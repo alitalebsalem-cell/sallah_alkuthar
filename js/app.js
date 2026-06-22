@@ -401,7 +401,7 @@ invoiceBody.innerHTML += `
 document
 .getElementById("invoiceTotal")
 .textContent =
-"⃁ " + total.toFixed(2);
+" " + total.toFixed(2);
 
 const invoice =
 document
