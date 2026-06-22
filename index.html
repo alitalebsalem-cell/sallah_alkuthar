@@ -2,9 +2,7 @@
 <html lang="ar" dir="rtl">
 
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <meta charset="UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,15 +11,85 @@
 
 <link rel="stylesheet" href="css/style.css">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </head>
 
 <body>
 
+<!-- سلة عائمة -->
+
+<div class="cart-icon" id="cartToggle">
+
+🛒
+
+<span id="cartCount">0</span>
+
+</div>
+
+<!-- القائمة الجانبية للسلة -->
+
+<div class="cart-sidebar" id="cartSidebar">
+
+<div class="cart-header">
+
+<h2>سلة المشتريات</h2>
+
+<button id="closeCart">✖</button>
+
+</div>
+
+<div id="cartItems"></div>
+
+<div class="cart-footer">
+
+<h3>
+
+الإجمالي:
+
+<span id="cartTotal">0</span>
+
+⃁
+
+</h3>
+
+<input
+type="text"
+id="customerName"
+placeholder="اسم العميل">
+
+<button id="clearCart">
+
+🗑 مسح السلة
+
+</button>
+
+<button id="createInvoice">
+
+📄 إنشاء فاتورة
+
+</button>
+
+</div>
+
+</div>
+
+<!-- الهيدر -->
+
 <header>
 
-<img src="images/logo.png" class="logo">
+<img
+src="images/logo.png"
+class="logo"
+alt="Logo">
 
-<h1>تموينات سلة الكوثر</h1>
+<h1>
+
+تموينات سلة الكوثر
+
+</h1>
 
 <input
 type="text"
@@ -30,58 +98,51 @@ placeholder="ابحث عن منتج...">
 
 </header>
 
+<!-- التصنيفات -->
+
 <div class="categories">
 
-<button class="cat-btn" data-cat="الكل">الكل</button>
+<button class="cat-btn" data-cat="الكل">
 
-<button class="cat-btn" data-cat="مشروبات">مشروبات</button>
+الكل
 
-<button class="cat-btn" data-cat="منظفات">منظفات</button>
-
-<button class="cat-btn" data-cat="حلويات">حلويات</button>
-
-<button class="cat-btn" data-cat="معلبات">معلبات</button>
-
-<button class="cat-btn" data-cat="مجمدات">مجمدات</button>
-
-</div>
-
-<div class="store-layout">
-
-<div class="cart-section">
-
-<h2>🛒 سلة المشتريات</h2>
-
-<p>
-عدد المنتجات:
-<span id="cartCount">0</span>
-</p>
-
-<div id="cartItems"></div>
-
-<hr>
-
-<h3>
-الإجمالي:
-<span id="cartTotal">
-0
-</span>
-ريال
-</h3>
-<input
-id="customerName"
-placeholder="اسم العميل">
-<button id="clearCart">
-🗑 مسح السلة
 </button>
 
-<br><br>
+<button class="cat-btn" data-cat="مشروبات">
 
-<button id="createInvoice">
-📄 إنشاء فاتورة
+مشروبات
+
+</button>
+
+<button class="cat-btn" data-cat="منظفات">
+
+منظفات
+
+</button>
+
+<button class="cat-btn" data-cat="حلويات">
+
+حلويات
+
+</button>
+
+<button class="cat-btn" data-cat="معلبات">
+
+معلبات
+
+</button>
+
+<button class="cat-btn" data-cat="مجمدات">
+
+مجمدات
+
 </button>
 
 </div>
+
+<!-- المنتجات -->
+
+<main>
 
 <div class="products-section">
 
@@ -89,8 +150,13 @@ placeholder="اسم العميل">
 
 </div>
 
-</div>
-<div id="invoiceTemplate" style="display:none;">
+</main>
+
+<!-- قالب الفاتورة -->
+
+<div
+id="invoiceTemplate"
+style="display:none;">
 
 <div class="invoice-box">
 
@@ -101,26 +167,43 @@ src="images/logo.png"
 class="invoice-logo">
 
 <h1>
+
 تموينات سلة الكوثر
+
 </h1>
+
+<p>
+
+نقطة بيع إلكترونية
+
+</p>
 
 </div>
 
 <div class="invoice-info">
 
 <div>
+
 رقم الفاتورة:
-<span id="invoiceNo"></span>
+
+<strong id="invoiceNo"></strong>
+
 </div>
 
 <div>
+
 التاريخ:
-<span id="invoiceDate"></span>
+
+<strong id="invoiceDate"></strong>
+
 </div>
 
 <div>
+
 العميل:
-<span id="invoiceCustomer"></span>
+
+<strong id="invoiceCustomer"></strong>
+
 </div>
 
 </div>
@@ -132,7 +215,9 @@ src="images/whatsapp-qr.png"
 width="120">
 
 <p>
+
 966538647362+
+
 </p>
 
 </div>
@@ -143,15 +228,15 @@ width="120">
 
 <tr>
 
-<th>المنتج</th>
+<th>CODE</th>
 
-<th>الكود</th>
+<th>DESCRIPTION</th>
 
-<th>الكمية</th>
+<th>QTY</th>
 
-<th>السعر</th>
+<th>PRICE</th>
 
-<th>الإجمالي</th>
+<th>AMOUNT</th>
 
 </tr>
 
@@ -163,24 +248,34 @@ width="120">
 
 </table>
 
-<h2>
+<div class="invoice-total">
 
-الإجمالي النهائي:
+الإجمالي النهائي :
 
-<span id="invoiceTotal"></span>
+<span id="invoiceTotal">
 
-ريال
+0
 
-</h2>
+</span>
+
+⃁
+
+</div>
+
+<div class="invoice-footer">
+
+شكراً لتسوقكم من تموينات سلة الكوثر
 
 </div>
 
 </div>
+
+</div>
+
 <script
 type="module"
-src="js/app.js">
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+src="js/app.js"></script>
+
 </body>
 
 </html>
