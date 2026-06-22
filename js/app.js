@@ -531,6 +531,145 @@ invoiceWindow.document.close();
 invoiceWindow.print();
 
 }
+document
+.getElementById("createInvoice")
+.addEventListener("click", async ()=>{
+
+if(cart.length === 0){
+
+alert("السلة فارغة");
+
+return;
+
+}
+
+const customerName =
+document
+.getElementById("customerName")
+.value || "غير محدد";
+
+const invoiceNo =
+"INV-" +
+Date.now();
+
+const invoiceDate =
+new Date()
+.toLocaleString("ar-SA");
+
+document
+.getElementById("invoiceNo")
+.textContent =
+invoiceNo;
+
+document
+.getElementById("invoiceDate")
+.textContent =
+invoiceDate;
+
+document
+.getElementById("invoiceCustomer")
+.textContent =
+customerName;
+
+const invoiceBody =
+document
+.getElementById("invoiceBody");
+
+invoiceBody.innerHTML = "";
+
+let total = 0;
+
+cart.forEach(item=>{
+
+const lineTotal =
+item.price * item.qty;
+
+total += lineTotal;
+
+invoiceBody.innerHTML += `
+
+<tr>
+
+<td>${item.name}</td>
+
+<td>${item.code}</td>
+
+<td>${item.qty}</td>
+
+<td>${item.price}</td>
+
+<td>${lineTotal.toFixed(2)}</td>
+
+</tr>
+
+`;
+
+});
+
+document
+.getElementById("invoiceTotal")
+.textContent =
+total.toFixed(2);
+
+const invoice =
+document
+.getElementById("invoiceTemplate");
+
+invoice.style.display =
+"block";
+
+const canvas =
+await html2canvas(
+invoice,
+{
+scale:2
+}
+);
+
+const imgData =
+canvas.toDataURL(
+"image/png"
+);
+
+const {
+jsPDF
+} = window.jspdf;
+
+const pdf =
+new jsPDF(
+"P",
+"mm",
+"A4"
+);
+
+const pageWidth =
+210;
+
+const imgWidth =
+190;
+
+const imgHeight =
+(canvas.height *
+imgWidth) /
+canvas.width;
+
+pdf.addImage(
+imgData,
+"PNG",
+10,
+10,
+imgWidth,
+imgHeight
+);
+
+pdf.save(
+`فاتورة-${invoiceNo}.pdf`
+);
+
+invoice.style.display =
+"none";
+
+});
 renderCart();
 
 loadProducts();
