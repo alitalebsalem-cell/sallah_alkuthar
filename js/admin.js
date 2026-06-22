@@ -1,3 +1,4 @@
+```javascript
 import { db } from "./firebase.js";
 
 import {
@@ -11,6 +12,7 @@ doc
 from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 let editingId = null;
+let allProducts = [];
 
 const productsTable =
 document.getElementById("productsTable");
@@ -88,18 +90,11 @@ document.getElementById("image").value = "";
 
 }
 
-async function loadProducts(){
-
-const snapshot =
-await getDocs(
-collection(db,"products")
-);
+function renderProducts(products){
 
 productsTable.innerHTML = "";
 
-snapshot.forEach(item=>{
-
-const p = item.data();
+products.forEach(product=>{
 
 productsTable.innerHTML += `
 
@@ -112,32 +107,32 @@ border:1px solid #ddd;
 ">
 
 <img
-src="${p.image}"
+src="${product.image}"
 width="100"
 style="
 height:100px;
 object-fit:contain;
 ">
 
-<h3>${p.name}</h3>
+<h3>${product.name}</h3>
 
-<p>${p.description || ""}</p>
+<p>${product.description || ""}</p>
 
-<p><b>الكود:</b> ${p.code}</p>
+<p><b>الكود:</b> ${product.code}</p>
 
-<p><b>القسم:</b> ${p.category}</p>
+<p><b>القسم:</b> ${product.category}</p>
 
-<p><b>السعر:</b> ${p.price} ريال</p>
+<p><b>السعر:</b> ${product.price} ريال</p>
 
 <button
-onclick="editProduct('${item.id}')">
+onclick="editProduct('${product.id}')">
 
 ✏️ تعديل
 
 </button>
 
 <button
-onclick="deleteProduct('${item.id}')">
+onclick="deleteProduct('${product.id}')">
 
 🗑 حذف
 
@@ -148,6 +143,30 @@ onclick="deleteProduct('${item.id}')">
 `;
 
 });
+
+}
+
+async function loadProducts(){
+
+const snapshot =
+await getDocs(
+collection(db,"products")
+);
+
+allProducts = [];
+
+snapshot.forEach(item=>{
+
+const p = item.data();
+
+allProducts.push({
+id:item.id,
+...p
+});
+
+});
+
+renderProducts(allProducts);
 
 }
 
@@ -170,46 +189,59 @@ loadProducts();
 window.editProduct =
 async function(id){
 
-const snapshot =
-await getDocs(
-collection(db,"products")
+const product =
+allProducts.find(
+p => p.id === id
 );
 
-snapshot.forEach(item=>{
-
-if(item.id === id){
-
-const p = item.data();
+if(!product) return;
 
 editingId = id;
 
 document.getElementById("name").value =
-p.name;
+product.name;
 
 document.getElementById("description").value =
-p.description;
+product.description;
 
 document.getElementById("code").value =
-p.code;
+product.code;
 
 document.getElementById("price").value =
-p.price;
+product.price;
 
 document.getElementById("category").value =
-p.category;
+product.category;
 
 document.getElementById("image").value =
-p.image;
+product.image;
 
 window.scrollTo({
 top:0,
 behavior:"smooth"
 });
 
-}
+};
+
+document
+.getElementById("searchAdmin")
+.addEventListener("input", function(){
+
+const value =
+this.value.toLowerCase();
+
+const filtered =
+allProducts.filter(product =>
+
+product.name
+.toLowerCase()
+.includes(value)
+
+);
+
+renderProducts(filtered);
 
 });
 
-};
-
 loadProducts();
+```
