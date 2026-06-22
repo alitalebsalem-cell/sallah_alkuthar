@@ -5,7 +5,9 @@
 
 <meta charset="UTF-8">
 
-<title>لوحة الإدارة</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>لوحة الإدارة - تموينات سلة الكوثر</title>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -15,27 +17,36 @@
 
 <div class="admin-box">
 
-<h1>إضافة منتج جديد</h1>
+<h1>إضافة / تعديل منتج</h1>
 
-<input id="name" placeholder="اسم المنتج">
+<input
+id="name"
+placeholder="اسم المنتج">
 
-<input id="description" placeholder="الوصف">
+<input
+id="description"
+placeholder="الوصف">
 
-<input id="code" placeholder="الكود">
+<input
+id="code"
+placeholder="الكود">
 
-<input id="price" type="number" placeholder="السعر">
+<input
+id="price"
+type="number"
+placeholder="السعر">
 
 <select id="category">
 
-<option>مشروبات</option>
+<option value="مشروبات">مشروبات</option>
 
-<option>منظفات</option>
+<option value="منظفات">منظفات</option>
 
-<option>حلويات</option>
+<option value="حلويات">حلويات</option>
 
-<option>معلبات</option>
+<option value="معلبات">معلبات</option>
 
-<option>مجمدات</option>
+<option value="مجمدات">مجمدات</option>
 
 </select>
 
@@ -45,26 +56,27 @@ placeholder="رابط الصورة">
 
 <button id="save">
 
-إضافة المنتج
+حفظ المنتج
 
 </button>
+
 <hr>
 
 <h2>جميع المنتجات</h2>
 
 <input
 id="searchAdmin"
-placeholder="بحث عن منتج">
+placeholder="ابحث عن منتج">
 
 <div id="productsTable">
 
 </div>
+
 </div>
 
 <script
 type="module"
 src="js/admin.js">
-
 </script>
 
 </body>
