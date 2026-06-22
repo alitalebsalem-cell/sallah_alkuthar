@@ -1,126 +1,79 @@
-import { db } from "./firebase.js";
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 
-import {
-collection,
-getDocs
-}
-from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+<head>
 
-let allProducts = [];
+<meta charset="UTF-8">
 
-const productsDiv =
-document.getElementById("products");
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const searchInput =
-document.getElementById("search");
+<title>تموينات سلة الكوثر</title>
 
-async function loadProducts(){
+<link rel="stylesheet" href="css/style.css">
 
-const querySnapshot =
-await getDocs(
-collection(db,"products")
-);
+</head>
 
-allProducts = [];
+<body>
 
-querySnapshot.forEach(doc=>{
+<header>
 
-allProducts.push({
-id:doc.id,
-...doc.data()
-});
+<img src="images/logo.png" class="logo">
 
-});
+<h1>تموينات سلة الكوثر</h1>
 
-renderProducts(allProducts);
+<input
+type="text"
+id="search"
+placeholder="ابحث عن منتج...">
 
-}
+</header>
 
-function renderProducts(products){
+<div class="categories">
 
-productsDiv.innerHTML = "";
+<button class="cat-btn" data-cat="الكل">الكل</button>
 
-products.forEach(p=>{
+<button class="cat-btn" data-cat="مشروبات">مشروبات</button>
 
-productsDiv.innerHTML += `
+<button class="cat-btn" data-cat="منظفات">منظفات</button>
 
-<div class="product">
+<button class="cat-btn" data-cat="حلويات">حلويات</button>
 
-<img
-src="${p.image}"
-onerror="this.src='https://via.placeholder.com/300'">
+<button class="cat-btn" data-cat="معلبات">معلبات</button>
 
-<h3>${p.name}</h3>
-
-<p>${p.description}</p>
-
-<p>الكود: ${p.code}</p>
-
-<div class="price">
-${p.price} ريال
-</div>
-
-<button
-class="cart-btn"
-data-id="${p.id}">
-
-🛒 إضافة للسلة
-
-</button>
+<button class="cat-btn" data-cat="مجمدات">مجمدات</button>
 
 </div>
 
-`;
+<div class="store-layout">
 
-});
+<div class="cart-section">
 
-}
+<h2>🛒 سلة المشتريات</h2>
 
-document
-.querySelectorAll(".cat-btn")
-.forEach(btn=>{
+<p>
+عدد المنتجات:
+<span id="cartCount">0</span>
+</p>
 
-btn.addEventListener("click",()=>{
+<div id="cartItems"></div>
 
-const cat =
-btn.dataset.cat;
+</div>
 
-if(cat==="الكل"){
+<div class="products-section">
 
-renderProducts(allProducts);
+<div id="products"></div>
 
-return;
+</div>
 
-}
+</div>
 
-const filtered =
-allProducts.filter(
-p=>p.category===cat
-);
+<script
+type="module"
+src="js/app.js">
+</script>
 
-renderProducts(filtered);
+</body>
 
-});
-
-});
-
-searchInput
-.addEventListener("input",()=>{
-
-const value =
-searchInput.value.toLowerCase();
-
-const filtered =
-allProducts.filter(p=>
-
-p.name
-.toLowerCase()
-.includes(value)
-
-);
-
-renderProducts(filtered);
-
-});
-
-loadProducts();
+</html>
+```
