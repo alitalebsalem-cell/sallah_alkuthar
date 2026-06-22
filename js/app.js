@@ -28,6 +28,10 @@ document.getElementById("cartCount");
 const cartTotal =
 document.getElementById("cartTotal");
 
+/* ==========================
+LOAD PRODUCTS
+========================== */
+
 async function loadProducts(){
 
 const querySnapshot =
@@ -50,6 +54,10 @@ renderProducts(allProducts);
 
 }
 
+/* ==========================
+RENDER PRODUCTS
+========================== */
+
 function renderProducts(products){
 
 productsDiv.innerHTML = "";
@@ -68,10 +76,20 @@ onerror="this.src='https://via.placeholder.com/300'">
 
 <p>${p.description || ""}</p>
 
-<p>SKU: ${p.code}</p>
+<p>
+
+الكود:
+
+${p.code}
+
+</p>
 
 <div class="price">
-${p.price} ⃁
+
+${p.price}
+
+⃁
+
 </div>
 
 <button
@@ -104,6 +122,10 @@ btn.dataset.id
 
 }
 
+/* ==========================
+CART FUNCTIONS
+========================== */
+
 function addToCart(id){
 
 const product =
@@ -115,7 +137,7 @@ if(!product) return;
 
 const existing =
 cart.find(
-item => item.id === id
+p => p.id === id
 );
 
 if(existing){
@@ -132,17 +154,6 @@ qty:1
 }
 
 saveCart();
-
-}
-
-function saveCart(){
-
-localStorage.setItem(
-"cart",
-JSON.stringify(cart)
-);
-
-renderCart();
 
 }
 
@@ -198,6 +209,21 @@ saveCart();
 
 }
 
+function saveCart(){
+
+localStorage.setItem(
+"cart",
+JSON.stringify(cart)
+);
+
+renderCart();
+
+}
+
+/* ==========================
+RENDER CART
+========================== */
+
 function renderCart(){
 
 cartItems.innerHTML = "";
@@ -206,32 +232,61 @@ let total = 0;
 
 cart.forEach(item=>{
 
-total +=
+const itemTotal =
 item.price *
 item.qty;
+
+total += itemTotal;
 
 cartItems.innerHTML += `
 
 <div class="cart-item">
 
 <h4>
+
 ${item.name}
+
 </h4>
 
 <p>
-${item.price} ⃁
+
+${item.code}
+
+</p>
 
 <p>
 
-<button onclick="decreaseQty('${item.id}')">
+${item.price} ⃁
+
+</p>
+
+<div>
+
+<button
+onclick="decreaseQty('${item.id}')">
+
 ➖
+
 </button>
+
+<span>
 
 ${item.qty}
 
-<button onclick="increaseQty('${item.id}')">
+</span>
+
+<button
+onclick="increaseQty('${item.id}')">
+
 ➕
+
 </button>
+
+</div>
+
+<p>
+
+${itemTotal.toFixed(2)} ⃁
 
 </p>
 
@@ -256,6 +311,10 @@ total.toFixed(2);
 
 }
 
+/* ==========================
+GLOBAL
+========================== */
+
 window.increaseQty =
 increaseQty;
 
@@ -264,6 +323,10 @@ decreaseQty;
 
 window.deleteItem =
 deleteItem;
+
+/* ==========================
+CLEAR CART
+========================== */
 
 document
 .getElementById("clearCart")
@@ -275,33 +338,9 @@ saveCart();
 
 });
 
-document
-.querySelectorAll(".cat-btn")
-.forEach(btn=>{
-
-btn.addEventListener("click",()=>{
-
-const cat =
-btn.dataset.cat;
-
-if(cat==="الكل"){
-
-renderProducts(allProducts);
-
-return;
-
-}
-
-const filtered =
-allProducts.filter(
-p => p.category === cat
-);
-
-renderProducts(filtered);
-
-});
-
-});
+/* ==========================
+SEARCH
+========================== */
 
 searchInput
 .addEventListener("input",()=>{
@@ -321,51 +360,139 @@ p.name
 renderProducts(filtered);
 
 });
+
+/* ==========================
+CATEGORY FILTER
+========================== */
+
+document
+.querySelectorAll(".cat-btn")
+.forEach(btn=>{
+
+btn.addEventListener("click",()=>{
+
+const cat =
+btn.dataset.cat;
+
+if(cat==="الكل"){
+
+renderProducts(
+allProducts
+);
+
+return;
+
+}
+
+const filtered =
+allProducts.filter(
+p => p.category === cat
+);
+
+renderProducts(
+filtered
+);
+
+});
+
+});
+
+/* ==========================
+OPEN CART
+========================== */
+
+document
+.getElementById("cartToggle")
+.addEventListener("click",()=>{
+
+document
+.getElementById("cartSidebar")
+.classList
+.add("active");
+
+});
+
+document
+.getElementById("closeCart")
+.addEventListener("click",()=>{
+
+document
+.getElementById("cartSidebar")
+.classList
+.remove("active");
+
+});
+
+/* ==========================
+INVOICE
+========================== */
+
 document
 .getElementById("createInvoice")
-.addEventListener("click", async ()=>{
+.addEventListener("click",
+async ()=>{
 
-if(cart.length === 0){
+if(cart.length===0){
 
-alert("Cart is Empty");
+alert(
+"السلة فارغة"
+);
 
 return;
 
 }
 
 const customerName =
+
 document
-.getElementById("customerName")
-.value || "WALK-IN";
+.getElementById(
+"customerName"
+)
+.value ||
+
+"WALK-IN";
 
 const invoiceNo =
+
 "INV-" +
+
 Math.floor(
-1000 + Math.random() * 9000
+1000 +
+Math.random()*9000
 );
 
 const invoiceDate =
+
 new Date()
-.toLocaleString("en-US");
+.toLocaleString();
 
 document
-.getElementById("invoiceNo")
+.getElementById(
+"invoiceNo"
+)
 .textContent =
 invoiceNo;
 
 document
-.getElementById("invoiceDate")
+.getElementById(
+"invoiceDate"
+)
 .textContent =
 invoiceDate;
 
 document
-.getElementById("invoiceCustomer")
+.getElementById(
+"invoiceCustomer"
+)
 .textContent =
 customerName;
 
 const invoiceBody =
+
 document
-.getElementById("invoiceBody");
+.getElementById(
+"invoiceBody"
+);
 
 invoiceBody.innerHTML = "";
 
@@ -374,7 +501,9 @@ let total = 0;
 cart.forEach(item=>{
 
 const lineTotal =
-item.price * item.qty;
+
+item.price *
+item.qty;
 
 total += lineTotal;
 
@@ -382,15 +511,47 @@ invoiceBody.innerHTML += `
 
 <tr>
 
-<td>${item.name}</td>
+<td>
 
-<td>${item.code}</td>
+${item.code}
 
-<td>${item.qty}</td>
+</td>
 
-<td>﷼ ${item.price}</td>
+<td>
 
-<td>﷼ ${lineTotal.toFixed(2)}</td>
+<b>
+
+${item.name}
+
+</b>
+
+<br>
+
+<small>
+
+${item.description || ""}
+
+</small>
+
+</td>
+
+<td>
+
+${item.qty}.00
+
+</td>
+
+<td>
+
+${item.price} ⃁
+
+</td>
+
+<td>
+
+${lineTotal.toFixed(2)} ⃁
+
+</td>
 
 </tr>
 
@@ -399,13 +560,19 @@ invoiceBody.innerHTML += `
 });
 
 document
-.getElementById("invoiceTotal")
+.getElementById(
+"invoiceTotal"
+)
 .textContent =
-" " + total.toFixed(2);
+
+total.toFixed(2);
 
 const invoice =
+
 document
-.getElementById("invoiceTemplate");
+.getElementById(
+"invoiceTemplate"
+);
 
 invoice.style.display =
 "block";
@@ -420,7 +587,9 @@ useCORS:true
 );
 
 const imgData =
-canvas.toDataURL("image/png");
+canvas.toDataURL(
+"image/png"
+);
 
 const { jsPDF } =
 window.jspdf;
@@ -435,7 +604,9 @@ new jsPDF(
 const imgWidth = 190;
 
 const imgHeight =
-(canvas.height * imgWidth)
+
+(canvas.height *
+imgWidth)
 /
 canvas.width;
 
@@ -455,8 +626,12 @@ pdf.save(
 invoice.style.display =
 "none";
 
-
 });
+
+/* ==========================
+START
+========================== */
+
 renderCart();
 
 loadProducts();
