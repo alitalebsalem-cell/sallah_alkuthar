@@ -322,7 +322,215 @@ p.name
 renderProducts(filtered);
 
 });
+document
+.getElementById("createInvoice")
+.addEventListener("click", createInvoice);
 
+function createInvoice(){
+
+const customerName =
+document.getElementById("customerName").value || "غير محدد";
+
+if(cart.length === 0){
+
+alert("السلة فارغة");
+
+return;
+
+}
+
+let invoiceNo =
+"INV-" +
+Date.now();
+
+let date =
+new Date()
+.toLocaleString("ar-SA");
+
+let total = 0;
+
+let productsRows = "";
+
+cart.forEach(item=>{
+
+const lineTotal =
+item.price * item.qty;
+
+total += lineTotal;
+
+productsRows += `
+
+<tr>
+
+<td>${item.name}</td>
+
+<td>${item.code}</td>
+
+<td>${item.qty}</td>
+
+<td>${item.price}</td>
+
+<td>${lineTotal.toFixed(2)}</td>
+
+</tr>
+
+`;
+
+});
+
+const invoiceWindow =
+window.open("","_blank");
+
+invoiceWindow.document.write(`
+
+<html dir="rtl">
+
+<head>
+
+<title>فاتورة</title>
+
+<style>
+
+body{
+font-family:tahoma;
+padding:30px;
+}
+
+.header{
+text-align:center;
+margin-bottom:20px;
+}
+
+.logo{
+width:120px;
+}
+
+.info{
+display:flex;
+justify-content:space-between;
+margin:20px 0;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#0a8f5a;
+color:white;
+}
+
+.total{
+margin-top:20px;
+font-size:24px;
+font-weight:bold;
+text-align:left;
+}
+
+.qr{
+margin-top:20px;
+text-align:center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+<img
+src="images/logo.png"
+class="logo">
+
+<h1>
+تموينات سلة الكوثر
+</h1>
+
+</div>
+
+<div class="info">
+
+<div>
+رقم الفاتورة:
+<br>
+${invoiceNo}
+</div>
+
+<div>
+التاريخ:
+<br>
+${date}
+</div>
+
+<div>
+العميل:
+<br>
+${customerName}
+</div>
+
+</div>
+
+<div class="qr">
+
+<img
+src="images/whatsapp-qr.png"
+width="120">
+
+<br>
+
+966538647362+
+
+</div>
+
+<table>
+
+<tr>
+
+<th>المنتج</th>
+
+<th>الكود</th>
+
+<th>الكمية</th>
+
+<th>السعر</th>
+
+<th>الإجمالي</th>
+
+</tr>
+
+${productsRows}
+
+</table>
+
+<div class="total">
+
+الإجمالي:
+${total.toFixed(2)}
+ريال
+
+</div>
+
+</body>
+
+</html>
+
+`);
+
+invoiceWindow.document.close();
+
+invoiceWindow.print();
+
+}
 renderCart();
 
 loadProducts();
