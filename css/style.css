@@ -164,3 +164,42 @@ border:none;
 cursor:pointer;
 
 }
+.store-layout{
+
+display:flex;
+gap:20px;
+align-items:flex-start;
+
+}
+
+.products-section{
+
+flex:3;
+
+}
+
+.cart-section{
+
+flex:1;
+background:white;
+padding:15px;
+border-radius:10px;
+position:sticky;
+top:20px;
+min-height:300px;
+box-shadow:0 0 10px rgba(0,0,0,.1);
+
+}
+
+.cart-item{
+
+border-bottom:1px solid #ddd;
+padding:10px 0;
+
+}
+
+.cart-item h4{
+
+margin:5px 0;
+
+}
