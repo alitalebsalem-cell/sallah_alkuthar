@@ -124,3 +124,43 @@ width:100%;
 cursor:pointer;
 
 }
+.admin-box{
+
+max-width:600px;
+
+margin:auto;
+
+background:white;
+
+padding:20px;
+
+border-radius:10px;
+
+}
+
+.admin-box input,
+.admin-box select{
+
+width:100%;
+
+padding:12px;
+
+margin:8px 0;
+
+}
+
+.admin-box button{
+
+width:100%;
+
+padding:15px;
+
+background:#0a8f5a;
+
+color:white;
+
+border:none;
+
+cursor:pointer;
+
+}
