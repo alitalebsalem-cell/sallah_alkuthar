@@ -323,32 +323,53 @@ renderProducts(filtered);
 });
 document
 .getElementById("createInvoice")
-.addEventListener("click", createInvoice);
-
-function createInvoice(){
-
-const customerName =
-document.getElementById("customerName").value || "NON";
+.addEventListener("click", async ()=>{
 
 if(cart.length === 0){
 
-alert("السلة فارغة");
+alert("Cart is Empty");
 
 return;
 
 }
 
-let invoiceNo =
-"INV-" +
-Date.now();
+const customerName =
+document
+.getElementById("customerName")
+.value || "WALK-IN";
 
-let date =
+const invoiceNo =
+"INV-" +
+Math.floor(
+1000 + Math.random() * 9000
+);
+
+const invoiceDate =
 new Date()
-.toLocaleString("ar-SA");
+.toLocaleString("en-US");
+
+document
+.getElementById("invoiceNo")
+.textContent =
+invoiceNo;
+
+document
+.getElementById("invoiceDate")
+.textContent =
+invoiceDate;
+
+document
+.getElementById("invoiceCustomer")
+.textContent =
+customerName;
+
+const invoiceBody =
+document
+.getElementById("invoiceBody");
+
+invoiceBody.innerHTML = "";
 
 let total = 0;
-
-let productsRows = "";
 
 cart.forEach(item=>{
 
@@ -357,7 +378,7 @@ item.price * item.qty;
 
 total += lineTotal;
 
-productsRows += `
+invoiceBody.innerHTML += `
 
 <tr>
 
@@ -367,9 +388,9 @@ productsRows += `
 
 <td>${item.qty}</td>
 
-<td>${item.price}</td>
+<td>﷼ ${item.price}</td>
 
-<td>${lineTotal.toFixed(2)}</td>
+<td>﷼ ${lineTotal.toFixed(2)}</td>
 
 </tr>
 
@@ -377,157 +398,64 @@ productsRows += `
 
 });
 
-const invoiceWindow =
-window.open("","_blank");
+document
+.getElementById("invoiceTotal")
+.textContent =
+"﷼ " + total.toFixed(2);
 
-invoiceWindow.document.write(`
+const invoice =
+document
+.getElementById("invoiceTemplate");
 
-<html dir="rtl">
+invoice.style.display =
+"block";
 
-<head>
-
-<title>فاتورة</title>
-
-<style>
-
-body{
-font-family:tahoma;
-padding:30px;
+const canvas =
+await html2canvas(
+invoice,
+{
+scale:3,
+useCORS:true
 }
+);
 
-.header{
-text-align:center;
-margin-bottom:20px;
-}
+const imgData =
+canvas.toDataURL("image/png");
 
-.logo{
-width:120px;
-}
+const { jsPDF } =
+window.jspdf;
 
-.info{
-display:flex;
-justify-content:space-between;
-margin:20px 0;
-}
+const pdf =
+new jsPDF(
+"P",
+"mm",
+"A4"
+);
 
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:20px;
-}
+const imgWidth = 190;
 
-th,td{
-border:1px solid #ddd;
-padding:10px;
-text-align:center;
-}
+const imgHeight =
+(canvas.height * imgWidth)
+/
+canvas.width;
 
-th{
-background:#0a8f5a;
-color:white;
-}
+pdf.addImage(
+imgData,
+"PNG",
+10,
+10,
+imgWidth,
+imgHeight
+);
 
-.total{
-margin-top:20px;
-font-size:24px;
-font-weight:bold;
-text-align:left;
-}
+pdf.save(
+`${invoiceNo}.pdf`
+);
 
-.qr{
-margin-top:20px;
-text-align:center;
-}
+invoice.style.display =
+"none";
 
-</style>
-
-</head>
-
-<body>
-
-<div class="header">
-
-<img
-src="images/logo.png"
-class="logo">
-
-<h1>
-SALLAT ALKAWTHAR MARKET
-</h1>
-
-</div>
-
-<div class="info">
-
-<div>
-INVOICE NO:
-<br>
-${invoiceNo}
-</div>
-
-<div>
-DATE:
-<br>
-${date}
-</div>
-
-<div>
-CUSTOMER:
-<br>
-${customerName}
-</div>
-
-</div>
-
-<div class="qr">
-
-<img
-src="images/whatsapp-qr.png"
-width="120">
-
-<br>
-
-966538647362+
-
-</div>
-
-<table>
-
-<tr>
-
-<th>PRODUCT OPTION</th>
-
-<th>SKU</th>
-
-<th>QUANTITY</th>
-
-<th>UNIT PRICE</th>
-
-<th>LINE TOTAL</th>
-
-</tr>
-
-${productsRows}
-
-</table>
-
-<div class="total">
-
-ESTIMATED TOTAL:
-${total.toFixed(2)} ﷼
-</div>
-
-</body>
-
-</html>
-
-`);
-
-invoiceWindow.document.close();
-
-invoiceWindow.print();
-
-}
+});
 document
 .getElementById("createInvoice")
 .addEventListener("click", async ()=>{
@@ -541,9 +469,7 @@ return;
 }
 
 const customerName =
-document
-.getElementById("customerName")
-.value || "NON";
+document.getElementById("customerName").value || "WALK-IN";
 
 const invoiceNo =
 "INV-" +
