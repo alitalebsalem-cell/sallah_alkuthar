@@ -68,10 +68,10 @@ onerror="this.src='https://via.placeholder.com/300'">
 
 <p>${p.description || ""}</p>
 
-<p>الكود: ${p.code}</p>
+<p>SKU: ${p.code}</p>
 
 <div class="price">
-${p.price} ﷼
+${p.price} ⃁
 </div>
 
 <button
@@ -219,7 +219,7 @@ ${item.name}
 </h4>
 
 <p>
-${item.price} ﷼
+${item.price} ⃁
 
 <p>
 
@@ -401,7 +401,7 @@ invoiceBody.innerHTML += `
 document
 .getElementById("invoiceTotal")
 .textContent =
-"﷼ " + total.toFixed(2);
+"⃁ " + total.toFixed(2);
 
 const invoice =
 document
