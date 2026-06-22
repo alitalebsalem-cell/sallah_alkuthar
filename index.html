@@ -88,7 +88,92 @@ placeholder="اسم العميل">
 </div>
 
 </div>
+<div id="invoiceTemplate" style="display:none;">
 
+<div class="invoice-box">
+
+<div class="invoice-header">
+
+<img
+src="images/logo.png"
+class="invoice-logo">
+
+<h1>
+تموينات سلة الكوثر
+</h1>
+
+</div>
+
+<div class="invoice-info">
+
+<div>
+رقم الفاتورة:
+<span id="invoiceNo"></span>
+</div>
+
+<div>
+التاريخ:
+<span id="invoiceDate"></span>
+</div>
+
+<div>
+العميل:
+<span id="invoiceCustomer"></span>
+</div>
+
+</div>
+
+<div class="invoice-qr">
+
+<img
+src="images/whatsapp-qr.png"
+width="120">
+
+<p>
+966538647362+
+</p>
+
+</div>
+
+<table id="invoiceTable">
+
+<thead>
+
+<tr>
+
+<th>المنتج</th>
+
+<th>الكود</th>
+
+<th>الكمية</th>
+
+<th>السعر</th>
+
+<th>الإجمالي</th>
+
+</tr>
+
+</thead>
+
+<tbody id="invoiceBody">
+
+</tbody>
+
+</table>
+
+<h2>
+
+الإجمالي النهائي:
+
+<span id="invoiceTotal"></span>
+
+ريال
+
+</h2>
+
+</div>
+
+</div>
 <script
 type="module"
 src="js/app.js">
