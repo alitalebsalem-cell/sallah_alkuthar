@@ -1,11 +1,25 @@
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
 body{
+
 font-family:'Segoe UI',Tahoma,sans-serif;
 background:#f5f5f5;
+direction:rtl;
+
 }
+
+/* =========================
+HEADER
+========================= */
 
 header{
 
 text-align:center;
+padding:20px;
 
 }
 
@@ -16,21 +30,35 @@ margin-bottom:10px;
 
 }
 
+header h1{
+
+margin-bottom:15px;
+color:#0a8f5a;
+
+}
+
 #search{
 
 width:80%;
-padding:12px;
-margin-top:15px;
+max-width:700px;
+padding:14px;
+border:1px solid #ddd;
+border-radius:10px;
+font-size:16px;
 
 }
+
+/* =========================
+CATEGORIES
+========================= */
 
 .categories{
 
 display:flex;
 flex-wrap:wrap;
-gap:10px;
 justify-content:center;
-margin:20px 0;
+gap:10px;
+padding:20px;
 
 }
 
@@ -41,22 +69,25 @@ border:none;
 background:#0a8f5a;
 color:white;
 cursor:pointer;
-border-radius:5px;
+border-radius:8px;
+font-weight:bold;
+transition:.3s;
 
 }
 
-.store-layout{
+.cat-btn:hover{
 
-display:grid;
-grid-template-columns: 1fr 320px;
-gap:20px;
-align-items:start;
+background:#087349;
 
 }
+
+/* =========================
+PRODUCTS
+========================= */
 
 .products-section{
 
-width:100%;
+padding:20px;
 
 }
 
@@ -64,11 +95,12 @@ width:100%;
 
 display:grid;
 grid-template-columns:
-repeat(auto-fill,minmax(250px,1fr));
+repeat(auto-fill,minmax(260px,1fr));
+
 gap:20px;
-width:100%;
 
 }
+
 .product{
 
 background:white;
@@ -93,32 +125,44 @@ height:220px;
 object-fit:contain;
 
 }
-.price{
 
-font-size:28px;
-font-weight:800;
-color:#0a8f5a;
+.product h3{
+
 margin:10px 0;
 
 }
-.price::before{
 
-content:"﷼ ";
-font-size:24px;
-font-weight:900;
-margin-left:5px;
+.product p{
+
+color:#666;
+margin-bottom:8px;
 
 }
 
+.price{
+
+font-size:30px;
+font-weight:800;
+color:#0a8f5a;
+margin:15px 0;
+
+}
+
+.cart-btn{
+
+width:100%;
+padding:12px;
+
+border:none;
+border-radius:10px;
+
 background:#0a8f5a;
 color:white;
-border:none;
-padding:12px;
-width:100%;
+
 cursor:pointer;
-border-radius:8px;
 font-size:16px;
 font-weight:bold;
+
 transition:.3s;
 
 }
@@ -129,78 +173,211 @@ background:#087349;
 
 }
 
-.cart-section{
+/* =========================
+FLOATING CART
+========================= */
 
-background:white;
-padding:20px;
-border-radius:16px;
-box-shadow:0 4px 15px rgba(0,0,0,.08);
+.cart-icon{
+
+position:fixed;
+
+top:20px;
+left:20px;
+
+width:65px;
+height:65px;
+
+border-radius:50%;
+
+background:#0a8f5a;
+color:white;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:30px;
+
+cursor:pointer;
+
+z-index:9999;
+
+box-shadow:0 5px 15px rgba(0,0,0,.2);
 
 }
 
+.cart-icon span{
+
+position:absolute;
+
+top:-5px;
+right:-5px;
+
+background:red;
+color:white;
+
+width:24px;
+height:24px;
+
+border-radius:50%;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:12px;
+font-weight:bold;
+
+}
+
+/* =========================
+SIDEBAR
+========================= */
+
+.cart-sidebar{
+
+position:fixed;
+
+top:0;
+left:-420px;
+
+width:420px;
+height:100%;
+
+background:white;
+
+overflow-y:auto;
+
+box-shadow:0 0 25px rgba(0,0,0,.2);
+
+transition:.4s;
+
+z-index:9998;
+
+}
+
+.cart-sidebar.active{
+
+left:0;
+
+}
+
+.cart-header{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+padding:20px;
+
+background:#0a8f5a;
+color:white;
+
+}
+
+.cart-header button{
+
+background:none;
+border:none;
+color:white;
+font-size:24px;
+cursor:pointer;
+
+}
+
+.cart-footer{
+
+padding:20px;
+
+}
+
+.cart-footer input{
+
+width:100%;
+padding:12px;
+
+border:1px solid #ddd;
+border-radius:8px;
+
+margin-bottom:10px;
+
+}
+
+.cart-footer button{
+
+width:100%;
+padding:12px;
+
+margin-top:10px;
+
+border:none;
+border-radius:8px;
+
+cursor:pointer;
+font-size:15px;
+font-weight:bold;
+
+}
+
+#createInvoice{
+
+background:#0a8f5a;
+color:white;
+
+}
+
+#clearCart{
+
+background:#d9534f;
+color:white;
+
+}
+
+/* =========================
+CART ITEMS
+========================= */
+
 .cart-item{
 
-padding:10px 0;
-border-bottom:1px solid #ddd;
+padding:15px;
+border-bottom:1px solid #eee;
 
 }
 
 .cart-item h4{
 
+margin-bottom:10px;
+
+}
+
+.cart-item p{
+
 margin:5px 0;
 
 }
 
-.admin-box{
+.cart-item button{
 
-max-width:600px;
-margin:auto;
-background:white;
-padding:20px;
-border-radius:10px;
-
-}
-
-.admin-box input,
-.admin-box select{
-
-width:100%;
-padding:12px;
-margin:8px 0;
-
-}
-
-.admin-box button{
-
-width:100%;
-padding:15px;
-background:#0a8f5a;
-color:white;
-border:none;
+padding:5px 10px;
+margin:3px;
 cursor:pointer;
 
-}
-
-@media(max-width:900px){
-
-.store-layout{
-
-grid-template-columns:1fr;
+border:none;
+border-radius:6px;
 
 }
 
-.cart-section{
+/* =========================
+INVOICE
+========================= */
 
-position:static;
-
-}
-
-}
 .invoice-box{
 
 width:900px;
+
 background:white;
 padding:40px;
+
 color:black;
 
 }
@@ -208,7 +385,7 @@ color:black;
 .invoice-header{
 
 text-align:center;
-margin-bottom:20px;
+margin-bottom:25px;
 
 }
 
@@ -220,9 +397,8 @@ width:150px;
 
 .invoice-header h1{
 
-font-size:42px;
-margin:10px 0;
-font-weight:800;
+font-size:40px;
+margin-top:10px;
 
 }
 
@@ -230,7 +406,9 @@ font-weight:800;
 
 display:flex;
 justify-content:space-between;
+
 margin:30px 0;
+
 font-size:18px;
 
 }
@@ -246,7 +424,6 @@ margin-bottom:25px;
 
 width:100%;
 border-collapse:collapse;
-margin-top:20px;
 
 }
 
@@ -254,8 +431,8 @@ margin-top:20px;
 
 background:#0b2a4a;
 color:white;
+
 padding:14px;
-font-size:18px;
 
 }
 
@@ -263,25 +440,71 @@ font-size:18px;
 
 border:1px solid #ddd;
 padding:12px;
+
 text-align:center;
-font-size:16px;
+
+}
+
+#invoiceTable tr:nth-child(even){
+
+background:#fafafa;
 
 }
 
 .invoice-total{
 
 margin-top:30px;
-font-size:34px;
+
+font-size:32px;
 font-weight:800;
+
 color:#0a8f5a;
+
 text-align:left;
 
 }
 
-#invoiceTable td{
+.invoice-footer{
 
-border:1px solid #ddd;
-padding:10px;
+margin-top:40px;
 text-align:center;
+
+font-size:18px;
+
+color:#666;
+
+}
+
+/* =========================
+MOBILE
+========================= */
+
+@media(max-width:768px){
+
+.cart-sidebar{
+
+width:100%;
+left:-100%;
+
+}
+
+#products{
+
+grid-template-columns:1fr;
+
+}
+
+.invoice-box{
+
+width:100%;
+
+}
+
+.invoice-info{
+
+flex-direction:column;
+gap:10px;
+
+}
 
 }
