@@ -25,6 +25,9 @@ document.getElementById("cartItems");
 const cartCount =
 document.getElementById("cartCount");
 
+const cartTotal =
+document.getElementById("cartTotal");
+
 async function loadProducts(){
 
 const querySnapshot =
@@ -91,10 +94,9 @@ document
 
 btn.addEventListener("click",()=>{
 
-const id =
-btn.dataset.id;
-
-addToCart(id);
+addToCart(
+btn.dataset.id
+);
 
 });
 
@@ -111,7 +113,29 @@ p => p.id === id
 
 if(!product) return;
 
-cart.push(product);
+const existing =
+cart.find(
+item => item.id === id
+);
+
+if(existing){
+
+existing.qty++;
+
+}else{
+
+cart.push({
+...product,
+qty:1
+});
+
+}
+
+saveCart();
+
+}
+
+function saveCart(){
 
 localStorage.setItem(
 "cart",
@@ -122,14 +146,69 @@ renderCart();
 
 }
 
+function increaseQty(id){
+
+const item =
+cart.find(
+p => p.id === id
+);
+
+if(item){
+
+item.qty++;
+
+saveCart();
+
+}
+
+}
+
+function decreaseQty(id){
+
+const item =
+cart.find(
+p => p.id === id
+);
+
+if(!item) return;
+
+item.qty--;
+
+if(item.qty <= 0){
+
+cart =
+cart.filter(
+p => p.id !== id
+);
+
+}
+
+saveCart();
+
+}
+
+function deleteItem(id){
+
+cart =
+cart.filter(
+p => p.id !== id
+);
+
+saveCart();
+
+}
+
 function renderCart(){
 
 cartItems.innerHTML = "";
 
-cartCount.textContent =
-cart.length;
+let total = 0;
 
 cart.forEach(item=>{
+
+total +=
+item.price *
+item.qty;
 
 cartItems.innerHTML += `
 
@@ -143,13 +222,59 @@ ${item.name}
 ${item.price} ريال
 </p>
 
+<p>
+
+<button onclick="decreaseQty('${item.id}')">
+➖
+</button>
+
+${item.qty}
+
+<button onclick="increaseQty('${item.id}')">
+➕
+</button>
+
+</p>
+
+<button
+onclick="deleteItem('${item.id}')">
+
+🗑 حذف
+
+</button>
+
 </div>
 
 `;
 
 });
 
+cartCount.textContent =
+cart.length;
+
+cartTotal.textContent =
+total.toFixed(2);
+
 }
+
+window.increaseQty =
+increaseQty;
+
+window.decreaseQty =
+decreaseQty;
+
+window.deleteItem =
+deleteItem;
+
+document
+.getElementById("clearCart")
+.addEventListener("click",()=>{
+
+cart = [];
+
+saveCart();
+
+});
 
 document
 .querySelectorAll(".cat-btn")
@@ -160,7 +285,7 @@ btn.addEventListener("click",()=>{
 const cat =
 btn.dataset.cat;
 
-if(cat === "الكل"){
+if(cat==="الكل"){
 
 renderProducts(allProducts);
 
