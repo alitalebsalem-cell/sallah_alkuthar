@@ -17,6 +17,90 @@ let allProducts = [];
 const productsTable =
 document.getElementById("productsTable");
 
+async function loadProducts(){
+
+const snapshot =
+await getDocs(
+collection(db,"products")
+);
+
+allProducts = [];
+
+snapshot.forEach(item=>{
+
+const p = item.data();
+
+allProducts.push({
+id:item.id,
+...p
+});
+
+});
+
+renderProducts(allProducts);
+
+}
+
+function renderProducts(products){
+
+productsTable.innerHTML = "";
+
+products.forEach(product=>{
+
+productsTable.innerHTML += `
+
+<div style="
+background:white;
+padding:15px;
+margin:10px 0;
+border-radius:10px;
+border:1px solid #ddd;
+">
+
+<img
+src="${product.image}"
+width="100"
+style="
+height:100px;
+object-fit:contain;
+">
+
+<h3>${product.name}</h3>
+
+<p>${product.description || ""}</p>
+
+<p><b>الكود:</b> ${product.code}</p>
+
+<p><b>القسم:</b> ${product.category}</p>
+
+<p><b>السعر:</b> ${product.price} ريال</p>
+
+<button onclick="editProduct('${product.id}')">
+✏️ تعديل
+</button>
+
+<button onclick="deleteProduct('${product.id}')">
+🗑 حذف
+</button>
+
+</div>
+
+`;
+
+});
+
+}
+
+function clearForm(){
+
+document.getElementById("name").value = "";
+document.getElementById("description").value = "";
+document.getElementById("code").value = "";
+document.getElementById("price").value = "";
+document.getElementById("image").value = "";
+
+}
+
 document
 .getElementById("save")
 .addEventListener("click", async ()=>{
@@ -76,107 +160,11 @@ loadProducts();
 
 });
 
-function clearForm(){
-
-document.getElementById("name").value = "";
-
-document.getElementById("description").value = "";
-
-document.getElementById("code").value = "";
-
-document.getElementById("price").value = "";
-
-document.getElementById("image").value = "";
-
-}
-
-function renderProducts(products){
-
-productsTable.innerHTML = "";
-
-products.forEach(product=>{
-
-productsTable.innerHTML += `
-
-<div style="
-background:white;
-padding:15px;
-margin:10px 0;
-border-radius:10px;
-border:1px solid #ddd;
-">
-
-<img
-src="${product.image}"
-width="100"
-style="
-height:100px;
-object-fit:contain;
-">
-
-<h3>${product.name}</h3>
-
-<p>${product.description || ""}</p>
-
-<p><b>الكود:</b> ${product.code}</p>
-
-<p><b>القسم:</b> ${product.category}</p>
-
-<p><b>السعر:</b> ${product.price} ريال</p>
-
-<button
-onclick="editProduct('${product.id}')">
-
-✏️ تعديل
-
-</button>
-
-<button
-onclick="deleteProduct('${product.id}')">
-
-🗑 حذف
-
-</button>
-
-</div>
-
-`;
-
-});
-
-}
-
-async function loadProducts(){
-
-const snapshot =
-await getDocs(
-collection(db,"products")
-);
-
-allProducts = [];
-
-snapshot.forEach(item=>{
-
-const p = item.data();
-
-allProducts.push({
-id:item.id,
-...p
-});
-
-});
-
-renderProducts(allProducts);
-
-}
-
 window.deleteProduct =
 async function(id){
 
-const result =
-confirm("هل تريد حذف المنتج؟");
-
-if(!result) return;
+if(!confirm("هل تريد حذف المنتج؟"))
+return;
 
 await deleteDoc(
 doc(db,"products",id)
@@ -187,7 +175,7 @@ loadProducts();
 };
 
 window.editProduct =
-async function(id){
+function(id){
 
 const product =
 allProducts.find(
@@ -232,25 +220,22 @@ this.value.toLowerCase();
 
 const filtered =
 allProducts.filter(product =>
-
-product.name
-.toLowerCase()
-.includes(value)
-
+product.name.toLowerCase().includes(value)
 );
 
 renderProducts(filtered);
 
 });
-```javascript
+
 document
 .getElementById("sortNewest")
-.addEventListener("click",()=>{
+?.addEventListener("click",()=>{
 
 const sorted =
-[...allProducts]
-.sort((a,b)=>
-(b.createdAt || 0) - (a.createdAt || 0)
+[...allProducts].sort(
+(a,b)=>
+(b.createdAt || 0) -
+(a.createdAt || 0)
 );
 
 renderProducts(sorted);
@@ -259,12 +244,13 @@ renderProducts(sorted);
 
 document
 .getElementById("sortOldest")
-.addEventListener("click",()=>{
+?.addEventListener("click",()=>{
 
 const sorted =
-[...allProducts]
-.sort((a,b)=>
-(a.createdAt || 0) - (b.createdAt || 0)
+[...allProducts].sort(
+(a,b)=>
+(a.createdAt || 0) -
+(b.createdAt || 0)
 );
 
 renderProducts(sorted);
@@ -273,12 +259,13 @@ renderProducts(sorted);
 
 document
 .getElementById("sortPriceAsc")
-.addEventListener("click",()=>{
+?.addEventListener("click",()=>{
 
 const sorted =
-[...allProducts]
-.sort((a,b)=>
-(a.price || 0) - (b.price || 0)
+[...allProducts].sort(
+(a,b)=>
+(a.price || 0) -
+(b.price || 0)
 );
 
 renderProducts(sorted);
@@ -287,12 +274,13 @@ renderProducts(sorted);
 
 document
 .getElementById("sortPriceDesc")
-.addEventListener("click",()=>{
+?.addEventListener("click",()=>{
 
 const sorted =
-[...allProducts]
-.sort((a,b)=>
-(b.price || 0) - (a.price || 0)
+[...allProducts].sort(
+(a,b)=>
+(b.price || 0) -
+(a.price || 0)
 );
 
 renderProducts(sorted);
@@ -301,12 +289,15 @@ renderProducts(sorted);
 
 document
 .getElementById("sortNameAsc")
-.addEventListener("click",()=>{
+?.addEventListener("click",()=>{
 
 const sorted =
-[...allProducts]
-.sort((a,b)=>
-a.name.localeCompare(b.name,'ar')
+[...allProducts].sort(
+(a,b)=>
+a.name.localeCompare(
+b.name,
+"ar"
+)
 );
 
 renderProducts(sorted);
@@ -315,18 +306,20 @@ renderProducts(sorted);
 
 document
 .getElementById("sortNameDesc")
-.addEventListener("click",()=>{
+?.addEventListener("click",()=>{
 
 const sorted =
-[...allProducts]
-.sort((a,b)=>
-b.name.localeCompare(a.name,'ar')
+[...allProducts].sort(
+(a,b)=>
+b.name.localeCompare(
+a.name,
+"ar"
+)
 );
 
 renderProducts(sorted);
 
 });
-```
 
 loadProducts();
 ```
