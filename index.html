@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="rtl">
 
 <head>
 
@@ -7,7 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>تموينات سلة الكوثر</title>
+<title>تموينات ستبلة الكوثر</title>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -35,7 +35,7 @@
 
 <div class="cart-header">
 
-<h2>سلة المشتريات</h2>
+<h2>سلة المشتريات/Cart</h2>
 
 <button id="closeCart">✖</button>
 
@@ -45,26 +45,13 @@
 
 <div class="cart-footer">
 
-<h3>
 
-الإجمالي:
-
-<span id="cartTotal">0</span>
-
-⃁
-
-</h3>
 
 <input
 type="text"
 id="customerName"
-placeholder="اسم العميل">
+placeholder="اسم العميل/customerName">
 
-<button id="clearCart">
-
-🗑 مسح السلة
-
-</button>
 
 <button id="createInvoice">
 
@@ -87,14 +74,14 @@ alt="Logo">
 
 <h1>
 
-تموينات سلة الكوثر
+تموينات سنبلة الكوثر
 
 </h1>
 
 <input
 type="text"
 id="search"
-placeholder="ابحث عن منتج...">
+placeholder="ابحث عن منتج/Search...">
 
 </header>
 
@@ -102,40 +89,27 @@ placeholder="ابحث عن منتج...">
 
 <div class="categories">
 
-<button class="cat-btn" data-cat="الكل">
+<button class="cat-btn" data-cat="الكل/All
+">
 
-الكل
-
-</button>
-
-<button class="cat-btn" data-cat="مشروبات">
-
-مشروبات
+الكل/All
 
 </button>
 
-<button class="cat-btn" data-cat="منظفات">
 
-منظفات
-
+<button class="cat-btn" data-cat="مواد غذائية/foodstuffs
+">
+مواد غذائية/foodstuffs
 </button>
 
-<button class="cat-btn" data-cat="حلويات">
-
-حلويات
-
+<button class="cat-btn" data-cat=" vegetable/خضار
+">
+ vegetable/خضار
 </button>
 
-<button class="cat-btn" data-cat="معلبات">
-
-معلبات
-
-</button>
-
-<button class="cat-btn" data-cat="مجمدات">
-
-مجمدات
-
+<button class="cat-btn" data-cat="Detergents/منظفات
+">
+Detergents/منظفات
 </button>
 
 </div>
@@ -168,7 +142,7 @@ class="invoice-logo">
 
 <h1>
 
-تموينات سلة الكوثر
+تموينات سنبلة الكوثر
 
 </h1>
 
@@ -184,7 +158,7 @@ class="invoice-logo">
 
 <div>
 
-رقم الفاتورة:
+رقم الفاتورة/INV NO:
 
 <strong id="invoiceNo"></strong>
 
@@ -192,7 +166,7 @@ class="invoice-logo">
 
 <div>
 
-التاريخ:
+التاريخ/Date:
 
 <strong id="invoiceDate"></strong>
 
@@ -200,7 +174,7 @@ class="invoice-logo">
 
 <div>
 
-العميل:
+العميل/Customer:
 
 <strong id="invoiceCustomer"></strong>
 
@@ -228,15 +202,14 @@ width="120">
 
 <tr>
 
-<th>CODE</th>
+<th>الصورة/Picture</th>
 
-<th>DESCRIPTION</th>
+<th>الكود/Code</th>
 
-<th>QTY</th>
+<th>الوصف/description</th>
 
-<th>PRICE</th>
+<th>الكمية/Qty</th>
 
-<th>AMOUNT</th>
 
 </tr>
 
@@ -250,21 +223,16 @@ width="120">
 
 <div class="invoice-total">
 
-الإجمالي النهائي :
+عدد الأصناف/Product NO :
 
 <span id="invoiceTotal">
-
 0
-
 </span>
 
-⃁
-
 </div>
-
 <div class="invoice-footer">
 
-شكراً لتسوقكم من تموينات سلة الكوثر
+شكراً لتسوقكم من تموينات سنبلة الكوثر
 
 </div>
 
