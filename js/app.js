@@ -60,10 +60,6 @@ RENDER PRODUCTS
 
 function renderProducts(products){
 
-productsDiv.innerHTML = "";
-
-products.forEach(p=>{
-
 productsDiv.innerHTML += `
 
 <div class="product">
@@ -78,28 +74,26 @@ onerror="this.src='https://via.placeholder.com/300'">
 
 <p>
 
-الكود/Code:
+Code / الكود
+
+<br>
 
 ${p.code}
 
 </p>
 
-
-</div>
-
 <button
 class="cart-btn"
 data-id="${p.id}">
 
-🛒 إضافة للسلة
+🛒 Add To Cart
+إضافة للسلة
 
 </button>
 
 </div>
 
 `;
-
-});
 
 document
 .querySelectorAll(".cart-btn")
@@ -223,17 +217,23 @@ function renderCart(){
 
 cartItems.innerHTML = "";
 
-let total = 0;
+let totalProducts = 0;
 
 cart.forEach(item=>{
 
-const totalProducts  += item.qty;
-
-total += itemTotal;
+totalProducts += item.qty;
 
 cartItems.innerHTML += `
 
 <div class="cart-item">
+
+<img
+src="${item.image}"
+style="
+width:60px;
+height:60px;
+object-fit:contain;
+">
 
 <h4>
 
@@ -243,11 +243,10 @@ ${item.name}
 
 <p>
 
+Code / الكود:
 ${item.code}
 
 </p>
-
-
 
 <div>
 
@@ -273,11 +272,10 @@ onclick="increaseQty('${item.id}')">
 
 </div>
 
-
 <button
 onclick="deleteItem('${item.id}')">
 
-🗑 حذف
+🗑 Delete / حذف
 
 </button>
 
@@ -292,6 +290,7 @@ cart.length;
 
 cartTotal.textContent =
 totalProducts;
+
 }
 
 /* ==========================
@@ -310,16 +309,6 @@ deleteItem;
 /* ==========================
 CLEAR CART
 ========================== */
-
-document
-.getElementById("clearCart")
-.addEventListener("click",()=>{
-
-cart = [];
-
-saveCart();
-
-});
 
 /* ==========================
 SEARCH
@@ -412,13 +401,14 @@ INVOICE
 
 document
 .getElementById("createInvoice")
-.addEventListener("click",
+.addEventListener(
+"click",
 async ()=>{
 
 if(cart.length===0){
 
 alert(
-"السلة فارغة"
+"Cart Empty / السلة فارغة"
 );
 
 return;
@@ -483,16 +473,23 @@ let totalProducts = 0;
 
 cart.forEach(item=>{
 
-const lineTotal =
-
-item.price *
-item.qty;
-
-total += lineTotal;
+totalProducts += item.qty;
 
 invoiceBody.innerHTML += `
 
 <tr>
+
+<td class="img-cell">
+
+<img
+src="${item.image}"
+style="
+width:60px;
+height:60px;
+object-fit:contain;
+">
+
+</td>
 
 <td>
 
@@ -520,19 +517,7 @@ ${item.description || ""}
 
 <td>
 
-${item.qty}.00
-
-</td>
-
-<td>
-
-${item.price} ⃁
-
-</td>
-
-<td>
-
-${lineTotal.toFixed(2)} ⃁
+${item.qty}
 
 </td>
 
@@ -547,8 +532,7 @@ document
 "invoiceTotal"
 )
 .textContent =
-
-total.toFixed(2);
+totalProducts;
 
 const invoice =
 
