@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
@@ -76,4 +75,3 @@ src="js/app.js">
 </body>
 
 </html>
-```
