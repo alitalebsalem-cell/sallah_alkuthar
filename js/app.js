@@ -78,17 +78,12 @@ onerror="this.src='https://via.placeholder.com/300'">
 
 <p>
 
-الكود:
+الكود/Code:
 
 ${p.code}
 
 </p>
 
-<div class="price">
-
-${p.price}
-
-⃁
 
 </div>
 
@@ -232,9 +227,7 @@ let total = 0;
 
 cart.forEach(item=>{
 
-const itemTotal =
-item.price *
-item.qty;
+const totalProducts  += item.qty;
 
 total += itemTotal;
 
@@ -254,11 +247,7 @@ ${item.code}
 
 </p>
 
-<p>
 
-${item.price} ⃁
-
-</p>
 
 <div>
 
@@ -284,11 +273,6 @@ onclick="increaseQty('${item.id}')">
 
 </div>
 
-<p>
-
-${itemTotal.toFixed(2)} ⃁
-
-</p>
 
 <button
 onclick="deleteItem('${item.id}')">
@@ -307,8 +291,7 @@ cartCount.textContent =
 cart.length;
 
 cartTotal.textContent =
-total.toFixed(2);
-
+totalProducts;
 }
 
 /* ==========================
@@ -496,7 +479,7 @@ document
 
 invoiceBody.innerHTML = "";
 
-let total = 0;
+let totalProducts = 0;
 
 cart.forEach(item=>{
 
