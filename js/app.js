@@ -73,7 +73,7 @@ ${p.price} ريال
 
 <button
 class="cart-btn"
-onclick="addToCart('${p.id}')">
+data-id="${p.id}">
 
 🛒 إضافة للسلة
 
@@ -85,10 +85,24 @@ onclick="addToCart('${p.id}')">
 
 });
 
+document
+.querySelectorAll(".cart-btn")
+.forEach(btn=>{
+
+btn.addEventListener("click",()=>{
+
+const id =
+btn.dataset.id;
+
+addToCart(id);
+
+});
+
+});
+
 }
 
-window.addToCart =
-function(id){
+function addToCart(id){
 
 const product =
 allProducts.find(
@@ -106,7 +120,7 @@ JSON.stringify(cart)
 
 renderCart();
 
-};
+}
 
 function renderCart(){
 
@@ -146,7 +160,7 @@ btn.addEventListener("click",()=>{
 const cat =
 btn.dataset.cat;
 
-if(cat==="الكل"){
+if(cat === "الكل"){
 
 renderProducts(allProducts);
 
