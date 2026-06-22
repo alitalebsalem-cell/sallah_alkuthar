@@ -1,15 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" dir="rtl">
+<html lang="ar" dir="rtl">
 
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-<title>تموينات ستبلة الكوثر</title>
+<title>
 
-<link rel="stylesheet" href="css/style.css">
+Al Kawthar Store
+تموينات سنبلة الكوثر
+
+</title>
+
+<link rel="stylesheet"
+href="css/style.css">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -19,43 +26,86 @@
 
 <body>
 
-<!-- سلة عائمة -->
+<!-- CART ICON -->
 
-<div class="cart-icon" id="cartToggle">
+<div
+class="cart-icon"
+id="cartToggle">
 
 🛒
 
-<span id="cartCount">0</span>
+<span id="cartCount">
+
+0
+
+</span>
 
 </div>
 
-<!-- القائمة الجانبية للسلة -->
+<!-- CART SIDEBAR -->
 
-<div class="cart-sidebar" id="cartSidebar">
+<div
+class="cart-sidebar"
+id="cartSidebar">
 
 <div class="cart-header">
 
-<h2>سلة المشتريات/Cart</h2>
+<h2>
 
-<button id="closeCart">✖</button>
+Shopping Cart
+سلة المشتريات
+
+</h2>
+
+<button id="closeCart">
+
+✖
+
+</button>
 
 </div>
 
-<div id="cartItems"></div>
+<div id="cartItems">
+
+</div>
 
 <div class="cart-footer">
 
+<h3>
 
+Products Count
+عدد المنتجات
+
+<br>
+
+<span id="cartTotal">
+
+0
+
+</span>
+
+</h3>
 
 <input
 type="text"
 id="customerName"
-placeholder="اسم العميل/customerName">
 
+placeholder="
+Customer Name
+اسم العميل
+">
+
+<button id="clearCart">
+
+🗑 Clear Cart
+مسح السلة
+
+</button>
 
 <button id="createInvoice">
 
-📄 إنشاء فاتورة
+📄 Create Invoice
+إنشاء فاتورة
 
 </button>
 
@@ -63,7 +113,7 @@ placeholder="اسم العميل/customerName">
 
 </div>
 
-<!-- الهيدر -->
+<!-- HEADER -->
 
 <header>
 
@@ -74,6 +124,10 @@ alt="Logo">
 
 <h1>
 
+Al Kawthar Store
+
+<br>
+
 تموينات سنبلة الكوثر
 
 </h1>
@@ -81,52 +135,62 @@ alt="Logo">
 <input
 type="text"
 id="search"
-placeholder="ابحث عن منتج/Search...">
+
+placeholder="
+Search Product
+البحث عن منتج
+">
 
 </header>
 
-<!-- التصنيفات -->
+<!-- CATEGORIES -->
 
 <div class="categories">
 
-<button class="cat-btn" data-cat="الكل/All
-">
+<button
+class="cat-btn"
+data-cat="مواد غذائية">
 
-الكل/All
+Foodstuffs
+مواد غذائية
 
 </button>
 
+<button
+class="cat-btn"
+data-cat="خضار">
 
-<button class="cat-btn" data-cat="مواد غذائية/foodstuffs
-">
-مواد غذائية/foodstuffs
+Vegetables
+خضار
+
 </button>
 
-<button class="cat-btn" data-cat=" vegetable/خضار
-">
- vegetable/خضار
-</button>
+<button
+class="cat-btn"
+data-cat="منظفات">
 
-<button class="cat-btn" data-cat="Detergents/منظفات
-">
-Detergents/منظفات
+Detergents
+منظفات
+
 </button>
 
 </div>
 
-<!-- المنتجات -->
+<!-- PRODUCTS -->
 
 <main>
 
 <div class="products-section">
 
-<div id="products"></div>
+<div id="products">
+
+</div>
 
 </div>
 
 </main>
 
-<!-- قالب الفاتورة -->
+<!-- INVOICE -->
 
 <div
 id="invoiceTemplate"
@@ -142,13 +206,21 @@ class="invoice-logo">
 
 <h1>
 
+Al Kawthar Store
+
+<br>
+
 تموينات سنبلة الكوثر
 
 </h1>
 
 <p>
 
-نقطة بيع إلكترونية
+Product Delivery Invoice
+
+<br>
+
+فاتورة تسليم منتجات
 
 </p>
 
@@ -158,7 +230,13 @@ class="invoice-logo">
 
 <div>
 
-رقم الفاتورة/INV NO:
+INV NO
+
+<br>
+
+رقم الفاتورة
+
+<br>
 
 <strong id="invoiceNo"></strong>
 
@@ -166,7 +244,13 @@ class="invoice-logo">
 
 <div>
 
-التاريخ/Date:
+DATE
+
+<br>
+
+التاريخ
+
+<br>
 
 <strong id="invoiceDate"></strong>
 
@@ -174,7 +258,13 @@ class="invoice-logo">
 
 <div>
 
-العميل/Customer:
+CUSTOMER
+
+<br>
+
+العميل
+
+<br>
 
 <strong id="invoiceCustomer"></strong>
 
@@ -190,7 +280,7 @@ width="120">
 
 <p>
 
-966538647362+
++966538647362
 
 </p>
 
@@ -202,14 +292,33 @@ width="120">
 
 <tr>
 
-<th>الصورة/Picture</th>
+<th>
 
-<th>الكود/Code</th>
+Picture
+الصورة
 
-<th>الوصف/description</th>
+</th>
 
-<th>الكمية/Qty</th>
+<th>
 
+Code
+الكود
+
+</th>
+
+<th>
+
+Description
+الوصف
+
+</th>
+
+<th>
+
+Qty
+الكمية
+
+</th>
 
 </tr>
 
@@ -223,16 +332,29 @@ width="120">
 
 <div class="invoice-total">
 
-عدد الأصناف/Product NO :
+Products Count
+
+<br>
+
+عدد المنتجات
+
+<br>
 
 <span id="invoiceTotal">
+
 0
+
 </span>
 
 </div>
+
 <div class="invoice-footer">
 
-شكراً لتسوقكم من تموينات سنبلة الكوثر
+Thank You For Shopping
+
+<br>
+
+شكراً لتسوقكم معنا
 
 </div>
 
@@ -242,7 +364,8 @@ width="120">
 
 <script
 type="module"
-src="js/app.js"></script>
+src="js/app.js">
+</script>
 
 </body>
 
