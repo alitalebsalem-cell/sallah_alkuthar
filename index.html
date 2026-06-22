@@ -1,13 +1,58 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
+
 <head>
+
 <meta charset="UTF-8">
-<title>السلة الكوثر</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>تموينات سلة الكوثر</title>
+
+<link rel="stylesheet" href="css/style.css">
+
 </head>
 
 <body>
 
-<h1>مرحباً بك في متجر السلة الكوثر</h1>
+<header>
+
+<img src="images/logo.png" class="logo">
+
+<h1>تموينات سلة الكوثر</h1>
+
+<input
+type="text"
+id="search"
+placeholder="ابحث عن منتج...">
+
+</header>
+
+<div class="categories">
+
+<button class="cat-btn" data-cat="الكل">الكل</button>
+
+<button class="cat-btn" data-cat="مشروبات">مشروبات</button>
+
+<button class="cat-btn" data-cat="منظفات">منظفات</button>
+
+<button class="cat-btn" data-cat="حلويات">حلويات</button>
+
+<button class="cat-btn" data-cat="معلبات">معلبات</button>
+
+<button class="cat-btn" data-cat="مجمدات">مجمدات</button>
+
+</div>
+
+<div id="products">
+
+</div>
+
+<script
+type="module"
+src="js/app.js">
+</script>
 
 </body>
+
 </html>
