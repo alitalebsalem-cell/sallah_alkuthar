@@ -71,7 +71,7 @@ onerror="this.src='https://via.placeholder.com/300'">
 <p>الكود: ${p.code}</p>
 
 <div class="price">
-${p.price} ريال
+${p.price} ﷼
 </div>
 
 <button
@@ -219,8 +219,7 @@ ${item.name}
 </h4>
 
 <p>
-${item.price} ريال
-</p>
+${item.price} ﷼
 
 <p>
 
@@ -329,7 +328,7 @@ document
 function createInvoice(){
 
 const customerName =
-document.getElementById("customerName").value || "غير محدد";
+document.getElementById("customerName").value || "NON";
 
 if(cart.length === 0){
 
@@ -453,7 +452,7 @@ src="images/logo.png"
 class="logo">
 
 <h1>
-تموينات سلة الكوثر
+SALLAT ALKAWTHAR MARKET
 </h1>
 
 </div>
@@ -461,19 +460,19 @@ class="logo">
 <div class="info">
 
 <div>
-رقم الفاتورة:
+INVOICE NO:
 <br>
 ${invoiceNo}
 </div>
 
 <div>
-التاريخ:
+DATE:
 <br>
 ${date}
 </div>
 
 <div>
-العميل:
+CUSTOMER:
 <br>
 ${customerName}
 </div>
@@ -496,15 +495,15 @@ width="120">
 
 <tr>
 
-<th>المنتج</th>
+<th>PRODUCT OPTION</th>
 
-<th>الكود</th>
+<th>SKU</th>
 
-<th>الكمية</th>
+<th>QUANTITY</th>
 
-<th>السعر</th>
+<th>UNIT PRICE</th>
 
-<th>الإجمالي</th>
+<th>LINE TOTAL</th>
 
 </tr>
 
@@ -514,10 +513,8 @@ ${productsRows}
 
 <div class="total">
 
-الإجمالي:
-${total.toFixed(2)}
-ريال
-
+ESTIMATED TOTAL:
+${total.toFixed(2)} ﷼
 </div>
 
 </body>
@@ -546,7 +543,7 @@ return;
 const customerName =
 document
 .getElementById("customerName")
-.value || "غير محدد";
+.value || "NON";
 
 const invoiceNo =
 "INV-" +
