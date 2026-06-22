@@ -242,6 +242,91 @@ product.name
 renderProducts(filtered);
 
 });
+```javascript
+document
+.getElementById("sortNewest")
+.addEventListener("click",()=>{
+
+const sorted =
+[...allProducts]
+.sort((a,b)=>
+(b.createdAt || 0) - (a.createdAt || 0)
+);
+
+renderProducts(sorted);
+
+});
+
+document
+.getElementById("sortOldest")
+.addEventListener("click",()=>{
+
+const sorted =
+[...allProducts]
+.sort((a,b)=>
+(a.createdAt || 0) - (b.createdAt || 0)
+);
+
+renderProducts(sorted);
+
+});
+
+document
+.getElementById("sortPriceAsc")
+.addEventListener("click",()=>{
+
+const sorted =
+[...allProducts]
+.sort((a,b)=>
+(a.price || 0) - (b.price || 0)
+);
+
+renderProducts(sorted);
+
+});
+
+document
+.getElementById("sortPriceDesc")
+.addEventListener("click",()=>{
+
+const sorted =
+[...allProducts]
+.sort((a,b)=>
+(b.price || 0) - (a.price || 0)
+);
+
+renderProducts(sorted);
+
+});
+
+document
+.getElementById("sortNameAsc")
+.addEventListener("click",()=>{
+
+const sorted =
+[...allProducts]
+.sort((a,b)=>
+a.name.localeCompare(b.name,'ar')
+);
+
+renderProducts(sorted);
+
+});
+
+document
+.getElementById("sortNameDesc")
+.addEventListener("click",()=>{
+
+const sorted =
+[...allProducts]
+.sort((a,b)=>
+b.name.localeCompare(a.name,'ar')
+);
+
+renderProducts(sorted);
+
+});
+```
 
 loadProducts();
 ```
