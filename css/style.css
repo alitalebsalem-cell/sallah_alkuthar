@@ -181,3 +181,62 @@ position:static;
 }
 
 }
+.invoice-box{
+
+width:900px;
+background:white;
+padding:30px;
+color:black;
+
+}
+
+.invoice-header{
+
+text-align:center;
+
+}
+
+.invoice-logo{
+
+width:120px;
+margin-bottom:10px;
+
+}
+
+.invoice-info{
+
+display:flex;
+justify-content:space-between;
+margin:25px 0;
+
+}
+
+.invoice-qr{
+
+text-align:center;
+margin-bottom:20px;
+
+}
+
+#invoiceTable{
+
+width:100%;
+border-collapse:collapse;
+
+}
+
+#invoiceTable th{
+
+background:#0b2a4a;
+color:white;
+padding:12px;
+
+}
+
+#invoiceTable td{
+
+border:1px solid #ddd;
+padding:10px;
+text-align:center;
+
+}
