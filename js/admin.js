@@ -95,21 +95,13 @@ onerror="this.src='https://via.placeholder.com/120'">
 
 <div class="admin-info">
 
-<h3>
-${product.name}
-</h3>
+<h3>${product.name}</h3>
 
-<p>
-${product.description || ""}
-</p>
+<p>${product.description || ""}</p>
 
-<p>
-SKU / ${product.code}
-</p>
+<p>SKU / ${product.code}</p>
 
-<p>
-${product.category}
-</p>
+<p>${product.category}</p>
 
 </div>
 
@@ -118,17 +110,13 @@ ${product.category}
 <button
 class="edit-btn"
 onclick="editProduct('${product.id}')">
-
 ✏️ Edit
-
 </button>
 
 <button
 class="delete-btn"
 onclick="deleteProduct('${product.id}')">
-
 🗑 Delete
-
 </button>
 
 </div>
@@ -140,71 +128,6 @@ onclick="deleteProduct('${product.id}')">
 });
 
 }
-
-<img
-src="${product.image}"
-width="120"
-style="
-height:120px;
-object-fit:contain;
-display:block;
-margin:auto;
-">
-
-<h3>
-
-${product.name}
-
-</h3>
-
-<p>
-
-${product.description || ""}
-
-</p>
-
-<p>
-
-<b>
-Code / الكود:
-</b>
-
-${product.code}
-
-</p>
-
-<p>
-
-<b>
-Category / القسم:
-</b>
-
-${product.category}
-
-</p>
-
-<button
-onclick="editProduct('${product.id}')">
-
-✏️ Edit / تعديل
-
-</button>
-
-<button
-onclick="deleteProduct('${product.id}')">
-
-🗑 Delete / حذف
-
-</button>
-
-</div>
-
-`;
-
-});
-
-}
-
 /* =========================
 CLEAR FORM
 ========================= */
