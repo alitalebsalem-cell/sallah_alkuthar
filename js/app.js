@@ -77,7 +77,7 @@ onerror="this.src='https://via.placeholder.com/300'">
 
 <p class="sku">
 
-SKU /
+SKU|
 
 ${p.code}
 
@@ -246,7 +246,7 @@ ${item.name}
 
 <p>
 
-SKU : :
+SKU| :
 ${item.code}
 
 </p>
