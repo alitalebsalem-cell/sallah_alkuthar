@@ -1,4 +1,4 @@
-let cart =
+3let cart =
 JSON.parse(
 localStorage.getItem("cart")
 ) || [];
@@ -21,15 +21,38 @@ let totalProducts = 0;
 
 cart.forEach(item=>{
 
-totalProducts += item.qty;
+totalProducts += Number(item.qty || 1);
+
+let productImage =
+"images/noimg.jpg";
+
+try{
+
+if(
+item.image &&
+typeof item.image === "string" &&
+item.image.trim() !== ""
+){
+
+productImage =
+item.image;
+
+}
+
+}catch(e){
+
+productImage =
+"images/noimg.jpg";
+
+}
 
 cartItems.innerHTML += `
 
 <div class="cart-item">
 
 <img
-src="${item.image}"
-onerror="this.src='https://via.placeholder.com/120'">
+src="${productImage}"
+onerror="this.src='images/noimg.jpg'">
 
 <div class="info">
 
@@ -47,15 +70,17 @@ SKU : ${item.code || ""}
 
 <div>
 
-<button onclick="decreaseQty('${item.id}')">
+<button
+onclick="decreaseQty('${item.id}')">
 ➖
 </button>
 
 <span>
-${item.qty}
+${item.qty || 1}
 </span>
 
-<button onclick="increaseQty('${item.id}')">
+<button
+onclick="increaseQty('${item.id}')">
 ➕
 </button>
 
@@ -63,7 +88,8 @@ ${item.qty}
 
 </div>
 
-<button onclick="deleteItem('${item.id}')">
+<button
+onclick="deleteItem('${item.id}')">
 🗑
 </button>
 
