@@ -661,6 +661,26 @@ invoice.style.display =
 "none";
 
 });
+
+/* ==========================
+WHATSAPP
+========================== */
+
+document
+.getElementById("whatsappBtn")
+.addEventListener(
+"click",
+()=>{
+
+window.open(
+
+"https://wa.me/966538647362",
+
+"_blank"
+
+);
+
+});
 renderCart();
 
 loadProducts();
