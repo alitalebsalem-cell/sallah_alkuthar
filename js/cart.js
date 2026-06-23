@@ -8,7 +8,8 @@ document.getElementById("cartItems");
 
 const cartTotal =
 document.getElementById("cartTotal");
-
+const cartSearch =
+document.getElementById("cartSearch");
 /* ==========================
 RENDER CART
 ========================== */
@@ -17,10 +18,31 @@ function renderCart(){
 
 cartItems.innerHTML = "";
 
+const searchText =
+
+cartSearch
+? cartSearch.value.toLowerCase()
+: "";
 let totalProducts = 0;
 
 cart.forEach(item=>{
+const productText =
 
+(
+(item.name || "") +
+" " +
+(item.description || "") +
+" " +
+(item.code || "")
+)
+.toLowerCase();
+
+if(
+searchText &&
+!productText.includes(searchText)
+){
+return;
+}
 totalProducts += Number(item.qty || 1);
 
 let productImage =
@@ -241,7 +263,23 @@ invoiceBody.innerHTML = "";
 let total = 0;
 
 cart.forEach(item=>{
+const productText =
 
+(
+(item.name || "") +
+" " +
+(item.description || "") +
+" " +
+(item.code || "")
+)
+.toLowerCase();
+
+if(
+searchText &&
+!productText.includes(searchText)
+){
+return;
+}
 total += item.qty;
 
 let productImage =
@@ -424,4 +462,12 @@ invoiceNo + ".pdf"
 );
 
 });
+if(cartSearch){
+
+cartSearch.addEventListener(
+"input",
+renderCart
+);
+
+}
 renderCart();
