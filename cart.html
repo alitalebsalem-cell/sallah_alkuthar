@@ -15,9 +15,9 @@ content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet"
 href="css/style.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 </head>
 
@@ -99,6 +99,126 @@ Back To Store
 
 </div>
 
+<!-- INVOICE TEMPLATE -->
+
+<div
+id="invoiceTemplate"
+style="
+position:fixed;
+left:-99999px;
+top:0;
+background:white;
+z-index:-1;
+">
+
+<div class="invoice-box">
+
+<div class="invoice-header">
+
+<img
+src="images/logo.png"
+class="invoice-logo">
+
+</div>
+
+<div class="invoice-info">
+
+<div>
+
+INV NO
+
+<br>
+
+<strong id="invoiceNo">
+
+</strong>
+
+</div>
+
+<div>
+
+DATE
+
+<br>
+
+<strong id="invoiceDate">
+
+</strong>
+
+</div>
+
+<div>
+
+CUSTOMER
+
+<br>
+
+<strong id="invoiceCustomer">
+
+</strong>
+
+</div>
+
+</div>
+
+<table id="invoiceTable">
+
+<thead>
+
+<tr>
+
+<th>
+
+Picture
+
+</th>
+
+<th>
+
+Code
+
+</th>
+
+<th>
+
+Description
+
+</th>
+
+<th>
+
+Qty
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody id="invoiceBody">
+
+</tbody>
+
+</table>
+
+<div class="invoice-total">
+
+Items
+
+<br>
+
+<span id="invoiceTotal">
+
+0
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
 <script
 type="module"
 src="js/cart.js">
@@ -107,3 +227,4 @@ src="js/cart.js">
 </body>
 
 </html>
+
