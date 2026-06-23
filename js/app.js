@@ -536,22 +536,27 @@ document
 .textContent =
 totalProducts;
 
-const invoice =
+try{
 
-document
-.getElementById(
+const invoice =
+document.getElementById(
 "invoiceTemplate"
 );
 
 invoice.style.display =
 "block";
 
+await new Promise(
+r => setTimeout(r,500)
+);
+
 const canvas =
 await html2canvas(
 invoice,
 {
 scale:3,
-useCORS:true
+useCORS:true,
+backgroundColor:"#ffffff"
 }
 );
 
@@ -560,16 +565,47 @@ canvas.toDataURL(
 "image/png"
 );
 
-const { jsPDF } =
-window.jspdf;
-
 const pdf =
-new jsPDF(
+new window.jspdf.jsPDF(
 "P",
 "mm",
 "A4"
 );
 
+const imgWidth = 190;
+
+const imgHeight =
+(canvas.height * imgWidth)
+/
+canvas.width;
+
+pdf.addImage(
+imgData,
+"PNG",
+10,
+10,
+imgWidth,
+imgHeight
+);
+
+pdf.save(
+`${invoiceNo}.pdf`
+);
+
+invoice.style.display =
+"none";
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"PDF Error: "
++
+error.message
+);
+
+}
 const imgWidth = 190;
 
 const imgHeight =
