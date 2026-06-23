@@ -681,7 +681,57 @@ imported++;
 alert(
 `${imported} Products Imported Successfully`
 );
+/* =========================
+EXPORT EXCEL
+========================= */
 
+document
+.getElementById("exportExcel")
+.addEventListener(
+"click",
+()=>{
+
+const data =
+
+allProducts.map(product=>({
+
+name:
+product.name || "",
+
+description:
+product.description || "",
+
+code:
+product.code || "",
+
+category:
+product.category || "",
+
+image:
+product.image || ""
+
+}));
+
+const worksheet =
+XLSX.utils.json_to_sheet(
+data
+);
+
+const workbook =
+XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(
+workbook,
+worksheet,
+"Products"
+);
+
+XLSX.writeFile(
+workbook,
+"products.xlsx"
+);
+
+});
 loadProducts();
 
 });
