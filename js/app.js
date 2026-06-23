@@ -357,10 +357,15 @@ return;
 }
 
 const filtered =
-allProducts.filter(
-p => p.category === cat
-);
+allProducts.filter(p =>
 
+(p.category || "")
+.toLowerCase()
+.includes(
+cat.toLowerCase()
+)
+
+);
 renderProducts(
 filtered
 );
