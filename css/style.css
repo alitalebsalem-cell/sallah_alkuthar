@@ -546,3 +546,17 @@ padding:4px;
 background:white;
 
 }
+.img-cell img{
+
+width:60px;
+height:60px;
+
+object-fit:contain;
+
+border:1px solid #ddd;
+
+border-radius:8px;
+
+padding:3px;
+
+}
