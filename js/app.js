@@ -346,11 +346,15 @@ btn.addEventListener("click",()=>{
 const cat =
 btn.dataset.cat;
 
-if(cat==="الكل"){
+if(cat==="all"){
 
 renderProducts(
 allProducts
 );
+
+return;
+
+}
 
 return;
 
