@@ -459,10 +459,17 @@ cartSidebar.classList.remove(
 INVOICE
 ========================== */
 
-/* ==========================
-START
-========================== */
+document
+.getElementById("createInvoice")
+.addEventListener(
+"click",
+async ()=>{
 
+alert(
+"Invoice Button Works ✅"
+);
+
+});
 renderCart();
 
 loadProducts();
