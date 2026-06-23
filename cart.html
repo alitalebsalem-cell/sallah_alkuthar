@@ -1,360 +1,230 @@
-let cart =
-JSON.parse(
-localStorage.getItem("cart")
-) || [];
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 
-const cartItems =
-document.getElementById(
-"cartItems"
-);
-
-const cartTotal =
-document.getElementById(
-"cartTotal"
-);
 <head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+سلة المشتريات
+</title>
+
+<link rel="stylesheet"
+href="css/style.css">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <head>
-/* ==========================
-RENDER CART
-========================== */
+</head>
 
-function renderCart(){
+<body>
 
-cartItems.innerHTML = "";
-
-let totalProducts = 0;
-
-cart.forEach(item=>{
-
-totalProducts += item.qty;
-
-cartItems.innerHTML += `
-
-<div class="cart-item">
+<header>
 
 <img
-src="${item.image}"
-onerror="this.src='https://via.placeholder.com/120'">
+src="images/logo.png"
+class="logo">
 
-<div class="info">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<h3>
-${item.name}
-</h3>
+<h1>
 
-<p>
-${item.description || ""}
-</p>
-
-<p>
-SKU / ${item.code}
-</p>
-
-<div>
-
-<button
-onclick="decreaseQty('${item.id}')">
-
-➖
-
-</button>
-
-<span>
-
-${item.qty}
-
-</span>
-
-<button
-onclick="increaseQty('${item.id}')">
-
-➕
-
-</button>
-
-</div>
-
-</div>
-
-<button
-onclick="deleteItem('${item.id}')">
-
-🗑
-
-</button>
-
-</div>
-
-`;
-
-});
-
-cartTotal.textContent =
-totalProducts;
-
-localStorage.setItem(
-"cart",
-JSON.stringify(cart)
-);
-
-}
-
-/* ==========================
-QUANTITY
-========================== */
-
-window.increaseQty =
-function(id){
-
-const item =
-cart.find(
-p => p.id === id
-);
-
-if(item){
-
-item.qty++;
-
-renderCart();
-
-}
-
-};
-
-window.decreaseQty =
-function(id){
-
-const item =
-cart.find(
-p => p.id === id
-);
-
-if(!item) return;
-
-item.qty--;
-
-if(item.qty <= 0){
-
-cart =
-cart.filter(
-p => p.id !== id
-);
-
-}
-
-renderCart();
-
-};
-
-window.deleteItem =
-function(id){
-
-cart =
-cart.filter(
-p => p.id !== id
-);
-
-renderCart();
-
-};
-
-/* ==========================
-WHATSAPP
-========================== */
-
-document
-.getElementById("whatsappBtn")
-.addEventListener(
-"click",
-()=>{
-
-window.open(
-"https://wa.me/966538647362",
-"_blank"
-);
-
-});
-
-/* ==========================
-PDF
-========================== */
-
-document
-.getElementById("createInvoice")
-.addEventListener(
-"click",
-async ()=>{
-
-if(cart.length===0){
-
-alert(
-"السلة فارغة"
-);
-
-return;
-
-}
-
-const invoiceNo =
-
-"INV-" +
-
-Math.floor(
-1000 +
-Math.random()*9000
-);
-
-document
-.getElementById(
-"invoiceNo"
-)
-.textContent =
-invoiceNo;
-
-document
-.getElementById(
-"invoiceDate"
-)
-.textContent =
-new Date()
-.toLocaleString();
-
-document
-.getElementById(
-"invoiceCustomer"
-)
-.textContent =
-
-document
-.getElementById(
-"customerName"
-)
-.value ||
-
-"WALK-IN";
-
-const invoiceBody =
-document
-.getElementById(
-"invoiceBody"
-);
-
-invoiceBody.innerHTML = "";
-
-let total = 0;
-
-cart.forEach(item=>{
-
-total += item.qty;
-
-invoiceBody.innerHTML += `
-
-<tr>
-
-<td class="img-cell">
-
-<img
-src="${item.image}"
-onerror="this.style.display='none'">
-
-</td>
-
-<td>
-
-${item.code || ""}
-
-</td>
-
-<td>
-
-<strong>
-
-${item.name || ""}
-
-</strong>
+سلة المشتريات
 
 <br>
 
-${item.description || ""}
+Shopping Cart
 
-</td>
+</h1>
 
-<td>
+</header>
 
-${item.qty}
+<div class="cart-page">
 
-</td>
+<div id="cartItems">
+
+</div>
+
+<div class="cart-summary">
+
+<h2>
+
+Items
+
+<br>
+
+<span id="cartTotal">
+
+0
+
+</span>
+
+</h2>
+
+<input
+type="text"
+id="customerName"
+
+placeholder="
+اسم العميل
+Customer Name
+">
+
+<button id="createInvoice">
+
+📄 إنشاء فاتورة
+Create Invoice
+
+</button>
+
+<button id="whatsappBtn">
+
+💬 واتساب
+WhatsApp
+
+</button>
+
+<a
+href="index.html"
+class="back-btn">
+
+⬅ العودة للمتجر
+Back To Store
+
+</a>
+
+</div>
+
+</div>
+
+<!-- INVOICE TEMPLATE -->
+
+<div
+id="invoiceTemplate"
+style="
+position:fixed;
+left:-99999px;
+top:0;
+background:white;
+padding:30px;
+width:1200px;
+">
+
+<div class="invoice-box">
+
+<div class="invoice-header">
+
+<img
+src="images/logo.png"
+class="invoice-logo">
+
+</div>
+
+<div class="invoice-info">
+
+<div>
+
+CUSTOMER
+
+<br>
+
+<strong id="invoiceCustomer">
+
+</strong>
+
+</div>
+
+<div>
+
+DATE
+
+<br>
+
+<strong id="invoiceDate">
+
+</strong>
+
+</div>
+
+<div>
+
+INV NO
+
+<br>
+
+<strong id="invoiceNo">
+
+</strong>
+
+</div>
+
+</div>
+
+<table id="invoiceTable">
+
+<thead>
+
+<tr>
+
+<th>
+
+Picture
+
+</th>
+
+<th>
+
+Code
+
+</th>
+
+<th>
+
+Description
+
+</th>
+
+<th>
+
+Qty
+
+</th>
 
 </tr>
 
-`;
+</thead>
 
-});
+<tbody id="invoiceBody">
 
-document
-.getElementById(
-"invoiceTotal"
-)
-.textContent =
-total;
+</tbody>
 
-const invoice =
-document
-.getElementById(
-"invoiceTemplate"
-);
+</table>
 
-invoice.style.display =
-"block";
+<div class="invoice-total">
 
-const canvas =
-await html2canvas(
-invoice,
-{
-scale:2,
-useCORS:true
-}
-);
+Items
 
-const imgData =
-canvas.toDataURL(
-"image/png"
-);
+<br>
 
-const pdf =
-new window.jspdf.jsPDF(
-"P",
-"mm",
-"A4"
-);
+<span id="invoiceTotal">
 
-const width = 210;
+0
 
-const height =
-(canvas.height * width)
-/ canvas.width;
+</span>
 
-pdf.addImage(
-imgData,
-"PNG",
-0,
-0,
-width,
-height
-);
+</div>
 
-pdf.save(
-invoiceNo + ".pdf"
-);
+</div>
 
-invoice.style.display =
-"none";
+</div>
 
-});
+<script
+type="module"
+src="js/cart.js">
+</script>
 
-renderCart();
+</body>
+
+</html>
