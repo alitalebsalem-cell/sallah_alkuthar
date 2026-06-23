@@ -1,1 +1,204 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+
+Shopping Cart
+سلة المشتريات
+
+</title>
+
+<link rel="stylesheet"
+href="css/style.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+</head>
+
+<body>
+
+<header>
+
+<img
+src="images/logo.png"
+class="logo">
+
+<h1>
+
+Shopping Cart
+<br>
+
+سلة المشتريات
+
+</h1>
+
+</header>
+
+<div class="cart-page">
+
+<div id="cartItems">
+
+</div>
+
+<div class="cart-summary">
+
+<h2>
+
+Items
+
+<br>
+
+<span id="cartTotal">
+
+0
+
+</span>
+
+</h2>
+
+<input
+type="text"
+id="customerName"
+placeholder="
+Customer Name
+اسم العميل
+">
+
+<button id="createInvoice">
+
+📄 Create Invoice
+إنشاء فاتورة
+
+</button>
+
+<button id="whatsappBtn">
+
+💬 WhatsApp
+واتساب
+
+</button>
+
+<a
+href="index.html"
+class="back-btn">
+
+⬅ Back To Store
+العودة للمتجر
+
+</a>
+
+</div>
+
+</div>
+
+<!-- INVOICE -->
+
+<div
+id="invoiceTemplate"
+style="display:none;">
+
+<div class="invoice-box">
+
+<div class="invoice-header">
+
+<img
+src="images/logo.png"
+class="invoice-logo">
+
+</div>
+
+<div class="invoice-info">
+
+<div>
+
+INV NO
+
+<br>
+
+<strong id="invoiceNo"></strong>
+
+</div>
+
+<div>
+
+DATE
+
+<br>
+
+<strong id="invoiceDate"></strong>
+
+</div>
+
+<div>
+
+CUSTOMER
+
+<br>
+
+<strong id="invoiceCustomer"></strong>
+
+</div>
+
+</div>
+
+<table id="invoiceTable">
+
+<thead>
+
+<tr>
+
+<th>Picture</th>
+
+<th>Code</th>
+
+<th>Description</th>
+
+<th>Qty</th>
+
+</tr>
+
+</thead>
+
+<tbody id="invoiceBody">
+
+</tbody>
+
+</table>
+
+<div class="invoice-total">
+
+Items
+
+<br>
+
+<span id="invoiceTotal">
+
+0
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+<script
+type="module"
+src="js/cart.js">
+</script>
+
+</body>
+
+</html>
+```
