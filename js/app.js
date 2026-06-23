@@ -57,8 +57,11 @@ renderProducts(allProducts);
 /* ==========================
 RENDER PRODUCTS
 ========================== */
-
 function renderProducts(products){
+
+productsDiv.innerHTML = "";
+
+products.forEach(p=>{
 
 productsDiv.innerHTML += `
 
@@ -73,13 +76,9 @@ onerror="this.src='https://via.placeholder.com/300'">
 <p>${p.description || ""}</p>
 
 <p>
-
 Code / الكود
-
 <br>
-
 ${p.code}
-
 </p>
 
 <button
@@ -87,6 +86,7 @@ class="cart-btn"
 data-id="${p.id}">
 
 🛒 Add To Cart
+<br>
 إضافة للسلة
 
 </button>
@@ -94,6 +94,8 @@ data-id="${p.id}">
 </div>
 
 `;
+
+});
 
 document
 .querySelectorAll(".cart-btn")
@@ -336,7 +338,6 @@ renderProducts(filtered);
 /* ==========================
 CATEGORY FILTER
 ========================== */
-
 document
 .querySelectorAll(".cat-btn")
 .forEach(btn=>{
@@ -346,38 +347,30 @@ btn.addEventListener("click",()=>{
 const cat =
 btn.dataset.cat;
 
-if(cat==="all"){
+if(cat === "all"){
 
-renderProducts(
-allProducts
-);
-
-return;
-
-}
+renderProducts(allProducts);
 
 return;
 
 }
 
 const filtered =
-allProducts.filter(p =>
+allProducts.filter(product =>
 
-(p.category || "")
+(product.category || "")
 .toLowerCase()
 .includes(
 cat.toLowerCase()
 )
 
 );
-renderProducts(
-filtered
-);
+
+renderProducts(filtered);
 
 });
 
 });
-
 /* ==========================
 OPEN CART
 ========================== */
