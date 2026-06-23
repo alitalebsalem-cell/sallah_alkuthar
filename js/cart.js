@@ -1,4 +1,3 @@
-alert("NEW CART JS");
 let cart =
 JSON.parse(
 localStorage.getItem("cart")
@@ -169,14 +168,8 @@ document
 .addEventListener(
 "click",
 async()=>{
-alert("START PDF");
-  alert(
-document.getElementById(
-"invoiceTemplate"
-)
-? "FOUND TEMPLATE"
-: "TEMPLATE NOT FOUND"
-);
+
+ 
 if(cart.length===0){
 
 alert("السلة فارغة");
@@ -322,7 +315,29 @@ const invoice =
 document.getElementById(
 "invoiceTemplate"
 );
+const images =
+invoice.querySelectorAll("img");
 
+await Promise.all(
+Array.from(images).map(img=>{
+
+return new Promise(resolve=>{
+
+if(img.complete){
+
+resolve();
+
+}else{
+
+img.onload = resolve;
+img.onerror = resolve;
+
+}
+
+});
+
+})
+);
 const canvas =
 await html2canvas(
 invoice,
@@ -332,7 +347,7 @@ useCORS:true,
 backgroundColor:"#ffffff"
 }
 );
-alert("CANVAS CREATED");
+
 const imgData =
 canvas.toDataURL(
 "image/png"
