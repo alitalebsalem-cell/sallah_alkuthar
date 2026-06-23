@@ -19,15 +19,8 @@ document.getElementById("products");
 const searchInput =
 document.getElementById("search");
 
-const cartItems =
-document.getElementById("cartItems");
-
 const cartCount =
 document.getElementById("cartCount");
-
-const cartTotal =
-document.getElementById("cartTotal");
-
 /* ==========================
 LOAD PRODUCTS
 ========================== */
