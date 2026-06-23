@@ -138,7 +138,7 @@ qty:1
 
 }
 
-saveCart();
+updateCartCount();
 
 }
 
@@ -153,7 +153,7 @@ if(item){
 
 item.qty++;
 
-saveCart();
+updateCartCount();
 
 }
 
@@ -179,7 +179,7 @@ p => p.id !== id
 
 }
 
-saveCart();
+updateCartCount();
 
 }
 
@@ -190,7 +190,7 @@ cart.filter(
 p => p.id !== id
 );
 
-saveCart();
+updateCartCount();
 
 }
 
@@ -205,88 +205,6 @@ renderCart();
 
 }
 
-/* ==========================
-RENDER CART
-========================== */
-
-function renderCart(){
-
-cartItems.innerHTML = "";
-
-let totalProducts = 0;
-
-cart.forEach(item=>{
-
-totalProducts += item.qty;
-
-cartItems.innerHTML += `
-
-<div class="cart-item">
-
-<img
-src="${item.image}"
-style="
-width:60px;
-height:60px;
-object-fit:contain;
-">
-
-<h4>
-
-${item.name}
-
-</h4>
-
-<p>
-
-SKU${item.code}
-
-</p>
-
-<div>
-
-<button
-onclick="decreaseQty('${item.id}')">
-
-➖
-
-</button>
-
-<span>
-
-${item.qty}
-
-</span>
-
-<button
-onclick="increaseQty('${item.id}')">
-
-➕
-
-</button>
-
-</div>
-
-<button
-onclick="deleteItem('${item.id}')">
-
-🗑 Delete / حذف
-
-</button>
-
-</div>
-
-`;
-
-});
-
-cartCount.textContent =
-cart.length;
-
-cartTotal.textContent =
-totalProducts;
-
-}
 
 /* ==========================
 GLOBAL
@@ -301,9 +219,6 @@ decreaseQty;
 window.deleteItem =
 deleteItem;
 
-/* ==========================
-CLEAR CART
-========================== */
 
 /* ==========================
 SEARCH
@@ -358,7 +273,22 @@ cat.toLowerCase()
 )
 
 );
+function updateCartCount(){
 
+if(!cartCount) return;
+
+cartCount.textContent = cart.length;
+
+localStorage.setItem(
+"cart",
+JSON.stringify(cart)
+);
+
+}
+  
+updateCartCount();
+
+loadProducts();
 renderProducts(filtered);
 
 });
