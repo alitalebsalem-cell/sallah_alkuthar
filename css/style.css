@@ -1093,3 +1093,36 @@ font-weight:800;
 color:#0a8f5a;
 
 }
+/* WhatsApp Button */
+
+#whatsappBtn{
+
+width:100%;
+
+padding:15px;
+
+margin-top:12px;
+
+border:none;
+
+border-radius:12px;
+
+background:#25D366;
+
+color:white;
+
+font-size:18px;
+
+font-weight:700;
+
+cursor:pointer;
+
+transition:.3s;
+
+}
+
+#whatsappBtn:hover{
+
+background:#1da851;
+
+}
