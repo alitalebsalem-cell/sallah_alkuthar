@@ -227,6 +227,15 @@ cart.forEach(item=>{
 
 total += item.qty;
 
+const productImage =
+
+item.image &&
+item.image.trim() !== ""
+
+? item.image
+
+: "images/no-image.png";
+
 invoiceBody.innerHTML += `
 
 <tr>
@@ -234,11 +243,43 @@ invoiceBody.innerHTML += `
 <td class="img-cell">
 
 <img
-src="${item.image}"
+src="${productImage}"
 crossorigin="anonymous"
-onerror="this.style.display='none'">
+onerror="this.src='images/no-image.png'">
 
 </td>
+
+<td>
+
+${item.code || ""}
+
+</td>
+
+<td>
+
+<strong>
+
+${item.name || ""}
+
+</strong>
+
+<br>
+
+${item.description || ""}
+
+</td>
+
+<td>
+
+${item.qty}
+
+</td>
+
+</tr>
+
+`;
+
+});
 
 <td>
 
