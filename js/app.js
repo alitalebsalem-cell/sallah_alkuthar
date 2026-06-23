@@ -459,15 +459,195 @@ cartSidebar.classList.remove(
 INVOICE
 ========================== */
 
+id="4vxzjy"
+/* ==========================
+INVOICE
+========================== */
+
 document
 .getElementById("createInvoice")
 .addEventListener(
 "click",
 async ()=>{
 
+if(cart.length===0){
+
 alert(
-"Invoice Button Works ✅"
+"Cart Empty / السلة فارغة"
 );
+
+return;
+
+}
+
+const customerName =
+document
+.getElementById(
+"customerName"
+)
+.value || "WALK-IN";
+
+const invoiceNo =
+"INV-" +
+Math.floor(
+1000 +
+Math.random()*9000
+);
+
+const invoiceDate =
+new Date()
+.toLocaleString();
+
+document
+.getElementById(
+"invoiceNo"
+)
+.textContent =
+invoiceNo;
+
+document
+.getElementById(
+"invoiceDate"
+)
+.textContent =
+invoiceDate;
+
+document
+.getElementById(
+"invoiceCustomer"
+)
+.textContent =
+customerName;
+
+const invoiceBody =
+document
+.getElementById(
+"invoiceBody"
+);
+
+invoiceBody.innerHTML = "";
+
+let totalProducts = 0;
+
+cart.forEach(item=>{
+
+totalProducts += item.qty;
+
+invoiceBody.innerHTML += `
+
+<tr>
+
+<td class="img-cell">
+
+<img
+src="${item.image}"
+onerror="this.style.display='none'">
+
+</td>
+
+<td>
+
+${item.code || ""}
+
+</td>
+
+<td>
+
+${item.name || ""}
+
+</td>
+
+<td>
+
+${item.qty}
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+document
+.getElementById(
+"invoiceTotal"
+)
+.textContent =
+totalProducts;
+
+const invoice =
+document
+.getElementById(
+"invoiceTemplate"
+);
+
+invoice.style.display =
+"block";
+
+await new Promise(
+resolve =>
+setTimeout(resolve,800)
+);
+
+try{
+
+const canvas =
+await html2canvas(
+invoice,
+{
+scale:2,
+useCORS:true,
+allowTaint:true,
+backgroundColor:"#ffffff"
+}
+);
+
+const imgData =
+canvas.toDataURL(
+"image/png"
+);
+
+const pdf =
+new window.jspdf.jsPDF(
+"P",
+"mm",
+"A4"
+);
+
+const imgWidth = 210;
+
+const imgHeight =
+(canvas.height *
+imgWidth)
+/ canvas.width;
+
+pdf.addImage(
+imgData,
+"PNG",
+0,
+0,
+imgWidth,
+imgHeight
+);
+
+pdf.save(
+`${invoiceNo}.pdf`
+);
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"PDF Error: " +
+error.message
+);
+
+}
+
+invoice.style.display =
+"none";
 
 });
 renderCart();
