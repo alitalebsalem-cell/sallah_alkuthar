@@ -531,6 +531,12 @@ db,
 "products"
 ),
 
+let nextCode = 10000;
+
+for(const product of products){
+
+await addDoc(
+collection(db,"products"),
 {
 
 name:
@@ -540,7 +546,7 @@ description:
 product.description || "",
 
 code:
-product.code || "",
+(nextCode++).toString(),
 
 category:
 product.category || "",
@@ -550,6 +556,9 @@ product.image || ""
 
 }
 
+);
+
+}
 );
 
 }
