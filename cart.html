@@ -9,18 +9,15 @@
 content="width=device-width, initial-scale=1.0">
 
 <title>
-
-Shopping Cart
 سلة المشتريات
-
 </title>
 
 <link rel="stylesheet"
 href="css/style.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 </head>
 
@@ -34,10 +31,11 @@ class="logo">
 
 <h1>
 
-Shopping Cart
+سلة المشتريات
+
 <br>
 
-سلة المشتريات
+Shopping Cart
 
 </h1>
 
@@ -68,22 +66,23 @@ Items
 <input
 type="text"
 id="customerName"
+
 placeholder="
-Customer Name
 اسم العميل
+Customer Name
 ">
 
 <button id="createInvoice">
 
-📄 Create Invoice
-إنشاء فاتورة
+📄 إنشاء فاتورة
+Create Invoice
 
 </button>
 
 <button id="whatsappBtn">
 
-💬 WhatsApp
-واتساب
+💬 واتساب
+WhatsApp
 
 </button>
 
@@ -91,102 +90,10 @@ Customer Name
 href="index.html"
 class="back-btn">
 
-⬅ Back To Store
-العودة للمتجر
+⬅ العودة للمتجر
+Back To Store
 
 </a>
-
-</div>
-
-</div>
-
-<!-- INVOICE -->
-
-<div
-id="invoiceTemplate"
-style="display:none;">
-
-<div class="invoice-box">
-
-<div class="invoice-header">
-
-<img
-src="images/logo.png"
-class="invoice-logo">
-
-</div>
-
-<div class="invoice-info">
-
-<div>
-
-INV NO
-
-<br>
-
-<strong id="invoiceNo"></strong>
-
-</div>
-
-<div>
-
-DATE
-
-<br>
-
-<strong id="invoiceDate"></strong>
-
-</div>
-
-<div>
-
-CUSTOMER
-
-<br>
-
-<strong id="invoiceCustomer"></strong>
-
-</div>
-
-</div>
-
-<table id="invoiceTable">
-
-<thead>
-
-<tr>
-
-<th>Picture</th>
-
-<th>Code</th>
-
-<th>Description</th>
-
-<th>Qty</th>
-
-</tr>
-
-</thead>
-
-<tbody id="invoiceBody">
-
-</tbody>
-
-</table>
-
-<div class="invoice-total">
-
-Items
-
-<br>
-
-<span id="invoiceTotal">
-
-0
-
-</span>
-
-</div>
 
 </div>
 
