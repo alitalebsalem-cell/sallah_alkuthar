@@ -136,7 +136,6 @@ Search Product
 </header>
 
 <!-- CATEGORIES -->
-```html
 <div class="categories">
 
 <button
@@ -180,7 +179,6 @@ Detergents
 </button>
 
 </div>
-```
 
 <!-- PRODUCTS -->
 
@@ -195,271 +193,104 @@ Detergents
 </div>
 
 </main>
-
 <!-- INVOICE -->
-  
-  document
-.getElementById("createInvoice")
-.addEventListener(
-"click",
-async ()=>{
 
-if(cart.length===0){
+<div
+id="invoiceTemplate"
+style="display:none;">
 
-alert(
-"Cart Empty / السلة فارغة"
-);
+<div class="invoice-box">
 
-return;
+<div class="invoice-header">
 
-}
+<img
+src="images/logo.png"
+class="invoice-logo">
 
-const customerName =
+</div>
 
-document
-.getElementById(
-"customerName"
-)
-.value ||
+<div class="invoice-info">
 
-"WALK-IN";
+<div>
 
-const invoiceNo =
+INV NO
+<br>
+رقم الفاتورة
+<br>
 
-"INV-" +
+<strong id="invoiceNo"></strong>
 
-Math.floor(
-1000 +
-Math.random()*9000
-);
+</div>
 
-const invoiceDate =
+<div>
 
-new Date()
-.toLocaleString();
+DATE
+<br>
+التاريخ
+<br>
 
-document
-.getElementById(
-"invoiceNo"
-)
-.textContent =
-invoiceNo;
+<strong id="invoiceDate"></strong>
 
-document
-.getElementById(
-"invoiceDate"
-)
-.textContent =
-invoiceDate;
+</div>
 
-document
-.getElementById(
-"invoiceCustomer"
-)
-.textContent =
-customerName;
+<div>
 
-const invoiceBody =
+CUSTOMER
+<br>
+العميل
+<br>
 
-document
-.getElementById(
-"invoiceBody"
-);
+<strong id="invoiceCustomer"></strong>
 
-invoiceBody.innerHTML = "";
+</div>
 
-let totalProducts = 0;
+</div>
 
-cart.forEach(item=>{
+<table id="invoiceTable">
 
-totalProducts += item.qty;
-
-invoiceBody.innerHTML += `
+<thead>
 
 <tr>
 
-<td class="img-cell">
+<th>Picture</th>
 
-<img
-src="${item.image}"
-onerror="this.style.display='none'">
+<th>Code</th>
 
-</td>
+<th>Description</th>
 
-<td>
-
-${item.code || ""}
-
-</td>
-
-<td>
-
-<b>
-
-${item.name || ""}
-
-</b>
-
-<br>
-
-<small>
-
-${item.description || ""}
-
-</small>
-
-</td>
-
-<td>
-
-${item.qty}
-
-</td>
+<th>Qty</th>
 
 </tr>
 
-`;
+</thead>
 
-});
+<tbody id="invoiceBody">
 
-document
-.getElementById(
-"invoiceTotal"
-)
-.textContent =
-totalProducts;
+</tbody>
 
-const invoice =
-document
-.getElementById(
-"invoiceTemplate"
-);
+</table>
 
-invoice.style.display =
-"block";
+<div class="invoice-total">
 
-/* انتظر قليلاً */
+Products Count
+<br>
 
-await new Promise(
-resolve =>
-setTimeout(resolve,800)
-);
+عدد المنتجات
+<br>
 
-/* لا تتوقف بسبب الصور */
+<span id="invoiceTotal">0</span>
 
-const images =
-invoice.querySelectorAll("img");
+</div>
 
-await Promise.all(
+</div>
 
-Array.from(images).map(img=>{
+</div>
 
-if(img.complete)
-return Promise.resolve();
+<script
+type="module"
+src="js/app.js">
+</script>
 
-return new Promise(resolve=>{
+</body>
 
-img.onload = resolve;
-
-img.onerror = resolve;
-
-setTimeout(
-resolve,
-1000
-);
-
-});
-
-})
-
-);
-
-try{
-
-const canvas =
-await html2canvas(
-invoice,
-{
-scale:2,
-useCORS:true,
-allowTaint:true,
-backgroundColor:"#ffffff"
-}
-);
-
-const imgData =
-canvas.toDataURL(
-"image/png"
-);
-
-const pdf =
-new window.jspdf.jsPDF(
-"P",
-"mm",
-"A4"
-);
-
-const imgWidth = 210;
-
-const imgHeight =
-(canvas.height * imgWidth)
-/
-canvas.width;
-
-let heightLeft =
-imgHeight;
-
-let position = 0;
-
-pdf.addImage(
-imgData,
-"PNG",
-0,
-position,
-imgWidth,
-imgHeight
-);
-
-heightLeft -= 297;
-
-while(heightLeft > 0){
-
-position =
-heightLeft -
-imgHeight;
-
-pdf.addPage();
-
-pdf.addImage(
-imgData,
-"PNG",
-0,
-position,
-imgWidth,
-imgHeight
-);
-
-heightLeft -= 297;
-
-}
-
-pdf.save(
-`${invoiceNo}.pdf`
-);
-
-}catch(error){
-
-console.error(error);
-
-alert(
-"PDF Error: " +
-error.message
-);
-
-}
-
-invoice.style.display =
-"none";
-
-});
 </html>
