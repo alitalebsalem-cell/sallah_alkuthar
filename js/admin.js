@@ -54,13 +54,61 @@ products.forEach(product=>{
 
 productsTable.innerHTML += `
 
-<div style="
-background:white;
-padding:15px;
-margin:10px 0;
-border-radius:12px;
-border:1px solid #ddd;
-">
+<div class="admin-product">
+
+<img
+src="${product.image}"
+onerror="this.src='https://via.placeholder.com/120'">
+
+<div class="admin-info">
+
+<h3>
+
+${product.name}
+
+</h3>
+
+<p>
+
+${product.description || ""}
+
+</p>
+
+<p>
+
+SKU / ${product.code}
+
+</p>
+
+<p>
+
+${product.category}
+
+</p>
+
+</div>
+
+<div class="admin-actions">
+
+<button
+class="edit-btn"
+onclick="editProduct('${product.id}')">
+
+✏️ Edit
+
+</button>
+
+<button
+class="delete-btn"
+onclick="deleteProduct('${product.id}')">
+
+🗑 Delete
+
+</button>
+
+</div>
+
+</div>
 
 <img
 src="${product.image}"
