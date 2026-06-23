@@ -1,230 +1,354 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+let cart =
+JSON.parse(
+localStorage.getItem("cart")
+) || [];
 
-<head>
+const cartItems =
+document.getElementById(
+"cartItems"
+);
 
-<meta charset="UTF-8">
+const cartTotal =
+document.getElementById(
+"cartTotal"
+);
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+/* ==========================
+RENDER CART
+========================== */
 
-<title>
-سلة المشتريات
-</title>
+function renderCart(){
 
-<link rel="stylesheet"
-href="css/style.css">
+cartItems.innerHTML = "";
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+let totalProducts = 0;
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+cart.forEach(item=>{
 
-</head>
+totalProducts += item.qty;
 
-<body>
+cartItems.innerHTML += `
 
-<header>
+<div class="cart-item">
 
 <img
-src="images/logo.png"
-class="logo">
+src="${item.image}"
+onerror="this.src='https://via.placeholder.com/120'">
 
-<h1>
+<div class="info">
 
-سلة المشتريات
+<h3>
+${item.name}
+</h3>
 
-<br>
+<p>
+${item.description || ""}
+</p>
 
-Shopping Cart
+<p>
+SKU / ${item.code}
+</p>
 
-</h1>
+<div>
 
-</header>
+<button
+onclick="decreaseQty('${item.id}')">
 
-<div class="cart-page">
+➖
 
-<div id="cartItems">
+</button>
 
-</div>
+<span>
 
-<div class="cart-summary">
-
-<h2>
-
-Items
-
-<br>
-
-<span id="cartTotal">
-
-0
+${item.qty}
 
 </span>
 
-</h2>
+<button
+onclick="increaseQty('${item.id}')">
 
-<input
-type="text"
-id="customerName"
-
-placeholder="
-اسم العميل
-Customer Name
-">
-
-<button id="createInvoice">
-
-📄 إنشاء فاتورة
-Create Invoice
+➕
 
 </button>
 
-<button id="whatsappBtn">
+</div>
 
-💬 واتساب
-WhatsApp
+</div>
+
+<button
+onclick="deleteItem('${item.id}')">
+
+🗑
 
 </button>
 
-<a
-href="index.html"
-class="back-btn">
-
-⬅ العودة للمتجر
-Back To Store
-
-</a>
-
 </div>
 
-</div>
+`;
 
-<!-- INVOICE TEMPLATE -->
+});
 
-<div
-id="invoiceTemplate"
-style="
-position:fixed;
-left:-99999px;
-top:0;
-background:white;
-z-index:-1;
-">
+cartTotal.textContent =
+totalProducts;
 
-<div class="invoice-box">
+localStorage.setItem(
+"cart",
+JSON.stringify(cart)
+);
 
-<div class="invoice-header">
+}
 
-<img
-src="images/logo.png"
-class="invoice-logo">
+/* ==========================
+QUANTITY
+========================== */
 
-</div>
+window.increaseQty =
+function(id){
 
-<div class="invoice-info">
+const item =
+cart.find(
+p => p.id === id
+);
 
-<div>
+if(item){
 
-INV NO
+item.qty++;
 
-<br>
+renderCart();
 
-<strong id="invoiceNo">
+}
 
-</strong>
+};
 
-</div>
+window.decreaseQty =
+function(id){
 
-<div>
+const item =
+cart.find(
+p => p.id === id
+);
 
-DATE
+if(!item) return;
 
-<br>
+item.qty--;
 
-<strong id="invoiceDate">
+if(item.qty <= 0){
 
-</strong>
+cart =
+cart.filter(
+p => p.id !== id
+);
 
-</div>
+}
 
-<div>
+renderCart();
 
-CUSTOMER
+};
 
-<br>
+window.deleteItem =
+function(id){
 
-<strong id="invoiceCustomer">
+cart =
+cart.filter(
+p => p.id !== id
+);
 
-</strong>
+renderCart();
 
-</div>
+};
 
-</div>
+/* ==========================
+WHATSAPP
+========================== */
 
-<table id="invoiceTable">
+document
+.getElementById("whatsappBtn")
+.addEventListener(
+"click",
+()=>{
 
-<thead>
+window.open(
+"https://wa.me/966538647362",
+"_blank"
+);
+
+});
+
+/* ==========================
+PDF
+========================== */
+
+document
+.getElementById("createInvoice")
+.addEventListener(
+"click",
+async ()=>{
+
+if(cart.length===0){
+
+alert(
+"السلة فارغة"
+);
+
+return;
+
+}
+
+const invoiceNo =
+
+"INV-" +
+
+Math.floor(
+1000 +
+Math.random()*9000
+);
+
+document
+.getElementById(
+"invoiceNo"
+)
+textContent =
+invoiceNo;
+
+document
+.getElementById(
+"invoiceDate"
+)
+textContent =
+new Date()
+.toLocaleString();
+
+document
+.getElementById(
+"invoiceCustomer"
+)
+textContent =
+
+document
+.getElementById(
+"customerName"
+)
+.value ||
+
+"WALK-IN";
+
+const invoiceBody =
+document
+.getElementById(
+"invoiceBody"
+);
+
+invoiceBody.innerHTML = "";
+
+let total = 0;
+
+cart.forEach(item=>{
+
+total += item.qty;
+
+invoiceBody.innerHTML += `
 
 <tr>
 
-<th>
+<td class="img-cell">
 
-Picture
+<img
+src="${item.image}"
+onerror="this.style.display='none'">
 
-</th>
+</td>
 
-<th>
+<td>
 
-Code
+${item.code || ""}
 
-</th>
+</td>
 
-<th>
+<td>
 
-Description
+<strong>
 
-</th>
+${item.name || ""}
 
-<th>
-
-Qty
-
-</th>
-
-</tr>
-
-</thead>
-
-<tbody id="invoiceBody">
-
-</tbody>
-
-</table>
-
-<div class="invoice-total">
-
-Items
+</strong>
 
 <br>
 
-<span id="invoiceTotal">
+${item.description || ""}
 
-0
+</td>
 
-</span>
+<td>
 
-</div>
+${item.qty}
 
-</div>
+</td>
 
-</div>
+</tr>
 
-<script
-type="module"
-src="js/cart.js">
-</script>
+`;
 
-</body>
+});
 
-</html>
+document
+.getElementById(
+"invoiceTotal"
+)
+textContent =
+total;
 
+const invoice =
+document
+.getElementById(
+"invoiceTemplate"
+);
+
+invoice.style.display =
+"block";
+
+const canvas =
+await html2canvas(
+invoice,
+{
+scale:2,
+useCORS:true
+}
+);
+
+const imgData =
+canvas.toDataURL(
+"image/png"
+);
+
+const pdf =
+new window.jspdf.jsPDF(
+"P",
+"mm",
+"A4"
+);
+
+const width = 210;
+
+const height =
+(canvas.height * width)
+/ canvas.width;
+
+pdf.addImage(
+imgData,
+"PNG",
+0,
+0,
+width,
+height
+);
+
+pdf.save(
+invoiceNo + ".pdf"
+);
+
+invoice.style.display =
+"none";
+
+});
+
+renderCart();
