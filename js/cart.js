@@ -4,14 +4,10 @@ localStorage.getItem("cart")
 ) || [];
 
 const cartItems =
-document.getElementById(
-"cartItems"
-);
+document.getElementById("cartItems");
 
 const cartTotal =
-document.getElementById(
-"cartTotal"
-);
+document.getElementById("cartTotal");
 
 /* ==========================
 RENDER CART
@@ -38,7 +34,7 @@ onerror="this.src='https://via.placeholder.com/120'">
 <div class="info">
 
 <h3>
-${item.name}
+${item.name || ""}
 </h3>
 
 <p>
@@ -46,40 +42,29 @@ ${item.description || ""}
 </p>
 
 <p>
-SKU / ${item.code}
+SKU : ${item.code || ""}
 </p>
 
 <div>
 
-<button
-onclick="decreaseQty('${item.id}')">
-
+<button onclick="decreaseQty('${item.id}')">
 ➖
-
 </button>
 
 <span>
-
 ${item.qty}
-
 </span>
 
-<button
-onclick="increaseQty('${item.id}')">
-
+<button onclick="increaseQty('${item.id}')">
 ➕
-
 </button>
 
 </div>
 
 </div>
 
-<button
-onclick="deleteItem('${item.id}')">
-
+<button onclick="deleteItem('${item.id}')">
 🗑
-
 </button>
 
 </div>
@@ -175,34 +160,22 @@ window.open(
 });
 
 /* ==========================
-PDF
+CREATE PDF
 ========================== */
 
 document
 .getElementById("createInvoice")
 .addEventListener(
 "click",
-()=>{
+async()=>{
 
 if(cart.length===0){
 
-alert(
-"Cart Empty"
-);
+alert("السلة فارغة");
 
 return;
 
 }
-
-const { jsPDF } =
-window.jspdf;
-
-const pdf =
-new jsPDF(
-"P",
-"mm",
-"A4"
-);
 
 const invoiceNo =
 
@@ -213,53 +186,32 @@ Math.floor(
 Math.random()*9000
 );
 
-const customer =
+document
+.getElementById("invoiceNo")
+.textContent =
+invoiceNo;
 
 document
-.getElementById(
-"customerName"
-)
+.getElementById("invoiceDate")
+.textContent =
+new Date().toLocaleString();
+
+document
+.getElementById("invoiceCustomer")
+.textContent =
+
+document
+.getElementById("customerName")
 .value ||
 
 "WALK-IN";
 
-const date =
-new Date()
-.toLocaleString();
-
-/* بيانات الفاتورة */
-
-pdf.setFontSize(14);
-
-pdf.text(
-"Al Kawthar Store",
-70,
-20
+const invoiceBody =
+document.getElementById(
+"invoiceBody"
 );
 
-pdf.setFontSize(11);
-
-pdf.text(
-`Invoice No: ${invoiceNo}`,
-14,
-35
-);
-
-pdf.text(
-`Date: ${date}`,
-14,
-43
-);
-
-pdf.text(
-`Customer: ${customer}`,
-14,
-51
-);
-
-/* الجدول */
-
-const rows = [];
+invoiceBody.innerHTML = "";
 
 let total = 0;
 
@@ -267,68 +219,100 @@ cart.forEach(item=>{
 
 total += item.qty;
 
-rows.push([
+invoiceBody.innerHTML += `
 
-item.code || "",
+<tr>
 
-item.name || "",
+<td class="img-cell">
 
-item.description || "",
+<img
+src="${item.image}"
+crossorigin="anonymous"
+onerror="this.style.display='none'">
 
-item.qty || 1
+</td>
 
-]);
+<td>
+
+${item.code || ""}
+
+</td>
+
+<td>
+
+<strong>
+
+${item.name || ""}
+
+</strong>
+
+<br>
+
+${item.description || ""}
+
+</td>
+
+<td>
+
+${item.qty}
+
+</td>
+
+</tr>
+
+`;
 
 });
 
-pdf.autoTable({
+document
+.getElementById("invoiceTotal")
+.textContent =
+total;
 
-startY:60,
+const invoice =
+document.getElementById(
+"invoiceTemplate"
+);
 
-head:[[
-"SKU",
-"Arabic Name",
-"English Name",
-"Qty"
-]],
-
-body:rows,
-
-styles:{
-
-fontSize:9,
-
-halign:"center"
-
-},
-
-headStyles:{
-
-fillColor:[10,143,90]
-
+const canvas =
+await html2canvas(
+invoice,
+{
+scale:2,
+useCORS:true,
+backgroundColor:"#ffffff"
 }
+);
 
-});
+const imgData =
+canvas.toDataURL(
+"image/png"
+);
 
-const finalY =
+const pdf =
+new window.jspdf.jsPDF(
+"P",
+"mm",
+"A4"
+);
 
-pdf.lastAutoTable.finalY
-+ 10;
+const pageWidth = 210;
 
-pdf.setFontSize(12);
+const pageHeight =
+(canvas.height * pageWidth)
+/ canvas.width;
 
-pdf.text(
-
-`Items: ${total}`,
-
-14,
-
-finalY
-
+pdf.addImage(
+imgData,
+"PNG",
+0,
+0,
+pageWidth,
+pageHeight
 );
 
 pdf.save(
-`${invoiceNo}.pdf`
+invoiceNo + ".pdf"
 );
 
 });
