@@ -583,14 +583,39 @@ maxCode = code;
 
 let nextCode =
 maxCode + 1;
+  const existingProducts =
+allProducts.map(p =>
+
+(
+p.name || ""
+)
+.trim()
+.toLowerCase()
+
+);
 for(const product of products){
 
-await addDoc(
+const productName =
 
-collection(
-db,
-"products"
-),
+(
+product.name || ""
+)
+.trim()
+.toLowerCase();
+
+if(
+existingProducts.includes(
+productName
+)
+){
+
+continue;
+
+}
+
+await addDoc(
+collection(db,"products"),
+
 
 {
 
