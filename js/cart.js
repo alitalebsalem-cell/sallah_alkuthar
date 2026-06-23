@@ -158,7 +158,6 @@ window.open(
 );
 
 });
-
 /* ==========================
 CREATE PDF
 ========================== */
@@ -169,7 +168,6 @@ document
 "click",
 async()=>{
 
- 
 if(cart.length===0){
 
 alert("السلة فارغة");
@@ -220,22 +218,28 @@ cart.forEach(item=>{
 
 total += item.qty;
 
-let productImage = "";
+let productImage =
+"images/noimg.jpg";
 
 try{
 
-productImage =
+if(
 
 item.image &&
+typeof item.image === "string" &&
 item.image.trim() !== ""
 
-? item.image
+){
 
-: "";
+productImage =
+item.image;
 
-}catch{
+}
 
-productImage = "";
+}catch(e){
+
+productImage =
+"images/noimg.jpg";
 
 }
 
@@ -245,22 +249,11 @@ invoiceBody.innerHTML += `
 
 <td class="img-cell">
 
-${
-productImage
-
-?
-
-`<img
+<img
 src="${productImage}"
 crossorigin="anonymous"
 referrerpolicy="no-referrer"
-onerror="this.style.display='none'">`
-
-:
-
-`No Image`
-
-}
+onerror="this.onerror=null;this.src='images/noimg.jpg';">
 
 </td>
 
@@ -306,6 +299,24 @@ document.getElementById(
 "invoiceTemplate"
 );
 
+/* إصلاح الصور قبل إنشاء PDF */
+
+invoice
+.querySelectorAll("img")
+.forEach(img=>{
+
+if(
+!img.src ||
+img.src === ""
+){
+
+img.src =
+"images/noimg.jpg";
+
+}
+
+});
+
 const images =
 invoice.querySelectorAll("img");
 
@@ -315,10 +326,7 @@ Array.from(images).map(img=>{
 
 return new Promise(resolve=>{
 
-if(
-img.complete ||
-!img.src
-){
+if(img.complete){
 
 resolve();
 
@@ -328,11 +336,18 @@ return;
 
 img.onload = ()=>resolve();
 
-img.onerror = ()=>resolve();
+img.onerror = ()=>{
+
+img.src =
+"images/noimg.jpg";
+
+resolve();
+
+};
 
 setTimeout(
 resolve,
-1500
+2000
 );
 
 });
@@ -383,5 +398,3 @@ invoiceNo + ".pdf"
 );
 
 });
-
-renderCart();
