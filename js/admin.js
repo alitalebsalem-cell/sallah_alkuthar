@@ -522,7 +522,7 @@ XLSX.utils.sheet_to_json(
 sheet
 );
 
-let imported = 0;
+
 
 /* يبدأ من 10000 */
 const snapshot =
@@ -553,7 +553,36 @@ maxCode = code;
 
 let nextCode =
 maxCode + 1;
+/* البحث عن أكبر كود موجود */
 
+const snapshot =
+await getDocs(
+collection(db,"products")
+);
+
+let maxCode = 9999;
+
+snapshot.forEach(doc=>{
+
+const code =
+parseInt(
+doc.data().code
+);
+
+if(
+!isNaN(code)
+&&
+code > maxCode
+){
+
+maxCode = code;
+
+}
+
+});
+
+let nextCode =
+maxCode + 1;
 for(const product of products){
 
 await addDoc(
