@@ -1017,3 +1017,28 @@ margin-bottom:5px;
 color:transparent;
 
 }
+.invoice-header{
+
+display:flex !important;
+
+justify-content:center !important;
+
+align-items:center !important;
+
+width:100% !important;
+
+margin-bottom:30px !important;
+
+}
+
+.invoice-logo{
+
+display:block !important;
+
+margin:auto !important;
+
+width:150px !important;
+
+height:auto !important;
+
+}
