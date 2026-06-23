@@ -297,7 +297,6 @@ JSON.stringify(cart)
 );
 
 }
-
 /* ==========================
 START
 ========================== */
@@ -305,13 +304,3 @@ START
 updateCartCount();
 
 loadProducts();
-  
-updateCartCount();
-
-loadProducts();
-renderProducts(filtered);
-
-});
-
-});
-
