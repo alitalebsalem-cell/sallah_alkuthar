@@ -172,16 +172,16 @@ transition:.3s;
 background:#087349;
 
 }
-
 /* =========================
 FLOATING CART
 ========================= */
+
 .cart-icon{
 
 position:fixed;
 
 top:20px;
-right:20px;
+left:20px;
 
 width:65px;
 height:65px;
@@ -204,69 +204,185 @@ z-index:9999;
 box-shadow:0 5px 15px rgba(0,0,0,.2);
 
 }
+
+.cart-icon span{
+
+position:absolute;
+
+top:-5px;
+right:-5px;
+
+background:red;
+color:white;
+
+width:24px;
+height:24px;
+
+border-radius:50%;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:12px;
+font-weight:bold;
+
+}
+
 /* =========================
 SIDEBAR
 ========================= */
 
-.cart-icon{
+.cart-sidebar{
 
 position:fixed;
 
-top:20px;
-right:20px;
+top:0;
+left:-650px;
 
-width:65px;
-height:65px;
+width:650px;
+height:100%;
 
-border-radius:50%;
+background:white;
 
-background:#0a8f5a;
-color:white;
+overflow-y:auto;
+
+box-shadow:0 0 25px rgba(0,0,0,.25);
+
+transition:.4s;
+
+z-index:9998;
+
+}
+
+.cart-sidebar.active{
+
+left:0;
+
+}
+
+.cart-header{
 
 display:flex;
 justify-content:center;
 align-items:center;
 
-font-size:30px;
+position:relative;
+
+padding:20px;
+
+background:#0a8f5a;
+color:white;
+
+}
+
+.cart-header button{
+
+position:absolute;
+
+right:15px;
+
+top:15px;
+
+background:none;
+
+border:none;
+
+color:white;
+
+font-size:28px;
 
 cursor:pointer;
 
-z-index:9999;
-
-box-shadow:0 5px 15px rgba(0,0,0,.2);
-
 }
+
 /* =========================
 CART ITEMS
 ========================= */
 
 .cart-item{
 
+display:flex;
+
+align-items:center;
+
+gap:15px;
+
 padding:15px;
-border-bottom:1px solid #eee;
+
+border-bottom:1px solid #ddd;
+
+background:white;
+
+}
+
+.cart-item img{
+
+width:80px;
+
+height:80px;
+
+object-fit:contain;
+
+border:1px solid #ddd;
+
+border-radius:8px;
+
+padding:4px;
+
+background:white;
+
+}
+
+.cart-item .info{
+
+flex:1;
 
 }
 
 .cart-item h4{
 
-margin-bottom:10px;
+margin-bottom:6px;
+
+font-size:18px;
 
 }
 
 .cart-item p{
 
-margin:5px 0;
+margin:4px 0;
 
 }
 
 .cart-item button{
 
-padding:5px 10px;
+padding:6px 12px;
+
 margin:3px;
+
 cursor:pointer;
 
 border:none;
+
 border-radius:6px;
+
+}
+
+@media(max-width:768px){
+
+.cart-sidebar{
+
+width:100%;
+
+left:-100%;
+
+}
+
+.cart-sidebar.active{
+
+left:0;
+
+}
 
 }
 
