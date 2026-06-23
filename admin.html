@@ -57,7 +57,18 @@ Detergents / منظفات
 </option>
 
 </select>
+<input
+type="file"
+id="excelFile"
+accept=".xlsx,.csv"
+style="display:none">
 
+<button id="importExcel">
+
+📥 Import Excel
+استيراد إكسل
+
+</button>
 <input
 id="image"
 placeholder="Image URL / رابط الصورة">
@@ -140,7 +151,7 @@ A → Z
 </div>
 
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script
 type="module"
 src="js/admin.js">
