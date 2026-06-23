@@ -1,3 +1,4 @@
+alert("NEW CART JS");
 let cart =
 JSON.parse(
 localStorage.getItem("cart")
