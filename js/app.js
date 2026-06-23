@@ -442,134 +442,6 @@ const invoiceDate =
 new Date()
 .toLocaleString();
 
-document
-.getElementById(
-"invoiceNo"
-)
-.textContent =
-invoiceNo;
-
-document
-.getElementById(
-"invoiceDate"
-)
-.textContent =
-invoiceDate;
-
-document
-.getElementById(
-"invoiceCustomer"
-)
-.textContent =
-customerName;
-
-const invoiceBody =
-
-document
-.getElementById(
-"invoiceBody"
-);
-
-invoiceBody.innerHTML = "";
-
-let totalProducts = 0;
-
-cart.forEach(item=>{
-
-totalProducts += item.qty;
-
-invoiceBody.innerHTML += `
-
-<tr>
-
-<td class="img-cell">
-
-<img
-src="${item.image}"
-style="
-width:60px;
-height:60px;
-object-fit:contain;
-">
-
-</td>
-
-<td>
-
-${item.code}
-
-</td>
-
-<td>
-
-<b>
-
-${item.name}
-
-</b>
-
-<br>
-
-<small>
-
-${item.description || ""}
-
-</small>
-
-</td>
-
-<td>
-
-${item.qty}
-
-</td>
-
-</tr>
-
-`;
-
-});
-
-document
-.getElementById(
-"invoiceTotal"
-)
-.textContent =
-totalProducts;
-
-try{
-
-const invoice =
-document.getElementById(
-"invoiceTemplate"
-);
-
-invoice.style.display =
-"block";
-await new Promise(
-resolve =>
-setTimeout(resolve,500)
-);
-  
-await new Promise(
-r => setTimeout(r,500)
-);
-
-const canvas =
-await html2canvas(
-invoice,
-{
-scale:3,
-useCORS:true,
-backgroundColor:"#ffffff"
-}
-);
-
-const imgData =
-canvas.toDataURL(
-"image/png"
-);
-
 const pdf =
 new window.jspdf.jsPDF(
 "P",
@@ -577,65 +449,120 @@ new window.jspdf.jsPDF(
 "A4"
 );
 
-const imgWidth = 210;
+/* شعار المتجر */
 
-const imgHeight =
-(canvas.height * imgWidth)
-/
-canvas.width;
+try{
+
 pdf.addImage(
-imgData,
+"images/logo.png",
 "PNG",
-0,
-0,
-210,
-imgHeight
+85,
+8,
+40,
+20
 );
 
-pdf.save(
-`${invoiceNo}.pdf`
+}catch(e){}
+
+/* معلومات الفاتورة */
+
+pdf.setFontSize(12);
+
+pdf.text(
+`Invoice No: ${invoiceNo}`,
+14,
+40
 );
 
-invoice.style.display =
-"none";
-
-}catch(error){
-
-console.error(error);
-
-alert(
-"PDF Error: "
-+
-error.message
+pdf.text(
+`Date: ${invoiceDate}`,
+14,
+48
 );
 
-}
-const imgWidth = 210;
-
-const imgHeight =
-
-(canvas.height *
-imgWidth)
-/
-canvas.width;
-pdf.addImage(
-imgData,
-"PNG",
-0,
-0,
-210,
-imgHeight
+pdf.text(
+`Customer: ${customerName}`,
+14,
+56
 );
 
-pdf.save(
-`${invoiceNo}.pdf`
-);
+/* بيانات الجدول */
 
-invoice.style.display =
-"none";
+const rows = [];
+
+let totalProducts = 0;
+
+cart.forEach(item=>{
+
+totalProducts += item.qty;
+
+rows.push([
+
+item.code || "",
+
+item.name || "",
+
+item.description || "",
+
+item.qty || 1
+
+]);
 
 });
 
+/* الجدول */
+
+pdf.autoTable({
+
+startY:65,
+
+head:[[
+"SKU",
+"Arabic Name",
+"English Name",
+"Qty"
+]],
+
+body:rows,
+
+styles:{
+
+fontSize:10,
+
+halign:"center"
+
+},
+
+headStyles:{
+
+fillColor:[10,143,90]
+
+}
+
+});
+
+/* عدد المنتجات */
+
+const finalY =
+pdf.lastAutoTable.finalY + 10;
+
+pdf.setFontSize(12);
+
+pdf.text(
+
+`Products Count: ${totalProducts}`,
+
+14,
+
+finalY
+
+);
+
+pdf.save(
+`${invoiceNo}.pdf`
+);
+
+});
 /* ==========================
 START
 ========================== */
