@@ -242,10 +242,10 @@ p.name
 renderProducts(filtered);
 
 });
-
 /* ==========================
 CATEGORY FILTER
 ========================== */
+
 document
 .querySelectorAll(".cat-btn")
 .forEach(btn=>{
@@ -273,11 +273,23 @@ cat.toLowerCase()
 )
 
 );
+
+renderProducts(filtered);
+
+});
+
+});
+
+/* ==========================
+CART COUNT
+========================== */
+
 function updateCartCount(){
 
 if(!cartCount) return;
 
-cartCount.textContent = cart.length;
+cartCount.textContent =
+cart.length;
 
 localStorage.setItem(
 "cart",
@@ -285,6 +297,14 @@ JSON.stringify(cart)
 );
 
 }
+
+/* ==========================
+START
+========================== */
+
+updateCartCount();
+
+loadProducts();
   
 updateCartCount();
 
