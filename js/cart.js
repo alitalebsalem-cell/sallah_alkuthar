@@ -220,14 +220,24 @@ cart.forEach(item=>{
 
 total += item.qty;
 
-const productImage =
+let productImage = "";
+
+try{
+
+productImage =
 
 item.image &&
 item.image.trim() !== ""
 
 ? item.image
 
-: "images/no-image.png";
+: "";
+
+}catch{
+
+productImage = "";
+
+}
 
 invoiceBody.innerHTML += `
 
@@ -235,10 +245,22 @@ invoiceBody.innerHTML += `
 
 <td class="img-cell">
 
-<img
+${
+productImage
+
+?
+
+`<img
 src="${productImage}"
 crossorigin="anonymous"
-onerror="this.src='images/no-image.png'">
+referrerpolicy="no-referrer"
+onerror="this.style.display='none'">`
+
+:
+
+`No Image`
+
+}
 
 </td>
 
@@ -293,16 +315,25 @@ Array.from(images).map(img=>{
 
 return new Promise(resolve=>{
 
-if(img.complete){
+if(
+img.complete ||
+!img.src
+){
 
 resolve();
 
-}else{
-
-img.onload = resolve;
-img.onerror = resolve;
+return;
 
 }
+
+img.onload = ()=>resolve();
+
+img.onerror = ()=>resolve();
+
+setTimeout(
+resolve,
+1500
+);
 
 });
 
