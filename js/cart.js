@@ -291,7 +291,7 @@ useCORS:true,
 backgroundColor:"#ffffff"
 }
 );
-
+alert("CANVAS CREATED");
 const imgData =
 canvas.toDataURL(
 "image/png"
