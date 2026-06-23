@@ -553,7 +553,19 @@ ${item.code || ""}
 
 <td>
 
+<b>
+
 ${item.name || ""}
+
+</b>
+
+<br>
+
+<small>
+
+${item.description || ""}
+
+</small>
 
 </td>
 
