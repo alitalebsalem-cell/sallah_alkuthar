@@ -205,8 +205,7 @@ window.open(
 "_blank"
 );
 
-});
-/* ==========================
+});/* ==========================
 CREATE PDF
 ========================== */
 
@@ -263,24 +262,8 @@ invoiceBody.innerHTML = "";
 let total = 0;
 
 cart.forEach(item=>{
-const productText =
 
-(
-(item.name || "") +
-" " +
-(item.description || "") +
-" " +
-(item.code || "")
-)
-.toLowerCase();
-
-if(
-searchText &&
-!productText.includes(searchText)
-){
-return;
-}
-total += item.qty;
+total += Number(item.qty || 1);
 
 let productImage =
 "images/noimg.jpg";
@@ -288,11 +271,9 @@ let productImage =
 try{
 
 if(
-
 item.image &&
 typeof item.image === "string" &&
 item.image.trim() !== ""
-
 ){
 
 productImage =
@@ -343,7 +324,7 @@ ${item.description || ""}
 
 <td>
 
-${item.qty}
+${item.qty || 1}
 
 </td>
 
@@ -362,8 +343,6 @@ const invoice =
 document.getElementById(
 "invoiceTemplate"
 );
-
-/* إصلاح الصور قبل إنشاء PDF */
 
 invoice
 .querySelectorAll("img")
@@ -462,6 +441,7 @@ invoiceNo + ".pdf"
 );
 
 });
+
 if(cartSearch){
 
 cartSearch.addEventListener(
@@ -470,4 +450,5 @@ renderCart
 );
 
 }
+
 renderCart();
