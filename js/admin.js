@@ -481,5 +481,162 @@ renderProducts(sorted);
 /* =========================
 START
 ========================= */
+/* ==========================
+IMPORT EXCEL
+========================== */
 
+document
+.getElementById("importExcel")
+.addEventListener("click",()=>{
+
+document
+.getElementById("excelFile")
+.click();
+
+});
+
+document
+.getElementById("excelFile")
+.addEventListener(
+"change",
+async(event)=>{
+
+const file =
+event.target.files[0];
+
+if(!file) return;
+
+const data =
+await file.arrayBuffer();
+
+const workbook =
+XLSX.read(data);
+
+const sheet =
+workbook.Sheets[
+workbook.SheetNames[0]
+];
+
+const products =
+XLSX.utils.sheet_to_json(
+sheet
+);
+
+for(const product of products){
+
+await addDoc(
+
+collection(
+db,
+"products"
+),
+
+{
+
+name:
+product.name || "",
+
+description:
+product.description || "",
+
+code:
+product.code || "",
+
+category:
+product.category || "",
+
+image:
+product.image || ""
+
+}
+
+);
+
+}
+
+alert(
+
+`${products.length}
+Products Imported Successfully`
+
+);
+/* =========================
+IMPORT EXCEL
+========================= */
+
+document
+.getElementById("importExcel")
+.addEventListener("click",()=>{
+
+document
+.getElementById("excelFile")
+.click();
+
+});
+
+document
+.getElementById("excelFile")
+.addEventListener(
+"change",
+async(event)=>{
+
+const file =
+event.target.files[0];
+
+if(!file) return;
+
+const data =
+await file.arrayBuffer();
+
+const workbook =
+XLSX.read(data);
+
+const sheet =
+workbook.Sheets[
+workbook.SheetNames[0]
+];
+
+const products =
+XLSX.utils.sheet_to_json(
+sheet
+);
+
+let imported = 0;
+
+for(const product of products){
+
+await addDoc(
+collection(db,"products"),
+{
+name:
+product.name || "",
+
+description:
+product.description || "",
+
+code:
+product.code || "",
+
+category:
+product.category || "",
+
+image:
+product.image || ""
+}
+);
+
+imported++;
+
+}
+
+alert(
+`${imported} Products Imported Successfully`
+);
+
+loadProducts();
+
+});
+loadProducts();
+
+});
 loadProducts();
