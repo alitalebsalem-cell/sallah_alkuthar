@@ -169,7 +169,7 @@ document
 .addEventListener(
 "click",
 async()=>{
-
+alert("START PDF");
 if(cart.length===0){
 
 alert("السلة فارغة");
