@@ -40,6 +40,8 @@ id:item.id,
 
 renderProducts(allProducts);
 
+updateStats();
+
 }
 
 /* =========================
