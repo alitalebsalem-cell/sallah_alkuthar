@@ -175,16 +175,15 @@ background:#087349;
 /* =========================
 FLOATING CART
 ========================= */
-
 .cart-icon{
 
 position:fixed;
 
-top:20px;
-left:20px;
+top:15px;
+left:15px;
 
-width:65px;
-height:65px;
+width:55px;
+height:55px;
 
 border-radius:50%;
 
@@ -195,28 +194,27 @@ display:flex;
 justify-content:center;
 align-items:center;
 
-font-size:30px;
+font-size:24px;
 
 cursor:pointer;
 
-z-index:9999;
+z-index:99999;
 
-box-shadow:0 5px 15px rgba(0,0,0,.2);
+box-shadow:0 4px 12px rgba(0,0,0,.2);
 
 }
-
 .cart-icon span{
 
 position:absolute;
 
-top:-5px;
-right:-5px;
+top:-3px;
+right:-3px;
 
 background:red;
 color:white;
 
-width:24px;
-height:24px;
+width:22px;
+height:22px;
 
 border-radius:50%;
 
@@ -224,7 +222,7 @@ display:flex;
 justify-content:center;
 align-items:center;
 
-font-size:12px;
+font-size:11px;
 font-weight:bold;
 
 }
@@ -372,9 +370,19 @@ border-radius:6px;
 
 .cart-sidebar{
 
-width:100%;
+width:90%;
 
 left:-100%;
+
+z-index:99998;
+
+}
+
+.cart-sidebar.active{
+
+left:0;
+
+}
 
 }
 
@@ -561,23 +569,30 @@ color:#666;
 /* =========================
 MOBILE
 ========================= */
-
 @media(max-width:768px){
 
 .cart-sidebar{
 
-right:-420px;
+width:90%;
+
+left:-100%;
+
+z-index:99998;
+
 }
 
-#products{
+.cart-sidebar.active{
 
-grid-template-columns:1fr;
+left:0;
 
 }
 
-.invoice-box{
+}
+.cart-sidebar.active{
 
-width:100%;
+left:0;
+
+}
 
 }
 
@@ -850,6 +865,23 @@ text-align:center;
 
 }
 
+.cart-sidebar{
+
+width:90%;
+
+left:-100%;
+
+z-index:99998;
+
+}
+
+.cart-sidebar.active{
+
+left:0;
+
+}
+
+}
 .admin-actions{
 
 justify-content:center;
