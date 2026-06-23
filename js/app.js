@@ -545,7 +545,11 @@ document.getElementById(
 
 invoice.style.display =
 "block";
-
+await new Promise(
+resolve =>
+setTimeout(resolve,500)
+);
+  
 await new Promise(
 r => setTimeout(r,500)
 );
