@@ -577,19 +577,18 @@ new window.jspdf.jsPDF(
 "A4"
 );
 
-const imgWidth = 190;
+const imgWidth = 210;
 
 const imgHeight =
 (canvas.height * imgWidth)
 /
 canvas.width;
-
 pdf.addImage(
 imgData,
 "PNG",
-10,
-10,
-imgWidth,
+0,
+0,
+210,
 imgHeight
 );
 
@@ -611,7 +610,7 @@ error.message
 );
 
 }
-const imgWidth = 190;
+const imgWidth = 210;
 
 const imgHeight =
 
@@ -619,13 +618,12 @@ const imgHeight =
 imgWidth)
 /
 canvas.width;
-
 pdf.addImage(
 imgData,
 "PNG",
-10,
-10,
-imgWidth,
+0,
+0,
+210,
 imgHeight
 );
 
