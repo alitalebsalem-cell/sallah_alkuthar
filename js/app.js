@@ -75,12 +75,13 @@ onerror="this.src='https://via.placeholder.com/300'">
 
 <p>${p.description || ""}</p>
 
-<p>
-Code / الكود
-<br>
-${p.code}
-</p>
+<p class="sku">
 
+SKU /
+
+${p.code}
+
+</p>
 <button
 class="cart-btn"
 data-id="${p.id}">
