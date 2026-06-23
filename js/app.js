@@ -246,8 +246,7 @@ ${item.name}
 
 <p>
 
-SKU| :
-${item.code}
+SKU${item.code}
 
 </p>
 
