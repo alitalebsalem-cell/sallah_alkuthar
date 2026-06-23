@@ -246,7 +246,7 @@ ${item.name}
 
 <p>
 
-Code / الكود:
+SKU : :
 ${item.code}
 
 </p>
