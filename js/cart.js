@@ -424,3 +424,4 @@ invoiceNo + ".pdf"
 );
 
 });
+renderCart();
