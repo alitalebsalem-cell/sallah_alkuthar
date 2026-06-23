@@ -878,3 +878,136 @@ left:0;
 }
 
 }
+/* =========================
+CART FOOTER
+========================= */
+
+.cart-footer{
+
+padding:20px;
+
+}
+
+/* Products Count */
+
+.cart-footer h3{
+
+font-size:20px;
+
+font-weight:700;
+
+text-align:center;
+
+margin-bottom:15px;
+
+color:#333;
+
+}
+
+#cartTotal{
+
+display:block;
+
+font-size:38px;
+
+font-weight:800;
+
+color:#0a8f5a;
+
+margin-top:8px;
+
+}
+
+/* Customer Name */
+
+#customerName{
+
+width:100%;
+
+padding:14px 18px;
+
+font-size:18px;
+
+border:2px solid #e0e0e0;
+
+border-radius:12px;
+
+outline:none;
+
+background:#fafafa;
+
+margin-bottom:15px;
+
+transition:.3s;
+
+}
+
+#customerName:focus{
+
+border-color:#0a8f5a;
+
+background:white;
+
+box-shadow:0 0 10px rgba(10,143,90,.15);
+
+}
+
+/* Invoice Button */
+
+#createInvoice{
+
+width:100%;
+
+padding:15px;
+
+border:none;
+
+border-radius:12px;
+
+background:#0a8f5a;
+
+color:white;
+
+font-size:18px;
+
+font-weight:700;
+
+cursor:pointer;
+
+transition:.3s;
+
+box-shadow:0 4px 12px rgba(10,143,90,.25);
+
+}
+
+#createInvoice:hover{
+
+background:#087349;
+
+transform:translateY(-2px);
+
+}
+
+/* English Only Label */
+
+.cart-footer h3::before{
+
+content:"Items";
+
+display:block;
+
+font-size:16px;
+
+font-weight:600;
+
+color:#666;
+
+margin-bottom:5px;
+
+}
+
+.cart-footer h3{
+
+color:transparent;
+
+}
