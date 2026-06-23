@@ -481,94 +481,6 @@ renderProducts(sorted);
 /* =========================
 START
 ========================= */
-/* ==========================
-IMPORT EXCEL
-========================== */
-
-document
-.getElementById("importExcel")
-.addEventListener("click",()=>{
-
-document
-.getElementById("excelFile")
-.click();
-
-});
-
-document
-.getElementById("excelFile")
-.addEventListener(
-"change",
-async(event)=>{
-
-const file =
-event.target.files[0];
-
-if(!file) return;
-
-const data =
-await file.arrayBuffer();
-
-const workbook =
-XLSX.read(data);
-
-const sheet =
-workbook.Sheets[
-workbook.SheetNames[0]
-];
-
-const products =
-XLSX.utils.sheet_to_json(
-sheet
-);
-
-for(const product of products){
-
-await addDoc(
-
-collection(
-db,
-"products"
-),
-
-let nextCode = 10000;
-
-for(const product of products){
-
-await addDoc(
-collection(db,"products"),
-{
-
-name:
-product.name || "",
-
-description:
-product.description || "",
-
-code:
-(nextCode++).toString(),
-
-category:
-product.category || "",
-
-image:
-product.image || ""
-
-}
-
-);
-
-}
-);
-
-}
-
-alert(
-
-`${products.length}
-Products Imported Successfully`
-
-);
 /* =========================
 IMPORT EXCEL
 ========================= */
@@ -612,11 +524,20 @@ sheet
 
 let imported = 0;
 
+/* يبدأ من 10000 */
+let nextCode = 10000;
+
 for(const product of products){
 
 await addDoc(
-collection(db,"products"),
+
+collection(
+db,
+"products"
+),
+
 {
+
 name:
 product.name || "",
 
@@ -624,14 +545,19 @@ description:
 product.description || "",
 
 code:
-product.code || "",
+(nextCode++).toString(),
 
 category:
 product.category || "",
 
 image:
-product.image || ""
+product.image || "",
+
+createdAt:
+Date.now()
+
 }
+
 );
 
 imported++;
@@ -645,7 +571,3 @@ alert(
 loadProducts();
 
 });
-loadProducts();
-
-});
-loadProducts();
