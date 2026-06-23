@@ -197,164 +197,269 @@ Detergents
 </main>
 
 <!-- INVOICE -->
+  
+  document
+.getElementById("createInvoice")
+.addEventListener(
+"click",
+async ()=>{
 
-<div
-id="invoiceTemplate"
-style="display:none;">
+if(cart.length===0){
 
-<div class="invoice-box">
+alert(
+"Cart Empty / السلة فارغة"
+);
 
-<div class="invoice-header">
+return;
 
-<img
-src="images/logo.png"
-class="invoice-logo">
+}
 
-</div>
+const customerName =
 
-</div>
+document
+.getElementById(
+"customerName"
+)
+.value ||
 
-<div class="invoice-info">
+"WALK-IN";
 
-<div>
+const invoiceNo =
 
-INV NO
+"INV-" +
 
-<br>
+Math.floor(
+1000 +
+Math.random()*9000
+);
 
-رقم الفاتورة
+const invoiceDate =
 
-<br>
+new Date()
+.toLocaleString();
 
-<strong id="invoiceNo"></strong>
+document
+.getElementById(
+"invoiceNo"
+)
+.textContent =
+invoiceNo;
 
-</div>
+document
+.getElementById(
+"invoiceDate"
+)
+.textContent =
+invoiceDate;
 
-<div>
+document
+.getElementById(
+"invoiceCustomer"
+)
+.textContent =
+customerName;
 
-DATE
+const invoiceBody =
 
-<br>
+document
+.getElementById(
+"invoiceBody"
+);
 
-التاريخ
+invoiceBody.innerHTML = "";
 
-<br>
+let totalProducts = 0;
 
-<strong id="invoiceDate"></strong>
+cart.forEach(item=>{
 
-</div>
+totalProducts += item.qty;
 
-<div>
-
-CUSTOMER
-
-<br>
-
-العميل
-
-<br>
-
-<strong id="invoiceCustomer"></strong>
-
-</div>
-
-</div>
-
-<div class="invoice-qr">
-
-<img
-src="images/whatsapp-qr.png"
-width="120">
-
-<p>
-
-+966538647362
-
-</p>
-
-</div>
-
-<table id="invoiceTable">
-
-<thead>
+invoiceBody.innerHTML += `
 
 <tr>
 
-<th>
+<td class="img-cell">
 
-Picture
-الصورة
+<img
+src="${item.image}"
+onerror="this.style.display='none'">
 
-</th>
+</td>
 
-<th>
+<td>
 
-Code
-الكود
+${item.code || ""}
 
-</th>
+</td>
 
-<th>
+<td>
 
-Description
-الوصف
+<b>
 
-</th>
+${item.name || ""}
 
-<th>
+</b>
 
-Qty
-الكمية
+<br>
 
-</th>
+<small>
+
+${item.description || ""}
+
+</small>
+
+</td>
+
+<td>
+
+${item.qty}
+
+</td>
 
 </tr>
 
-</thead>
+`;
 
-<tbody id="invoiceBody">
+});
 
-</tbody>
+document
+.getElementById(
+"invoiceTotal"
+)
+.textContent =
+totalProducts;
 
-</table>
+const invoice =
+document
+.getElementById(
+"invoiceTemplate"
+);
 
-<div class="invoice-total">
+invoice.style.display =
+"block";
 
-Products Count
+/* انتظر قليلاً */
 
-<br>
+await new Promise(
+resolve =>
+setTimeout(resolve,800)
+);
 
-عدد المنتجات
+/* لا تتوقف بسبب الصور */
 
-<br>
+const images =
+invoice.querySelectorAll("img");
 
-<span id="invoiceTotal">
+await Promise.all(
 
-0
+Array.from(images).map(img=>{
 
-</span>
+if(img.complete)
+return Promise.resolve();
 
-</div>
+return new Promise(resolve=>{
 
-<div class="invoice-footer">
+img.onload = resolve;
 
-Thank You For Shopping
+img.onerror = resolve;
 
-<br>
+setTimeout(
+resolve,
+1000
+);
 
-شكراً لتسوقكم معنا
+});
 
-</div>
+})
 
-</div>
+);
 
-</div>
+try{
 
-<script
-type="module"
-src="js/app.js">
-</script>
+const canvas =
+await html2canvas(
+invoice,
+{
+scale:2,
+useCORS:true,
+allowTaint:true,
+backgroundColor:"#ffffff"
+}
+);
 
-</body>
+const imgData =
+canvas.toDataURL(
+"image/png"
+);
 
+const pdf =
+new window.jspdf.jsPDF(
+"P",
+"mm",
+"A4"
+);
+
+const imgWidth = 210;
+
+const imgHeight =
+(canvas.height * imgWidth)
+/
+canvas.width;
+
+let heightLeft =
+imgHeight;
+
+let position = 0;
+
+pdf.addImage(
+imgData,
+"PNG",
+0,
+position,
+imgWidth,
+imgHeight
+);
+
+heightLeft -= 297;
+
+while(heightLeft > 0){
+
+position =
+heightLeft -
+imgHeight;
+
+pdf.addPage();
+
+pdf.addImage(
+imgData,
+"PNG",
+0,
+position,
+imgWidth,
+imgHeight
+);
+
+heightLeft -= 297;
+
+}
+
+pdf.save(
+`${invoiceNo}.pdf`
+);
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"PDF Error: " +
+error.message
+);
+
+}
+
+invoice.style.display =
+"none";
+
+});
 </html>
