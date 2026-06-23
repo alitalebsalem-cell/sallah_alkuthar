@@ -267,7 +267,7 @@ left:0;
 display:flex;
 justify-content:space-between;
 align-items:center;
-
+position:relative;
 padding:20px;
 
 background:#0a8f5a;
@@ -277,11 +277,24 @@ color:white;
 
 .cart-header button{
 
+position:absolute;
+
+left:15px;
+
+top:15px;
+
 background:none;
+
 border:none;
+
 color:white;
-font-size:24px;
+
+font-size:28px;
+
 cursor:pointer;
+
+z-index:99999;
+
 
 }
 
