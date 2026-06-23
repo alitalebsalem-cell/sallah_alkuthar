@@ -1,4 +1,4 @@
-3let cart =
+let cart =
 JSON.parse(
 localStorage.getItem("cart")
 ) || [];
