@@ -182,7 +182,7 @@ document
 .getElementById("createInvoice")
 .addEventListener(
 "click",
-async ()=>{
+()=>{
 
 if(cart.length===0){
 
@@ -194,6 +194,16 @@ return;
 
 }
 
+const { jsPDF } =
+window.jspdf;
+
+const pdf =
+new jsPDF(
+"P",
+"mm",
+"A4"
+);
+
 const invoiceNo =
 
 "INV-" +
@@ -203,26 +213,7 @@ Math.floor(
 Math.random()*9000
 );
 
-document
-.getElementById(
-"invoiceNo"
-)
-.textContent =
-invoiceNo;
-
-document
-.getElementById(
-"invoiceDate"
-)
-.textContent =
-new Date()
-.toLocaleString();
-
-document
-.getElementById(
-"invoiceCustomer"
-)
-.textContent =
+const customer =
 
 document
 .getElementById(
@@ -232,13 +223,43 @@ document
 
 "WALK-IN";
 
-const invoiceBody =
-document
-.getElementById(
-"invoiceBody"
+const date =
+new Date()
+.toLocaleString();
+
+/* بيانات الفاتورة */
+
+pdf.setFontSize(14);
+
+pdf.text(
+"Al Kawthar Store",
+70,
+20
 );
 
-invoiceBody.innerHTML = "";
+pdf.setFontSize(11);
+
+pdf.text(
+`Invoice No: ${invoiceNo}`,
+14,
+35
+);
+
+pdf.text(
+`Date: ${date}`,
+14,
+43
+);
+
+pdf.text(
+`Customer: ${customer}`,
+14,
+51
+);
+
+/* الجدول */
+
+const rows = [];
 
 let total = 0;
 
@@ -246,103 +267,69 @@ cart.forEach(item=>{
 
 total += item.qty;
 
-invoiceBody.innerHTML += `
+rows.push([
 
-<tr>
+item.code || "",
 
-<td>
+item.name || "",
 
-<img
-src="${item.image}"
-width="50">
+item.description || "",
 
-</td>
+item.qty || 1
 
-<td>
-
-${item.code}
-
-</td>
-
-<td>
-
-${item.name}
-<br>
-${item.description || ""}
-
-</td>
-
-<td>
-
-${item.qty}
-
-</td>
-
-</tr>
-
-`;
+]);
 
 });
 
-document
-.getElementById(
-"invoiceTotal"
-)
-.textContent =
-total;
+pdf.autoTable({
 
-const invoice =
-document
-.getElementById(
-"invoiceTemplate"
-);
+startY:60,
 
-invoice.style.display =
-"block";
+head:[[
+"SKU",
+"Arabic Name",
+"English Name",
+"Qty"
+]],
 
-const canvas =
-await html2canvas(
-invoice,
-{
-scale:2,
-useCORS:true
+body:rows,
+
+styles:{
+
+fontSize:9,
+
+halign:"center"
+
+},
+
+headStyles:{
+
+fillColor:[10,143,90]
+
 }
-);
 
-const imgData =
-canvas.toDataURL(
-"image/png"
-);
+});
 
-const pdf =
-new window.jspdf.jsPDF(
-"P",
-"mm",
-"A4"
-);
+const finalY =
 
-const width = 210;
+pdf.lastAutoTable.finalY
++ 10;
 
-const height =
-(canvas.height *
-width)
-/ canvas.width;
+pdf.setFontSize(12);
 
-pdf.addImage(
-imgData,
-"PNG",
-0,
-0,
-width,
-height
+pdf.text(
+
+`Items: ${total}`,
+
+14,
+
+finalY
+
 );
 
 pdf.save(
-invoiceNo + ".pdf"
+`${invoiceNo}.pdf`
 );
-
-invoice.style.display =
-"none";
 
 });
 
