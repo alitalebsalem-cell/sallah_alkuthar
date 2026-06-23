@@ -170,6 +170,13 @@ document
 "click",
 async()=>{
 alert("START PDF");
+  alert(
+document.getElementById(
+"invoiceTemplate"
+)
+? "FOUND TEMPLATE"
+: "TEMPLATE NOT FOUND"
+);
 if(cart.length===0){
 
 alert("السلة فارغة");
