@@ -384,7 +384,6 @@ left:0;
 
 }
 
-}
 
 .cart-sidebar.active{
 
@@ -565,10 +564,10 @@ font-size:18px;
 color:#666;
 
 }
-
 /* =========================
 MOBILE
 ========================= */
+
 @media(max-width:768px){
 
 .cart-sidebar{
@@ -587,23 +586,20 @@ left:0;
 
 }
 
-}
-.cart-sidebar.active{
-
-left:0;
-
-}
-
-}
-
 .invoice-info{
 
 flex-direction:column;
+
 gap:10px;
 
 }
 
 }
+
+/* =========================
+INVOICE IMAGES
+========================= */
+
 .img-cell{
 
 width:80px;
@@ -629,18 +625,11 @@ padding:4px;
 background:white;
 
 }
-.img-cell img{
 
-width:60px;
-height:60px;
+/* =========================
+SKU
+========================= */
 
-object-fit:contain;
-
-border:1px solid #ddd;
-
-border-radius:8px;
-
-padding:3px;
 .sku{
 
 font-size:12px;
@@ -655,7 +644,8 @@ font-weight:600;
 
 letter-spacing:.5px;
 
-}/* =========================
+}
+/* =========================
 ADMIN PANEL
 ========================= */
 
@@ -852,7 +842,7 @@ background:#dc3545;
 color:white;
 
 }
-
+id="rv44my"
 /* MOBILE */
 
 @media(max-width:768px){
@@ -862,6 +852,12 @@ color:white;
 flex-direction:column;
 
 text-align:center;
+
+}
+
+.admin-actions{
+
+justify-content:center;
 
 }
 
@@ -878,13 +874,6 @@ z-index:99998;
 .cart-sidebar.active{
 
 left:0;
-
-}
-
-}
-.admin-actions{
-
-justify-content:center;
 
 }
 
