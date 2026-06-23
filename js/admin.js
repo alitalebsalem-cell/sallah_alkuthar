@@ -96,27 +96,19 @@ onerror="this.src='https://via.placeholder.com/120'">
 <div class="admin-info">
 
 <h3>
-
 ${product.name}
-
 </h3>
 
 <p>
-
 ${product.description || ""}
-
 </p>
 
 <p>
-
 SKU / ${product.code}
-
 </p>
 
 <p>
-
 ${product.category}
-
 </p>
 
 </div>
@@ -142,6 +134,12 @@ onclick="deleteProduct('${product.id}')">
 </div>
 
 </div>
+
+`;
+
+});
+
+}
 
 <img
 src="${product.image}"
