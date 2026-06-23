@@ -64,7 +64,12 @@ productsDiv.innerHTML = "";
 products.forEach(p=>{
 
 productsDiv.innerHTML += `
+...
+`;
 
+});
+
+}
 <div class="product">
 
 <img
