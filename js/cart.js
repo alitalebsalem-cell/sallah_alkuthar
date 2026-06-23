@@ -274,38 +274,6 @@ ${item.qty}
 
 });
 
-<td>
-
-${item.code || ""}
-
-</td>
-
-<td>
-
-<strong>
-
-${item.name || ""}
-
-</strong>
-
-<br>
-
-${item.description || ""}
-
-</td>
-
-<td>
-
-${item.qty}
-
-</td>
-
-</tr>
-
-`;
-
-});
-
 document
 .getElementById("invoiceTotal")
 .textContent =
@@ -315,10 +283,12 @@ const invoice =
 document.getElementById(
 "invoiceTemplate"
 );
+
 const images =
 invoice.querySelectorAll("img");
 
 await Promise.all(
+
 Array.from(images).map(img=>{
 
 return new Promise(resolve=>{
@@ -337,7 +307,9 @@ img.onerror = resolve;
 });
 
 })
+
 );
+
 const canvas =
 await html2canvas(
 invoice,
