@@ -525,7 +525,34 @@ sheet
 let imported = 0;
 
 /* يبدأ من 10000 */
-let nextCode = 10000;
+const snapshot =
+await getDocs(
+collection(db,"products")
+);
+
+let maxCode = 9999;
+
+snapshot.forEach(doc=>{
+
+const code =
+parseInt(
+doc.data().code
+);
+
+if(
+!isNaN(code)
+&&
+code > maxCode
+){
+
+maxCode = code;
+
+}
+
+});
+
+let nextCode =
+maxCode + 1;
 
 for(const product of products){
 
