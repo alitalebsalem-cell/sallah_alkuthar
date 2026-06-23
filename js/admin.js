@@ -520,7 +520,9 @@ IMPORT EXCEL
 
 document
 .getElementById("importExcel")
-.addEventListener("click",()=>{
+.addEventListener(
+"click",
+()=>{
 
 document
 .getElementById("excelFile")
@@ -555,9 +557,10 @@ XLSX.utils.sheet_to_json(
 sheet
 );
 
+let imported = 0;
 
+/* الحصول على أكبر كود موجود */
 
-/* يبدأ من 10000 */
 const snapshot =
 await getDocs(
 collection(db,"products")
@@ -565,11 +568,11 @@ collection(db,"products")
 
 let maxCode = 9999;
 
-snapshot.forEach(doc=>{
+snapshot.forEach(item=>{
 
 const code =
 parseInt(
-doc.data().code
+item.data().code
 );
 
 if(
@@ -586,53 +589,23 @@ maxCode = code;
 
 let nextCode =
 maxCode + 1;
-/* البحث عن أكبر كود موجود */
 
-const snapshot =
-await getDocs(
-collection(db,"products")
-);
+/* أسماء المنتجات الموجودة */
 
-let maxCode = 9999;
+const existingProducts =
+allProducts.map(p=>
 
-snapshot.forEach(doc=>{
-
-const code =
-parseInt(
-doc.data().code
-);
-
-if(
-!isNaN(code)
-&&
-code > maxCode
-){
-
-maxCode = code;
-
-}
-
-});
-
-let nextCode =
-maxCode + 1;
-  const existingProducts =
-allProducts.map(p =>
-
-(
-p.name || ""
-)
+(p.name || "")
 .trim()
 .toLowerCase()
 
 );
+
 for(const product of products){
 
 const productName =
 
-(
-product.name || ""
-)
+(product.name || "")
 .trim()
 .toLowerCase();
 
@@ -647,8 +620,11 @@ continue;
 }
 
 await addDoc(
-collection(db,"products"),
 
+collection(
+db,
+"products"
+),
 
 {
 
@@ -681,6 +657,11 @@ imported++;
 alert(
 `${imported} Products Imported Successfully`
 );
+
+loadProducts();
+
+});
+
 /* =========================
 EXPORT EXCEL
 ========================= */
@@ -732,6 +713,9 @@ workbook,
 );
 
 });
-loadProducts();
 
-});
+/* =========================
+START
+========================= */
+
+loadProducts();
