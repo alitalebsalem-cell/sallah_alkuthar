@@ -45,7 +45,38 @@ renderProducts(allProducts);
 /* =========================
 RENDER PRODUCTS
 ========================= */
+function updateStats(){
 
+document.getElementById(
+"totalProducts"
+).textContent =
+allProducts.length;
+
+document.getElementById(
+"foodCount"
+).textContent =
+
+allProducts.filter(
+p => p.category === "مواد غذائية"
+).length;
+
+document.getElementById(
+"vegCount"
+).textContent =
+
+allProducts.filter(
+p => p.category === "خضار"
+).length;
+
+document.getElementById(
+"detCount"
+).textContent =
+
+allProducts.filter(
+p => p.category === "منظفات"
+).length;
+
+}
 function renderProducts(products){
 
 productsTable.innerHTML = "";
