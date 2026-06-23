@@ -372,32 +372,89 @@ renderProducts(filtered);
 });
 
 });
+
 /* ==========================
 OPEN CART
 ========================== */
 
-document
-.getElementById("cartToggle")
-.addEventListener("click",()=>{
+const cartToggle =
+document.getElementById(
+"cartToggle"
+);
 
-document
-.getElementById("cartSidebar")
-.classList
-.add("active");
+const cartSidebar =
+document.getElementById(
+"cartSidebar"
+);
+
+const closeCart =
+document.getElementById(
+"closeCart"
+);
+
+if(cartToggle && cartSidebar){
+
+cartToggle.addEventListener(
+"click",
+(e)=>{
+
+e.preventDefault();
+
+cartSidebar.classList.add(
+"active"
+);
 
 });
 
-document
-.getElementById("closeCart")
-.addEventListener("click",()=>{
+}
 
-document
-.getElementById("cartSidebar")
-.classList
-.remove("active");
+if(closeCart && cartSidebar){
+
+closeCart.addEventListener(
+"click",
+()=>{
+
+cartSidebar.classList.remove(
+"active"
+);
 
 });
 
+}
+
+/* اغلاق عند الضغط خارج السلة */
+
+document.addEventListener(
+"click",
+(event)=>{
+
+if(
+
+cartSidebar.classList.contains(
+"active"
+)
+
+&&
+
+!cartSidebar.contains(
+event.target
+)
+
+&&
+
+!cartToggle.contains(
+event.target
+)
+
+){
+
+cartSidebar.classList.remove(
+"active"
+);
+
+}
+
+});
 /* ==========================
 INVOICE
 ========================== */
