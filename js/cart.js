@@ -206,22 +206,6 @@ renderCart();
 window.deleteItem =
 function(id){
 
-cart =
-cart.filter(
-p => p.id !== id
-);
-
-renderCart();
-
-};
-cart =
-cart.filter(
-p => p.id !== id
-);
-
-renderCart();
-
-};
 
 /* ==========================
 WHATSAPP
