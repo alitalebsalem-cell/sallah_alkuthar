@@ -76,9 +76,15 @@ document.getElementById(
 allProducts.filter(
 p => p.category === "منظفات"
 ).length;
+
+document.getElementById(
+"supCount"
+).textContent =
+
 allProducts.filter(
 p => p.category === "مستلزمات"
 ).length;
+
 }
 
 function renderProducts(products){
@@ -139,7 +145,6 @@ onclick="deleteProduct('${product.id}')">
 });
 
 }
-
 /* =========================
 IMAGE PICKER
 ========================= */
