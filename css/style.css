@@ -1455,3 +1455,33 @@ font-size:16px;
 font-weight:bold;
 
 }
+/* ==========================
+CART GRID
+========================== */
+
+#cartItems{
+
+display:grid !important;
+
+grid-template-columns:
+repeat(auto-fill,minmax(450px,1fr));
+
+gap:20px;
+
+width:100%;
+
+align-items:start;
+
+}
+
+/* الجوال */
+
+@media(max-width:768px){
+
+#cartItems{
+
+grid-template-columns:1fr;
+
+}
+
+}
