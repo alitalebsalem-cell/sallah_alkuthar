@@ -220,19 +220,98 @@ const imageFile =
 document.getElementById(
 "imageFile"
 )?.files[0];
-
 if(imageFile){
 
 imageUrl =
-await new Promise(resolve=>{
+await new Promise((resolve,reject)=>{
+
+const img =
+new Image();
 
 const reader =
 new FileReader();
 
 reader.onload =
-e=>resolve(
-e.target.result
+e=>{
+
+img.onload = ()=>{
+
+const canvas =
+document.createElement("canvas");
+
+const MAX_WIDTH = 800;
+
+let width =
+img.width;
+
+let height =
+img.height;
+
+if(width > MAX_WIDTH){
+
+height =
+height *
+(MAX_WIDTH / width);
+
+width =
+MAX_WIDTH;
+
+}
+
+canvas.width =
+width;
+
+canvas.height =
+height;
+
+const ctx =
+canvas.getContext("2d");
+
+ctx.drawImage(
+img,
+0,
+0,
+width,
+height
 );
+
+const compressed =
+canvas.toDataURL(
+"image/jpeg",
+0.6
+);
+
+const sizeInBytes =
+
+Math.ceil(
+(compressed.length * 3) / 4
+);
+
+if(
+sizeInBytes >
+1000000
+){
+
+alert(
+"الصورة كبيرة جداً حتى بعد الضغط.\nيرجى اختيار صورة أصغر من 1 ميجابايت."
+);
+
+reject();
+
+return;
+
+}
+
+resolve(
+compressed
+);
+
+};
+
+img.src =
+e.target.result;
+
+};
 
 reader.readAsDataURL(
 imageFile
