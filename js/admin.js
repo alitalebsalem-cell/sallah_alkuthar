@@ -43,7 +43,6 @@ renderProducts(allProducts);
 updateStats();
 
 }
-
 /* =========================
 RENDER PRODUCTS
 ========================= */
@@ -79,19 +78,29 @@ p => p.category === "منظفات"
 ).length;
 
 }
+
 function renderProducts(products){
 
 productsTable.innerHTML = "";
 
 products.forEach(product=>{
 
+const image =
+
+product.image &&
+product.image.trim() !== ""
+
+? product.image
+
+: "images/noimg.jpg";
+
 productsTable.innerHTML += `
 
 <div class="admin-product">
 
 <img
-src="${product.image}"
-onerror="this.src='https://via.placeholder.com/120'">
+src="${image}"
+onerror="this.src='images/noimg.jpg'">
 
 <div class="admin-info">
 
@@ -128,6 +137,40 @@ onclick="deleteProduct('${product.id}')">
 });
 
 }
+
+/* =========================
+IMAGE PICKER
+========================= */
+
+document
+.getElementById("imageFile")
+?.addEventListener(
+"change",
+function(){
+
+const file =
+this.files[0];
+
+if(!file) return;
+
+const reader =
+new FileReader();
+
+reader.onload =
+function(e){
+
+document.getElementById(
+"previewImage"
+).src =
+e.target.result;
+
+};
+
+reader.readAsDataURL(file);
+
+}
+);
+
 /* =========================
 CLEAR FORM
 ========================= */
@@ -142,8 +185,19 @@ document.getElementById("code").value = "";
 
 document.getElementById("image").value = "";
 
-document.getElementById("previewImage").src =
-"https://via.placeholder.com/150";
+const imageFile =
+document.getElementById("imageFile");
+
+if(imageFile){
+
+imageFile.value = "";
+
+}
+
+document.getElementById(
+"previewImage"
+).src =
+"images/noimg.jpg";
 
 }
 
@@ -153,8 +207,47 @@ SAVE PRODUCT
 
 document
 .getElementById("save")
-.addEventListener("click",
+.addEventListener(
+"click",
 async ()=>{
+
+let imageUrl =
+document.getElementById(
+"image"
+).value.trim();
+
+const imageFile =
+document.getElementById(
+"imageFile"
+)?.files[0];
+
+if(imageFile){
+
+imageUrl =
+await new Promise(resolve=>{
+
+const reader =
+new FileReader();
+
+reader.onload =
+e=>resolve(
+e.target.result
+);
+
+reader.readAsDataURL(
+imageFile
+);
+
+});
+
+}
+
+if(!imageUrl){
+
+imageUrl =
+"images/noimg.jpg";
+
+}
 
 const product = {
 
@@ -171,7 +264,7 @@ category:
 document.getElementById("category").value,
 
 image:
-document.getElementById("image").value,
+imageUrl,
 
 createdAt:
 Date.now()
@@ -181,8 +274,7 @@ Date.now()
 if(
 
 !product.name ||
-!product.code ||
-!product.image
+!product.code
 
 ){
 
@@ -285,22 +377,28 @@ if(!product) return;
 editingId = id;
 
 document.getElementById("name").value =
-product.name;
+product.name || "";
 
 document.getElementById("description").value =
-product.description;
+product.description || "";
 
 document.getElementById("code").value =
-product.code;
+product.code || "";
 
 document.getElementById("category").value =
-product.category;
+product.category || "";
 
 document.getElementById("image").value =
-product.image;
+product.image || "";
 
 document.getElementById("previewImage").src =
-product.image;
+
+product.image &&
+product.image.trim() !== ""
+
+? product.image
+
+: "images/noimg.jpg";
 
 window.scrollTo({
 
@@ -311,7 +409,6 @@ behavior:"smooth"
 });
 
 };
-
 /* =========================
 SEARCH
 ========================= */
