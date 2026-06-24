@@ -285,7 +285,8 @@ alert(
 return;
 
 }
-
+console.log("editingId =", editingId);
+console.log(product);
 if(editingId){
 
 await updateDoc(
