@@ -65,19 +65,39 @@ style="display:none">
 
 
 <input
+type="file"
+id="excelFile"
+accept=".xlsx,.csv"
+style="display:none">
+
+<input
 id="image"
 placeholder="Image URL / رابط الصورة">
-<button id="importExcel">
+
+<label
+for="imageFile"
+class="upload-btn">
+
+🖼️ إدراج من معرض الصور
+<br>
+Insert From Gallery
+
+</label>
+
 <input
 type="file"
 id="imageFile"
 accept="image/*"
-style="margin-top:10px;">
+style="display:none">
+
+<button id="importExcel">
+
 📥 Import Excel
 استيراد منتجات من ملف إكسل
 
 </button>
-  <button id="exportExcel">
+
+<button id="exportExcel">
 
 📤 Export Excel
 تصدير المنتجات كامله الى ملف إكسل
