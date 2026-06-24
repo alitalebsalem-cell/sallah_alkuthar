@@ -202,9 +202,17 @@ isNaN(qty) || qty < 1
 renderCart();
 
 };
-
 window.deleteItem =
 function(id){
+
+cart =
+cart.filter(
+p => p.id !== id
+);
+
+renderCart();
+
+};
 
 
 /* ==========================
