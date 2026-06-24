@@ -181,9 +181,8 @@ renderCart();
 
 };
 
-window.deleteItem =
-function(id){
-window.updateQty = function(id,value){
+window.updateQty =
+function(id,value){
 
 const item =
 cart.find(
@@ -195,18 +194,22 @@ if(!item) return;
 const qty =
 parseInt(value);
 
-if(
-isNaN(qty) ||
-qty < 1
-){
+item.qty =
+isNaN(qty) || qty < 1
+? 1
+: qty;
 
-item.qty = 1;
+renderCart();
 
-}else{
+};
 
-item.qty = qty;
+window.deleteItem =
+function(id){
 
-}
+cart =
+cart.filter(
+p => p.id !== id
+);
 
 renderCart();
 
