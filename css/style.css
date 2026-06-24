@@ -1319,7 +1319,6 @@ color:#333;
 font-weight:bold;
 
 }
-
 /* الجوال */
 
 @media(max-width:768px){
@@ -1327,6 +1326,16 @@ font-weight:bold;
 .cart-page{
 
 grid-template-columns:1fr;
+
+}
+
+#cartItems{
+
+display:grid;
+
+grid-template-columns:1fr;
+
+gap:15px;
 
 }
 
@@ -1348,6 +1357,8 @@ box-shadow:0 2px 10px rgba(0,0,0,.08);
 
 min-height:140px;
 
+width:100%;
+
 }
 
 .cart-summary{
@@ -1357,37 +1368,90 @@ position:static;
 }
 
 }
-.upload-btn{
-display:block;
-width:100%;
-padding:14px;
-background:#0a8f5a;
-color:#fff;
-border-radius:8px;
-cursor:pointer;
-font-weight:bold;
-text-align:center;
-margin:10px 0;
-}
 
-.upload-btn:hover{
-opacity:.9;
+/* الكمبيوتر */
+
+#cartItems{
+
+display:grid;
+
+grid-template-columns:
+repeat(auto-fill,minmax(450px,1fr));
+
+gap:20px;
+
+align-items:start;
+
 }
 
 .cart-item{
+
+display:flex;
+
+align-items:center;
+
+justify-content:space-between;
+
+background:#fff;
+
+padding:15px;
+
+border-radius:15px;
+
+box-shadow:0 2px 10px rgba(0,0,0,.08);
+
+min-height:140px;
+
 width:100%;
+
+box-sizing:border-box;
+
 }
+
+.upload-btn{
+
+display:block;
+
+width:100%;
+
+padding:14px;
+
+background:#0a8f5a;
+
+color:#fff;
+
+border-radius:8px;
+
+cursor:pointer;
+
+font-weight:bold;
+
+text-align:center;
+
+margin:10px 0;
+
+}
+
+.upload-btn:hover{
+
+opacity:.9;
+
+}
+
 .qty-input{
 
-width:60px;
-height:36px;
+width:70px;
+
+height:38px;
 
 text-align:center;
 
 border:1px solid #ddd;
+
 border-radius:8px;
 
 font-size:16px;
+
 font-weight:bold;
 
 }
