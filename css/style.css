@@ -1342,3 +1342,19 @@ position:static;
 }
 
 }
+.upload-btn{
+display:block;
+width:100%;
+padding:14px;
+background:#0a8f5a;
+color:#fff;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+text-align:center;
+margin:10px 0;
+}
+
+.upload-btn:hover{
+opacity:.9;
+}
