@@ -97,9 +97,12 @@ onclick="decreaseQty('${item.id}')">
 ➖
 </button>
 
-<span>
-${item.qty || 1}
-</span>
+<input
+type="number"
+min="1"
+value="${item.qty || 1}"
+class="qty-input"
+onchange="updateQty('${item.id}',this.value)">
 
 <button
 onclick="increaseQty('${item.id}')">
@@ -180,7 +183,34 @@ renderCart();
 
 window.deleteItem =
 function(id){
+window.updateQty = function(id,value){
 
+const item =
+cart.find(
+p => p.id === id
+);
+
+if(!item) return;
+
+const qty =
+parseInt(value);
+
+if(
+isNaN(qty) ||
+qty < 1
+){
+
+item.qty = 1;
+
+}else{
+
+item.qty = qty;
+
+}
+
+renderCart();
+
+};
 cart =
 cart.filter(
 p => p.id !== id
