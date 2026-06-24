@@ -76,67 +76,14 @@ document.getElementById(
 allProducts.filter(
 p => p.category === "منظفات"
 ).length;
+
+document.getElementById(
+"supCount"
+).textContent =
+
 allProducts.filter(
 p => p.category === "مستلزمات"
 ).length;
-}
-
-function renderProducts(products){
-
-productsTable.innerHTML = "";
-
-products.forEach(product=>{
-
-const image =
-
-product.image &&
-product.image.trim() !== ""
-
-? product.image
-
-: "images/noimg.jpg";
-
-productsTable.innerHTML += `
-
-<div class="admin-product">
-
-<img
-src="${image}"
-onerror="this.src='images/noimg.jpg'">
-
-<div class="admin-info">
-
-<h3>${product.name}</h3>
-
-<p>${product.description || ""}</p>
-
-<p>SKU / ${product.code}</p>
-
-<p>${product.category}</p>
-
-</div>
-
-<div class="admin-actions">
-
-<button
-class="edit-btn"
-onclick="editProduct('${product.id}')">
-✏️ Edit
-</button>
-
-<button
-class="delete-btn"
-onclick="deleteProduct('${product.id}')">
-🗑 Delete
-</button>
-
-</div>
-
-</div>
-
-`;
-
-});
 
 }
 
