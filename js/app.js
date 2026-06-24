@@ -132,8 +132,21 @@ existing.qty++;
 }else{
 
 cart.push({
-...product,
-qty:1
+
+id: product.id,
+
+name: product.name || "",
+
+description: product.description || "",
+
+code: product.code || "",
+
+category: product.category || "",
+
+image: product.image || "images/noimg.jpg",
+
+qty: 1
+
 });
 
 }
