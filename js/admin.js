@@ -76,7 +76,9 @@ document.getElementById(
 allProducts.filter(
 p => p.category === "منظفات"
 ).length;
-
+allProducts.filter(
+p => p.category === "مستلزمات"
+).length;
 }
 
 function renderProducts(products){
