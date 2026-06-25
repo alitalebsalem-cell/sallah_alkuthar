@@ -761,7 +761,6 @@ alert(
 loadProducts();
 
 });
-
 /* =========================
 EXPORT EXCEL
 ========================= */
@@ -786,10 +785,7 @@ code:
 product.code || "",
 
 category:
-product.category || "",
-
-image:
-product.image || ""
+product.category || ""
 
 }));
 
@@ -813,7 +809,6 @@ workbook,
 );
 
 });
-
 /* =========================
 START
 ========================= */
