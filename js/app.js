@@ -1,121 +1,257 @@
 import { db } from "./firebase.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-const NEW_CATEGORIES = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","طلبات المعمل"];
-const CATEGORY_ICONS = {"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","طلبات المعمل":"📋"};
+const SESSION_KEY = "sallah_customer_session";
+const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
+
+const CATEGORY_PERMISSIONS = {
+  "حساب معمل": ["قسم المعمل","قسم المستودع","طلبات المعمل"],
+  "حساب فرع": ["قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]
+};
 
 let allProducts = [];
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
-let currentCategory = "all";
+let currentCustomer = null;
+let currentCustomerPin = "";
+let customersCache = [];
 let productQuantities = {};
+let currentCategory = null;
 
 const productsDiv = document.getElementById("products");
 const searchInput = document.getElementById("search");
 const cartCount = document.getElementById("cartCount");
 const cartIconLink = document.getElementById("cartIconLink");
-
-const SESSION_KEY = "sallah_customer_session";
-const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
-
-let currentCustomer = null;
-let currentCustomerPin = "";
-let customersCache = [];
+const categoriesBar = document.getElementById("categoriesBar");
+const productsMain = document.getElementById("productsMain");
+const loginRequiredOverlay = document.getElementById("loginRequiredOverlay");
+const loginRequiredBtn = document.getElementById("loginRequiredBtn");
 
 function escapeHTML(value){
   return String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 }
+function getItemQty(item){ const qty = parseInt(item.qty,10); return isNaN(qty) || qty < 1 ? 1 : qty; }
+function getProductImage(p){ if(p.image && typeof p.image === "string" && p.image.trim() !== "") return p.image; return "images/noimg.jpg"; }
+function getCartTotalQty(){ return cart.reduce((sum,item) => sum + getItemQty(item), 0); }
 
-function getItemQty(item){
-  const qty = parseInt(item.qty,10);
-  return isNaN(qty) || qty < 1 ? 1 : qty;
-}
-
-function getProductImage(product){
-  if(product.image && typeof product.image === "string" && product.image.trim() !== "") return product.image;
-  return "images/noimg.jpg";
-}
-
-function getCartTotalQty(){
-  return cart.reduce((sum,item)=>sum + getItemQty(item),0);
-}
-
-function findProduct(id){
-  return allProducts.find(product=>String(product.id) === String(id));
-}
-
-function updateCartCount(){
-  if(cartCount) cartCount.textContent = getCartTotalQty();
-  localStorage.setItem("cart",JSON.stringify(cart));
-}
-
-function addToCart(id,quantity){
-  const product = findProduct(id);
-  if(!product) return;
-  const addQty = parseInt(quantity,10);
-  const finalQty = isNaN(addQty) || addQty < 1 ? 1 : addQty;
-  const existing = cart.find(item=>String(item.id) === String(id));
-  if(existing){
-    existing.qty = getItemQty(existing) + finalQty;
-  }else{
-    cart.push({
-      id: product.id,
-      name: product.name || "",
-      description: product.description || "",
-      code: product.code || "",
-      category: product.category || "",
-      image: product.image || "images/noimg.jpg",
-      qty: finalQty
-    });
+/* ========================
+   LANGUAGE TOGGLE
+   ======================== */
+const LANG_KEY = "sallah_lang";
+const translations = {
+  ar: {
+    searchPlaceholder: "🔍 ابحث عن منتج...",
+    login: "🔑 دخول",
+    loginTitle: "تسجيل الدخول",
+    loginSubtitle: "اختر نوع الحساب والاسم وأدخل كلمة المرور",
+    accountType: "-- نوع الحساب --",
+    selectName: "-- اختر الاسم --",
+    pinPlaceholder: "كلمة المرور (4 أرقام)",
+    submit: "دخول",
+    name: "الاسم:",
+    type: "النوع:",
+    pin: "PIN:",
+    show: "إظهار",
+    hide: "إخفاء",
+    changePin: "🔑 تغيير كلمة المرور",
+    myInvoices: "📄 فواتيري",
+    logout: "🚪 تسجيل الخروج",
+    logoutConfirm: "هل تريد تسجيل الخروج؟",
+    welcomeMsg: "مرحباً بك في سمسم",
+    welcomeSub: "سجّل دخولك للوصول إلى المنتجات",
+    loginBtnOverlay: "🔑 تسجيل الدخول",
+    addedToCart: "تمت الإضافة",
+    addToCart: "إضافة إلى السلة",
+    noProducts: "لا توجد منتجات في هذا القسم",
+    loading: "جاري تحميل المنتجات...",
+    allCategories: "الكل",
+  },
+  en: {
+    searchPlaceholder: "🔍 Search products...",
+    login: "🔑 Login",
+    loginTitle: "Login",
+    loginSubtitle: "Select account type, name and enter PIN",
+    accountType: "-- Account Type --",
+    selectName: "-- Select Name --",
+    pinPlaceholder: "PIN (4 digits)",
+    submit: "Login",
+    name: "Name:",
+    type: "Type:",
+    pin: "PIN:",
+    show: "Show",
+    hide: "Hide",
+    changePin: "🔑 Change PIN",
+    myInvoices: "📄 My Invoices",
+    logout: "🚪 Logout",
+    logoutConfirm: "Are you sure you want to logout?",
+    welcomeMsg: "Welcome to SimSim",
+    welcomeSub: "Login to access products",
+    loginBtnOverlay: "🔑 Login",
+    addedToCart: "Added!",
+    addToCart: "Add to Cart",
+    noProducts: "No products in this section",
+    loading: "Loading products...",
+    allCategories: "All",
   }
-  updateCartCount();
-  if(cartIconLink){cartIconLink.classList.add("bounce");setTimeout(()=>cartIconLink.classList.remove("bounce"),400);}
+};
+function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
+function t(key){ return translations[getLang()][key] || key; }
+function applyLang(){
+  const lang = getLang();
+  const btn = document.getElementById("langToggle");
+  if(btn) btn.textContent = lang === "ar" ? "EN" : "عربي";
+  if(searchInput) searchInput.placeholder = t("searchPlaceholder");
+  const loginBtnEl = document.getElementById("loginBtn");
+  if(loginBtnEl) loginBtnEl.innerHTML = t("login");
+  if(loginRequiredBtn) loginRequiredBtn.textContent = t("loginBtnOverlay");
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if(el.tagName === "INPUT" || el.tagName === "SELECT") el.placeholder = t(key);
+    else el.textContent = t(key);
+  });
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+}
+document.getElementById("langToggle")?.addEventListener("click", () => {
+  const next = getLang() === "ar" ? "en" : "ar";
+  localStorage.setItem(LANG_KEY, next);
+  applyLang();
+});
+
+/* ========================
+   AUTH / SESSION
+   ======================== */
+function loadSession(){
+  const stored = localStorage.getItem(SESSION_KEY);
+  if(stored){
+    try{
+      const data = JSON.parse(stored);
+      currentCustomer = { id:data.id, name:data.name, accountType:data.accountType||"", permissions:data.permissions||{} };
+      currentCustomerPin = data.pin || "";
+      updateAuthUI();
+      showStore();
+    }catch(e){ currentCustomer = null; }
+  }
+}
+function saveSession(customer, pin){
+  currentCustomer = customer;
+  currentCustomerPin = pin || "";
+  const sessionData = { id:customer.id, name:customer.name, pin:currentCustomerPin, accountType:customer.accountType||"", permissions:customer.permissions||{} };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+  updateAuthUI();
+  showStore();
+}
+function clearSession(){
+  currentCustomer = null;
+  currentCustomerPin = "";
+  localStorage.removeItem(SESSION_KEY);
+  updateAuthUI();
+  hideStore();
+}
+function updateAuthUI(){
+  const loginBtnEl = document.getElementById("loginBtn");
+  const userProfileEl = document.getElementById("userProfile");
+  if(currentCustomer){
+    if(loginBtnEl) loginBtnEl.style.display = "none";
+    if(userProfileEl) userProfileEl.style.display = "inline-flex";
+    document.getElementById("loggedInUser").textContent = currentCustomer.name;
+    document.getElementById("profileName").textContent = currentCustomer.name;
+    document.getElementById("profileType").textContent = currentCustomer.accountType || "غير محدد";
+    document.getElementById("profileAvatar").textContent = (currentCustomer.name || "?")[0];
+  }else{
+    if(loginBtnEl) loginBtnEl.style.display = "inline-flex";
+    if(userProfileEl) userProfileEl.style.display = "none";
+  }
 }
 
-function showFeedback(btn){
-  if(!btn) return;
-  const originalHTML = btn.innerHTML;
-  btn.classList.add("is-added");
-  btn.innerHTML = '<span class="cart-btn-icon">✓</span><span>تمت الإضافة</span>';
-  setTimeout(()=>{btn.classList.remove("is-added");btn.innerHTML=originalHTML;},1200);
+/* ========================
+   SHOW/HIDE STORE
+   ======================== */
+function showStore(){
+  if(loginRequiredOverlay) loginRequiredOverlay.classList.add("hidden");
+  if(categoriesBar) categoriesBar.style.display = "";
+  if(productsMain) productsMain.style.display = "";
+  if(searchInput) searchInput.disabled = false;
+  applyPermissions();
+  const allowed = getAllowedCategories();
+  if(!currentCategory || !allowed.includes(currentCategory)){
+    currentCategory = allowed.length ? allowed[0] : null;
+  }
+  setActiveCategory();
+  renderProducts(getFilteredProducts());
+}
+function hideStore(){
+  if(loginRequiredOverlay) loginRequiredOverlay.classList.remove("hidden");
+  if(categoriesBar) categoriesBar.style.display = "none";
+  if(productsMain) productsMain.style.display = "none";
+  if(searchInput) searchInput.disabled = true;
 }
 
-/* LOAD PRODUCTS */
-productsDiv.innerHTML = '<div style="text-align:center;padding:40px;color:var(--secondary);">جاري تحميل المنتجات...</div>';
+/* ========================
+   PERMISSIONS
+   ======================== */
+function getAllowedCategories(){
+  if(!currentCustomer) return [];
+  const accType = currentCustomer.accountType || "";
+  return CATEGORY_PERMISSIONS[accType] || ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","طلبات المعمل"];
+}
+function applyPermissions(){
+  const allowed = getAllowedCategories();
+  document.querySelectorAll(".cat-card").forEach(card => {
+    const cat = card.dataset.cat;
+    if(allowed.includes(cat)){
+      card.style.display = "";
+      card.style.opacity = "1";
+      card.style.pointerEvents = "auto";
+    }else{
+      card.style.display = "none";
+      card.style.opacity = "0.3";
+      card.style.pointerEvents = "none";
+    }
+  });
+}
+function setActiveCategory(){
+  document.querySelectorAll(".cat-card").forEach(c => {
+    c.classList.toggle("active", c.dataset.cat === currentCategory);
+  });
+}
+
+/* ========================
+   PRODUCTS
+   ======================== */
+productsDiv.innerHTML = `<div style="text-align:center;padding:40px;color:var(--secondary);">${t("loading")}</div>`;
+
 async function loadProducts(){
   const querySnapshot = await getDocs(collection(db,"products"));
   allProducts = [];
-  querySnapshot.forEach(doc=>{
-    allProducts.push({id:doc.id,...doc.data()});
-  });
-  renderProducts(getFilteredProducts());
+  querySnapshot.forEach(doc => allProducts.push({id:doc.id,...doc.data()}));
+  if(currentCustomer) renderProducts(getFilteredProducts());
 }
 
 function getFilteredProducts(){
-  if(currentCategory === "all") return allProducts;
+  if(!currentCategory) return allProducts;
   return allProducts.filter(p => (p.category || "") === currentCategory);
 }
 
-/* RENDER PRODUCTS */
 function renderProducts(products){
   if(!productsDiv) return;
   productsDiv.innerHTML = "";
   if(products.length === 0){
-    productsDiv.innerHTML = '<div style="text-align:center;padding:40px;color:var(--secondary);grid-column:1/-1;">لا توجد منتجات في هذا القسم</div>';
+    productsDiv.innerHTML = `<div style="text-align:center;padding:40px;color:var(--secondary);grid-column:1/-1;">${t("noProducts")}</div>`;
     return;
   }
-  products.forEach(product=>{
+  products.forEach(product => {
     const pid = product.id;
     if(!productQuantities[pid]) productQuantities[pid] = 1;
     const qty = productQuantities[pid];
     productsDiv.insertAdjacentHTML("beforeend",`
       <div class="product" style="animation-delay:${Math.random()*.2}s">
         <div class="product-img-wrap">
-          <img src="${escapeHTML(getProductImage(product))}" alt="${escapeHTML(product.name || "")}" loading="lazy" decoding="async" onerror="this.src='images/noimg.jpg'">
+          <img src="${escapeHTML(getProductImage(product))}" alt="${escapeHTML(product.name||"")}" loading="lazy" decoding="async" onerror="this.src='images/noimg.jpg'">
         </div>
         <div class="product-info">
-          <h3>${escapeHTML(product.name || "")}</h3>
-          <p class="product-desc">${escapeHTML(product.description || "")}</p>
-          <p class="product-sku">SKU: ${escapeHTML(product.code || "")}</p>
+          <h3>${escapeHTML(product.name||"")}</h3>
+          <p class="product-desc">${escapeHTML(product.description||"")}</p>
+          <p class="product-sku">SKU: ${escapeHTML(product.code||"")}</p>
         </div>
         <div class="product-qty-row">
           <button type="button" data-action="dec" data-id="${escapeHTML(pid)}">−</button>
@@ -124,30 +260,28 @@ function renderProducts(products){
         </div>
         <button class="product-cart-btn" data-id="${escapeHTML(pid)}" type="button">
           <span class="cart-btn-icon">🛒</span>
-          <span>إضافة إلى السلة</span>
+          <span data-i18n="addToCart">${t("addToCart")}</span>
         </button>
       </div>
     `);
   });
 }
 
-/* PRODUCT ACTIONS DELEGATION */
 if(productsDiv){
-  productsDiv.addEventListener("click",event=>{
+  productsDiv.addEventListener("click", event => {
     const incBtn = event.target.closest('[data-action="inc"]');
     const decBtn = event.target.closest('[data-action="dec"]');
     const cartBtn = event.target.closest(".product-cart-btn");
-
     if(incBtn){
       const id = incBtn.dataset.id;
-      productQuantities[id] = (productQuantities[id] || 1) + 1;
+      productQuantities[id] = (productQuantities[id]||1)+1;
       const el = document.getElementById("qty-"+id);
       if(el) el.textContent = productQuantities[id];
       return;
     }
     if(decBtn){
       const id = decBtn.dataset.id;
-      productQuantities[id] = Math.max(1,(productQuantities[id] || 1) - 1);
+      productQuantities[id] = Math.max(1,(productQuantities[id]||1)-1);
       const el = document.getElementById("qty-"+id);
       if(el) el.textContent = productQuantities[id];
       return;
@@ -155,36 +289,46 @@ if(productsDiv){
     if(cartBtn){
       const id = cartBtn.dataset.id;
       const qty = productQuantities[id] || 1;
-      addToCart(id,qty);
-      showFeedback(cartBtn);
+      addToCart(id, qty);
+      cartBtn.classList.add("is-added");
+      cartBtn.querySelector("span:last-child").textContent = t("addedToCart");
+      setTimeout(() => { cartBtn.classList.remove("is-added"); cartBtn.querySelector("span:last-child").textContent = t("addToCart"); }, 1200);
       return;
     }
   });
 }
 
-/* SEARCH */
-if(searchInput){
-  searchInput.addEventListener("input",()=>{
-    const value = searchInput.value.trim().toLowerCase();
-    const filtered = getFilteredProducts().filter(product=>{
-      const productText = `${product.name || ""} ${product.description || ""} ${product.code || ""} ${product.category || ""}`.toLowerCase();
-      return productText.includes(value);
-    });
-    renderProducts(filtered);
-  });
+/* ========================
+   CART
+   ======================== */
+function addToCart(id, quantity){
+  const product = allProducts.find(p => String(p.id) === String(id));
+  if(!product) return;
+  const addQty = parseInt(quantity,10);
+  const finalQty = isNaN(addQty) || addQty < 1 ? 1 : addQty;
+  const existing = cart.find(item => String(item.id) === String(id));
+  if(existing){ existing.qty = getItemQty(existing) + finalQty; }
+  else{ cart.push({ id:product.id, name:product.name||"", description:product.description||"", code:product.code||"", category:product.category||"", image:product.image||"images/noimg.jpg", qty:finalQty }); }
+  updateCartCount();
+  if(cartIconLink){ cartIconLink.classList.add("bounce"); setTimeout(()=>cartIconLink.classList.remove("bounce"),400); }
+}
+function updateCartCount(){
+  if(cartCount) cartCount.textContent = getCartTotalQty();
+  localStorage.setItem("cart",JSON.stringify(cart));
 }
 
-/* CATEGORY FILTER */
-document.querySelectorAll(".cat-card").forEach(card=>{
-  card.addEventListener("click",()=>{
-    document.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("active"));
-    card.classList.add("active");
+/* ========================
+   CATEGORY FILTER
+   ======================== */
+document.querySelectorAll(".cat-card").forEach(card => {
+  card.addEventListener("click", () => {
     currentCategory = card.dataset.cat;
+    setActiveCategory();
     const value = searchInput ? searchInput.value.trim().toLowerCase() : "";
     let filtered = getFilteredProducts();
     if(value){
-      filtered = filtered.filter(p=>{
-        const t = `${p.name || ""} ${p.description || ""} ${p.code || ""}`.toLowerCase();
+      filtered = filtered.filter(p => {
+        const t = `${p.name||""} ${p.description||""} ${p.code||""}`.toLowerCase();
         return t.includes(value);
       });
     }
@@ -192,87 +336,88 @@ document.querySelectorAll(".cat-card").forEach(card=>{
   });
 });
 
-/* AUTH / SESSION */
-function loadSession(){
-  const stored = localStorage.getItem(SESSION_KEY);
-  if(stored){
-    try{
-      const data = JSON.parse(stored);
-      currentCustomer = {id:data.id,name:data.name,accountType:data.accountType||"",permissions:data.permissions||{}};
-      currentCustomerPin = data.pin || "";
-      updateAuthUI();
-    }catch(e){currentCustomer=null;}
-  }
+/* ========================
+   SEARCH
+   ======================== */
+if(searchInput){
+  searchInput.addEventListener("input", () => {
+    const value = searchInput.value.trim().toLowerCase();
+    const filtered = getFilteredProducts().filter(p => {
+      const productText = `${p.name||""} ${p.description||""} ${p.code||""} ${p.category||""}`.toLowerCase();
+      return productText.includes(value);
+    });
+    renderProducts(filtered);
+  });
 }
 
-function saveSession(customer,pin){
-  currentCustomer = customer;
-  currentCustomerPin = pin || "";
-  const sessionData = {id:customer.id,name:customer.name,pin:currentCustomerPin,accountType:customer.accountType||"",permissions:customer.permissions||{}};
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-  updateAuthUI();
+/* ========================
+   LOGIN MODAL (FIXED: fetches from Firestore)
+   ======================== */
+const loginModal = document.getElementById("loginModal");
+const loginModalClose = document.getElementById("loginModalClose");
+const loginAccountType = document.getElementById("loginAccountType");
+const loginNameInput = document.getElementById("loginName");
+const loginPinInput = document.getElementById("loginPin");
+const loginSubmitBtn = document.getElementById("loginSubmit");
+const loginError = document.getElementById("loginError");
+
+function openLoginModal(){
+  if(!loginModal) return;
+  loginModal.hidden = false;
+  loginModal.setAttribute("aria-hidden","false");
+  if(loginAccountType) loginAccountType.value = "";
+  if(loginNameInput){ loginNameInput.style.display = "none"; loginNameInput.value = ""; }
+  if(loginPinInput){ loginPinInput.style.display = "none"; loginPinInput.value = ""; }
+  if(loginSubmitBtn) loginSubmitBtn.style.display = "none";
+  if(loginError) loginError.textContent = "";
+  requestAnimationFrame(() => loginModal.classList.add("active"));
+  loadCustomersFromFirestore();
 }
 
-function clearSession(){
-  currentCustomer = null;
-  currentCustomerPin = "";
-  localStorage.removeItem(SESSION_KEY);
-  updateAuthUI();
+function closeLoginModal(){
+  if(!loginModal) return;
+  loginModal.classList.remove("active");
+  loginModal.setAttribute("aria-hidden","true");
+  setTimeout(() => { loginModal.hidden = true; }, 200);
 }
 
-function updateAuthUI(){
-  const loginBtn = document.getElementById("loginBtn");
-  const userProfile = document.getElementById("userProfile");
-  const loggedInUser = document.getElementById("loggedInUser");
-  const profileName = document.getElementById("profileName");
-  const profileType = document.getElementById("profileType");
-  const profileAvatar = document.getElementById("profileAvatar");
-  if(currentCustomer){
-    if(loginBtn) loginBtn.style.display = "none";
-    if(userProfile) userProfile.style.display = "inline-flex";
-    if(loggedInUser) loggedInUser.textContent = currentCustomer.name;
-    if(profileName) profileName.textContent = currentCustomer.name;
-    if(profileType) profileType.textContent = currentCustomer.accountType || "غير محدد";
-    if(profileAvatar) profileAvatar.textContent = (currentCustomer.name || "?")[0];
-  }else{
-    if(loginBtn) loginBtn.style.display = "inline-flex";
-    if(userProfile) userProfile.style.display = "none";
-  }
-}
-
-/* LOCAL CUSTOMERS */
-function getLocalCustomers(){
-  try{return JSON.parse(localStorage.getItem(CUSTOMERS_LOCAL_KEY)) || [];}catch(e){return [];}
-}
-function saveLocalCustomers(arr){localStorage.setItem(CUSTOMERS_LOCAL_KEY,JSON.stringify(arr));}
-
-async function loadCustomersCache(){
+async function loadCustomersFromFirestore(){
   customersCache = getLocalCustomers();
   try{
     const snapshot = await getDocs(collection(db, "customers"));
-    const firestoreCustomers = snapshot.docs.map(d=>({id:d.id,...d.data()}));
-    const localIds = new Set(customersCache.map(c=>c.id));
-    const localNames = new Set(customersCache.map(c=>String(c.name||"").trim().toLowerCase()));
+    const firestoreCustomers = snapshot.docs.map(d => ({ id:d.id, ...d.data() }));
+    const localIds = new Set(customersCache.map(c => c.id));
+    const localNames = new Set(customersCache.map(c => String(c.name||"").trim().toLowerCase()));
     let changed = false;
-    firestoreCustomers.forEach(fc=>{
-      if(!localIds.has(fc.id) && !localNames.has(String(fc.name||"").trim().toLowerCase())){
-        customersCache.push(fc);localIds.add(fc.id);localNames.add(String(fc.name||"").trim().toLowerCase());changed=true;
+    firestoreCustomers.forEach(fc => {
+      const fcName = String(fc.name||"").trim().toLowerCase();
+      const existingById = customersCache.find(c => c.id === fc.id);
+      const existingByName = customersCache.find(c => String(c.name||"").trim().toLowerCase() === fcName);
+      if(existingById){
+        Object.assign(existingById, fc);
+      }else if(existingByName){
+        Object.assign(existingByName, fc);
+      }else{
+        customersCache.push(fc);
+        changed = true;
       }
     });
-    if(changed) saveLocalCustomers(customersCache);
-  }catch(e){}
+    saveLocalCustomers(customersCache);
+  }catch(e){
+    console.warn("Firestore sync failed:", e);
+  }
 }
 
+function getLocalCustomers(){ try{ return JSON.parse(localStorage.getItem(CUSTOMERS_LOCAL_KEY)) || []; }catch(e){ return []; } }
+function saveLocalCustomers(arr){ localStorage.setItem(CUSTOMERS_LOCAL_KEY, JSON.stringify(arr)); }
+
 function populateCustomerDropdown(accountType){
-  const loginNameInput = document.getElementById("loginName");
   if(!loginNameInput) return;
   loginNameInput.innerHTML = '<option value="">-- اختر الاسم --</option>';
   let filtered = customersCache;
-  if(accountType){
-    filtered = customersCache.filter(c => (c.accountType || "") === accountType);
-  }
-  const sorted = [...filtered].sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ar"));
-  sorted.forEach(c=>{
+  if(accountType) filtered = customersCache.filter(c => (c.accountType || "") === accountType);
+  const sorted = [...filtered].sort((a,b) => String(a.name||"").localeCompare(String(b.name||""), "ar"));
+  sorted.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c.name;
     opt.textContent = c.name;
@@ -280,157 +425,102 @@ function populateCustomerDropdown(accountType){
   });
 }
 
-/* LOGIN MODAL */
-function openLoginModal(){
-  const loginModal = document.getElementById("loginModal");
-  if(!loginModal) return;
-  if(!customersCache.length) loadCustomersCache();
-  loginModal.hidden = false;
-  loginModal.setAttribute("aria-hidden","false");
-  requestAnimationFrame(()=>loginModal.classList.add("active"));
-  const loginAccountType = document.getElementById("loginAccountType");
-  const loginNameInput = document.getElementById("loginName");
-  const loginPinInput = document.getElementById("loginPin");
-  const loginSubmit = document.getElementById("loginSubmit");
-  if(loginAccountType) loginAccountType.value = "";
-  if(loginNameInput){loginNameInput.style.display="none";loginNameInput.value="";}
-  if(loginPinInput){loginPinInput.style.display="none";loginPinInput.value="";}
-  if(loginSubmit) loginSubmit.style.display = "none";
-}
-function closeLoginModal(){
-  const loginModal = document.getElementById("loginModal");
-  if(!loginModal) return;
-  loginModal.classList.remove("active");
-  loginModal.setAttribute("aria-hidden","true");
-  setTimeout(()=>{loginModal.hidden=true;},200);
-}
-
-/* LOGIN EVENTS */
-document.getElementById("loginBtn")?.addEventListener("click",openLoginModal);
-document.getElementById("loginModalClose")?.addEventListener("click",closeLoginModal);
-document.getElementById("loginModal")?.addEventListener("click",e=>{if(e.target.id==="loginModal")closeLoginModal();});
-
-document.getElementById("loginAccountType")?.addEventListener("change",function(){
+loginAccountType?.addEventListener("change", function(){
   const val = this.value;
-  const loginNameInput = document.getElementById("loginName");
-  const loginPinInput = document.getElementById("loginPin");
-  const loginSubmit = document.getElementById("loginSubmit");
   if(val){
     populateCustomerDropdown(val);
     if(loginNameInput) loginNameInput.style.display = "block";
     if(loginPinInput) loginPinInput.style.display = "none";
-    if(loginSubmit) loginSubmit.style.display = "none";
+    if(loginSubmitBtn) loginSubmitBtn.style.display = "none";
   }else{
     if(loginNameInput) loginNameInput.style.display = "none";
     if(loginPinInput) loginPinInput.style.display = "none";
-    if(loginSubmit) loginSubmit.style.display = "none";
+    if(loginSubmitBtn) loginSubmitBtn.style.display = "none";
   }
 });
 
-document.getElementById("loginName")?.addEventListener("change",function(){
-  const loginPinInput = document.getElementById("loginPin");
-  const loginSubmit = document.getElementById("loginSubmit");
+loginNameInput?.addEventListener("change", function(){
   if(this.value){
     if(loginPinInput) loginPinInput.style.display = "block";
-    if(loginSubmit) loginSubmit.style.display = "block";
+    if(loginSubmitBtn) loginSubmitBtn.style.display = "block";
   }else{
     if(loginPinInput) loginPinInput.style.display = "none";
-    if(loginSubmit) loginSubmit.style.display = "none";
+    if(loginSubmitBtn) loginSubmitBtn.style.display = "none";
   }
 });
 
-document.getElementById("loginPin")?.addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("loginSubmit")?.click();});
+loginPinInput?.addEventListener("keydown", e => { if(e.key === "Enter") loginSubmitBtn?.click(); });
 
-document.getElementById("loginSubmit")?.addEventListener("click",async()=>{
-  const loginError = document.getElementById("loginError");
-  const loginSubmitBtn = document.getElementById("loginSubmit");
-  const loginNameInput = document.getElementById("loginName");
-  const loginPinInput = document.getElementById("loginPin");
-  const loginAccountType = document.getElementById("loginAccountType");
+loginSubmitBtn?.addEventListener("click", () => {
   if(loginError) loginError.textContent = "";
   const name = loginNameInput ? loginNameInput.value.trim() : "";
   const pin = loginPinInput ? loginPinInput.value.trim() : "";
   const accountType = loginAccountType ? loginAccountType.value : "";
-  if(!name){if(loginError)loginError.textContent="اختر الاسم";return;}
-  if(!pin || pin.length!==4){if(loginError)loginError.textContent="كلمة المرور 4 أرقام";return;}
-  if(!accountType){if(loginError)loginError.textContent="اختر نوع الحساب";return;}
-
-  loginSubmitBtn.disabled = true;
-  loginSubmitBtn.textContent = "جاري التحقق...";
-
+  if(!accountType){ loginError.textContent = "اختر نوع الحساب"; return; }
+  if(!name){ loginError.textContent = "اختر الاسم"; return; }
+  if(!pin || pin.length !== 4){ loginError.textContent = "كلمة المرور 4 أرقام"; return; }
   const trimmedName = name.trim().toLowerCase();
   const match = customersCache.find(c => String(c.name||"").trim().toLowerCase() === trimmedName);
-  if(!match){
-    if(loginError) loginError.textContent = "الحساب غير موجود";
-    loginSubmitBtn.disabled = false;
-    loginSubmitBtn.textContent = "دخول";
-    return;
-  }
+  if(!match){ loginError.textContent = "الحساب غير موجود"; return; }
   if(String(match.pin) === pin){
-    saveSession({id:match.id,name:match.name,accountType:match.accountType||accountType,permissions:match.permissions||{}},pin);
+    saveSession({ id:match.id, name:match.name, accountType:match.accountType || accountType, permissions:match.permissions||{} }, pin);
     closeLoginModal();
   }else{
-    if(loginError) loginError.textContent = "كلمة المرور خاطئة";
+    loginError.textContent = "كلمة المرور خاطئة";
   }
-  loginSubmitBtn.disabled = false;
-  loginSubmitBtn.textContent = "دخول";
 });
 
-/* PROFILE DROPDOWN */
+document.getElementById("loginBtn")?.addEventListener("click", openLoginModal);
+loginRequiredBtn?.addEventListener("click", openLoginModal);
+loginModalClose?.addEventListener("click", closeLoginModal);
+loginModal?.addEventListener("click", e => { if(e.target === loginModal) closeLoginModal(); });
+
+/* ========================
+   PROFILE
+   ======================== */
 const profileToggle = document.getElementById("profileToggle");
 const profileDropdown = document.getElementById("profileDropdown");
-const profileLogoutBtn = document.getElementById("profileLogoutBtn");
-const profileTogglePin = document.getElementById("profileTogglePin");
-const profileChangePinBtn = document.getElementById("profileChangePinBtn");
-const profileInvoicesBtn = document.getElementById("profileInvoicesBtn");
 
-profileToggle?.addEventListener("click",e=>{e.stopPropagation();profileDropdown?.classList.toggle("show");});
-document.addEventListener("click",e=>{if(profileDropdown&&profileDropdown.classList.contains("show")&&!profileDropdown.contains(e.target)&&e.target!==profileToggle)profileDropdown.classList.remove("show");});
+profileToggle?.addEventListener("click", e => { e.stopPropagation(); profileDropdown?.classList.toggle("show"); });
+document.addEventListener("click", e => { if(profileDropdown?.classList.contains("show") && !profileDropdown.contains(e.target) && e.target !== profileToggle) profileDropdown.classList.remove("show"); });
 
-profileLogoutBtn?.addEventListener("click",()=>{
+document.getElementById("profileLogoutBtn")?.addEventListener("click", () => {
   profileDropdown?.classList.remove("show");
-  if(confirm("هل تريد تسجيل الخروج؟")) clearSession();
+  if(confirm(t("logoutConfirm"))) clearSession();
 });
-
-profileTogglePin?.addEventListener("click",()=>{
-  const profilePin = document.getElementById("profilePin");
-  if(!profilePin) return;
-  if(profilePin.textContent === "****"){profilePin.textContent = currentCustomerPin || "N/A";profileTogglePin.textContent = "إخفاء";}
-  else{profilePin.textContent = "****";profileTogglePin.textContent = "إظهار";}
+document.getElementById("profileTogglePin")?.addEventListener("click", () => {
+  const el = document.getElementById("profilePin");
+  if(!el) return;
+  if(el.textContent === "****"){ el.textContent = currentCustomerPin || "N/A"; document.getElementById("profileTogglePin").textContent = t("hide"); }
+  else{ el.textContent = "****"; document.getElementById("profileTogglePin").textContent = t("show"); }
 });
-
-profileChangePinBtn?.addEventListener("click",async()=>{
+document.getElementById("profileChangePinBtn")?.addEventListener("click", async () => {
   profileDropdown?.classList.remove("show");
   const newPin = prompt("أدخل كلمة المرور الجديدة (4 أرقام):");
-  if(!newPin || !/^\d{4}$/.test(newPin)){alert("يجب أن تكون 4 أرقام");return;}
+  if(!newPin || !/^\d{4}$/.test(newPin)){ alert("يجب أن تكون 4 أرقام"); return; }
   currentCustomerPin = newPin;
-  const stored = JSON.parse(localStorage.getItem(SESSION_KEY)|| "{}");
+  const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
   stored.pin = newPin;
-  localStorage.setItem(SESSION_KEY,JSON.stringify(stored));
-  try{
-    const {doc:updateDocRef,updateDoc} = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
-    const {db:dbRef} = await import("./firebase.js");
-    await updateDoc(doc(dbRef,"customers",currentCustomer.id),{pin:newPin});
-  }catch(e){}
+  localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
+  try{ const {doc,updateDoc} = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"); const {db:d} = await import("./firebase.js"); await updateDoc(doc(d,"customers",currentCustomer.id),{pin:newPin}); }catch(e){}
   alert("تم تغيير كلمة المرور");
 });
-
-profileInvoicesBtn?.addEventListener("click",()=>{
+document.getElementById("profileInvoicesBtn")?.addEventListener("click", () => {
   profileDropdown?.classList.remove("show");
   openInvoicesModal();
 });
 
-/* INVOICES MODAL */
+/* ========================
+   INVOICES MODAL
+   ======================== */
 function openInvoicesModal(){
-  const invoicesModal = document.getElementById("invoicesModal");
-  const invoicesList = document.getElementById("invoicesList");
-  const invoicesSubtitle = document.getElementById("invoicesSubtitle");
-  if(!invoicesModal) return;
-  invoicesModal.hidden = false;
-  invoicesModal.setAttribute("aria-hidden","false");
-  if(invoicesList) invoicesList.innerHTML = '<div class="loading-text">جاري تحميل الفواتير...</div>';
-  if(invoicesSubtitle) invoicesSubtitle.textContent = `العميل: ${currentCustomer?.name || ""}`;
-  requestAnimationFrame(()=>invoicesModal.classList.add("active"));
+  const m = document.getElementById("invoicesModal");
+  if(!m) return;
+  m.hidden = false;
+  m.setAttribute("aria-hidden","false");
+  document.getElementById("invoicesList").innerHTML = '<div class="loading-text">جاري تحميل الفواتير...</div>';
+  document.getElementById("invoicesSubtitle").textContent = `العميل: ${currentCustomer?.name||""}`;
+  requestAnimationFrame(() => m.classList.add("active"));
   loadCustomerInvoices();
 }
 function closeInvoicesModal(){
@@ -438,45 +528,21 @@ function closeInvoicesModal(){
   if(!m) return;
   m.classList.remove("active");
   m.setAttribute("aria-hidden","true");
-  setTimeout(()=>{m.hidden=true;},200);
-}
-function openInvoiceDetailModal(inv){
-  const m = document.getElementById("invoiceDetailModal");
-  const c = document.getElementById("invoiceDetailContent");
-  if(!m||!c) return;
-  let html = `<h2 style="color:var(--dark);margin-bottom:12px;">فاتورة ${escapeHTML(inv.branchName||inv.invoiceNo||"")}</h2>`;
-  html += `<p style="color:var(--secondary);font-size:13px;margin-bottom:12px;">العميل: ${escapeHTML(inv.customerName||"")} | التاريخ: ${inv.date||""}</p>`;
-  if(inv.items && inv.items.length){
-    html += '<table style="width:100%;border-collapse:collapse;"><thead><tr style="background:var(--dark);color:#fff;"><th style="padding:8px;border:1px solid var(--dark);">#</th><th style="padding:8px;border:1px solid var(--dark);">المنتج</th><th style="padding:8px;border:1px solid var(--dark);">الكمية</th></tr></thead><tbody>';
-    inv.items.forEach((item,idx)=>{
-      html += `<tr><td style="padding:6px;border:1px solid rgba(199,178,153,.2);text-align:center;">${idx+1}</td><td style="padding:6px;border:1px solid rgba(199,178,153,.2);">${escapeHTML(item.name||"")}</td><td style="padding:6px;border:1px solid rgba(199,178,153,.2);text-align:center;">${getItemQty(item)}</td></tr>`;
-    });
-    html += '</tbody></table>';
-  }
-  html += `<div style="text-align:center;margin-top:14px;"><button onclick="document.getElementById('invoiceDetailModal').classList.remove('active');document.getElementById('invoiceDetailModal').setAttribute('aria-hidden','true');setTimeout(()=>{document.getElementById('invoiceDetailModal').hidden=true;},200);" style="padding:10px 24px;border:none;border-radius:10px;background:rgba(122,102,85,.1);color:var(--dark);font-weight:700;cursor:pointer;">إغلاق</button></div>`;
-  c.innerHTML = html;
-  m.hidden = false;
-  m.setAttribute("aria-hidden","false");
-  requestAnimationFrame(()=>m.classList.add("active"));
+  setTimeout(() => { m.hidden = true; }, 200);
 }
 
 async function loadCustomerInvoices(){
   if(!currentCustomer) return;
-  const {collection:col,query:q,where,orderBy,getDocs:gd} = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
-  const {db:d} = await import("./firebase.js");
-  const invoicesList = document.getElementById("invoicesList");
+  const list = document.getElementById("invoicesList");
   try{
+    const {collection:col,query:q,where,orderBy,getDocs:gd} = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
+    const {db:d} = await import("./firebase.js");
     let snapshot;
-    try{
-      const qq = q(col(d,"invoices"),where("customerId","==",currentCustomer.id),orderBy("createdAt","desc"));
-      snapshot = await gd(qq);
-    }catch(e){
-      const qq = q(col(d,"invoices"),where("customerId","==",currentCustomer.id));
-      snapshot = await gd(qq);
-    }
-    if(snapshot.empty){if(invoicesList)invoicesList.innerHTML='<div class="empty-text">لا توجد فواتير</div>';return;}
-    invoicesList.innerHTML = "";
-    snapshot.forEach(doc=>{
+    try{ snapshot = await gd(q(col(d,"invoices"),where("customerId","==",currentCustomer.id),orderBy("createdAt","desc"))); }
+    catch(e){ snapshot = await gd(q(col(d,"invoices"),where("customerId","==",currentCustomer.id))); }
+    if(snapshot.empty){ list.innerHTML = '<div class="empty-text">لا توجد فواتير</div>'; return; }
+    list.innerHTML = "";
+    snapshot.forEach(doc => {
       const inv = doc.data();
       const div = document.createElement("div");
       div.className = "invoice-history-card";
@@ -491,39 +557,43 @@ async function loadCustomerInvoices(){
           <span>الكمية: ${inv.totalQty||0}</span>
         </div>
       `;
-      div.addEventListener("click",()=>openInvoiceDetailModal(inv));
-      invoicesList.appendChild(div);
+      div.addEventListener("click", () => openInvoiceDetail(inv));
+      list.appendChild(div);
     });
-  }catch(e){
-    if(invoicesList) invoicesList.innerHTML = '<div class="error-text">حدث خطأ</div>';
-  }
+  }catch(e){ list.innerHTML = '<div class="error-text">حدث خطأ</div>'; }
 }
 
-document.getElementById("invoicesModalClose")?.addEventListener("click",closeInvoicesModal);
-document.getElementById("invoicesCloseBtn")?.addEventListener("click",closeInvoicesModal);
-document.getElementById("invoicesModal")?.addEventListener("click",e=>{if(e.target.id==="invoicesModal")closeInvoicesModal();});
-document.getElementById("invoiceDetailClose")?.addEventListener("click",()=>{
+function openInvoiceDetail(inv){
   const m = document.getElementById("invoiceDetailModal");
-  if(m){m.classList.remove("active");m.setAttribute("aria-hidden","true");setTimeout(()=>{m.hidden=true;},200);}
-});
-document.getElementById("invoiceDetailModal")?.addEventListener("click",e=>{
-  if(e.target.id==="invoiceDetailModal"){
-    const m = document.getElementById("invoiceDetailModal");
-    m.classList.remove("active");m.setAttribute("aria-hidden","true");setTimeout(()=>{m.hidden=true;},200);
-  }
+  const c = document.getElementById("invoiceDetailContent");
+  if(!m||!c) return;
+  let html = `<div style="text-align:center;margin-bottom:14px;"><img src="images/logo.png" style="width:80px;height:auto;margin:0 auto 6px;" onerror="this.style.display='none'"><h2 style="color:var(--dark);font-size:20px;">تفاصيل الفاتورة</h2></div>`;
+  html += `<div class="invoice-detail-meta"><div><span>رقم الفاتورة</span><strong>${escapeHTML((inv.invoiceNo||"").replace("INV-",""))}</strong></div><div><span>العميل</span><strong>${escapeHTML(inv.customerName||"")}</strong></div><div><span>التاريخ</span><strong>${escapeHTML(inv.date||"")}</strong></div></div>`;
+  html += '<table class="invoice-detail-table"><thead><tr><th>#</th><th>المنتج</th><th>KOD</th><th>الكمية</th></tr></thead><tbody>';
+  (inv.items||[]).forEach((item,i) => { html += `<tr><td>${i+1}</td><td>${escapeHTML(item.name||"")}</td><td>${escapeHTML(item.code||"")}</td><td>${getItemQty(item)}</td></tr>`; });
+  html += '</tbody></table>';
+  html += `<div class="invoice-detail-summary"><span>المنتجات: ${inv.totalItems||0}</span><span>الكمية: ${inv.totalQty||0}</span></div>`;
+  html += `<div style="text-align:center;margin-top:14px;"><button onclick="document.getElementById('invoiceDetailModal').classList.remove('active');document.getElementById('invoiceDetailModal').hidden=true;" style="padding:10px 24px;border:none;border-radius:10px;background:rgba(122,102,85,.1);color:var(--dark);font-weight:700;cursor:pointer;">إغلاق</button></div>`;
+  c.innerHTML = html;
+  m.hidden = false;
+  m.setAttribute("aria-hidden","false");
+  requestAnimationFrame(() => m.classList.add("active"));
+}
+
+document.getElementById("invoicesModalClose")?.addEventListener("click", closeInvoicesModal);
+document.getElementById("invoicesCloseBtn")?.addEventListener("click", closeInvoicesModal);
+document.getElementById("invoicesModal")?.addEventListener("click", e => { if(e.target.id === "invoicesModal") closeInvoicesModal(); });
+document.getElementById("invoiceDetailClose")?.addEventListener("click", () => { const m=document.getElementById("invoiceDetailModal"); if(m){m.classList.remove("active");m.setAttribute("aria-hidden","true");setTimeout(()=>{m.hidden=true;},200);} });
+document.getElementById("invoiceDetailModal")?.addEventListener("click", e => { if(e.target.id==="invoiceDetailModal"){const m=e.target;m.classList.remove("active");m.setAttribute("aria-hidden","true");setTimeout(()=>{m.hidden=true;},200);} });
+
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape"){ closeLoginModal(); closeInvoicesModal(); const m=document.getElementById("invoiceDetailModal"); if(m?.classList.contains("active")){m.classList.remove("active");m.setAttribute("aria-hidden","true");setTimeout(()=>{m.hidden=true;},200);} }
 });
 
-document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){
-    closeLoginModal();
-    closeInvoicesModal();
-    const m=document.getElementById("invoiceDetailModal");
-    if(m&&m.classList.contains("active")){m.classList.remove("active");m.setAttribute("aria-hidden","true");setTimeout(()=>{m.hidden=true;},200);}
-  }
-});
-
-/* INIT */
+/* ========================
+   INIT
+   ======================== */
+applyLang();
 updateCartCount();
 loadProducts();
 loadSession();
-loadCustomersCache();

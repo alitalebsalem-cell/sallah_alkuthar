@@ -1,770 +1,327 @@
 import { db } from "./firebase.js";
 import { generateInvoicePdf } from "./invoice-pdf.js";
-
 import {
-  collection,
-  addDoc,
-  getDocs,
-  updateDoc,
-  doc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  Timestamp
+  collection, addDoc, getDocs, updateDoc, doc,
+  query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-const CUSTOMERS_COLLECTION = "customers";
-const INVOICES_COLLECTION = "invoices";
 const SESSION_KEY = "sallah_customer_session";
 const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
-
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
-let currentCustomer = null;
-let currentCustomerPin = "";
-let customersCache = [];
-let customersCacheLoaded = false;
-
-const cartItems = document.getElementById("cartItems");
-const cartTotal = document.getElementById("cartTotal");
-const cartSearch = document.getElementById("cartSearch");
-const branchNameInput = document.getElementById("branchName");
-const invoiceNoElement = document.getElementById("invoiceNo");
-const invoiceDateElement = document.getElementById("invoiceDate");
-const invoiceCustomerElement = document.getElementById("invoiceCustomer");
-const invoiceProducts = document.getElementById("invoiceProducts");
-const invoiceTotalElement = document.getElementById("invoiceTotal");
-const invoiceQtyElement = document.getElementById("invoiceQty");
-const invoiceTemplate = document.getElementById("invoiceTemplate");
-const createInvoiceButton = document.getElementById("createInvoice");
-const whatsappButton = document.getElementById("whatsappBtn");
-const clearCartButton = document.getElementById("clearCartBtn");
-const clearCartModal = document.getElementById("clearCartConfirmModal");
-const confirmClearInput = document.getElementById("confirmClearInput");
-const cancelClearCartButton = document.getElementById("cancelClearCart");
-const confirmClearCartButton = document.getElementById("confirmClearCart");
-
-const loginBtn = document.getElementById("loginBtn");
-const userProfile = document.getElementById("userProfile");
-const profileToggle = document.getElementById("profileToggle");
-const profileDropdown = document.getElementById("profileDropdown");
-const profileName = document.getElementById("profileName");
-const profileType = document.getElementById("profileType");
-const profilePin = document.getElementById("profilePin");
-const profileTogglePin = document.getElementById("profileTogglePin");
-const profileChangePinBtn = document.getElementById("profileChangePinBtn");
-const profileInvoicesBtn = document.getElementById("profileInvoicesBtn");
-const profileLogoutBtn = document.getElementById("profileLogoutBtn");
-const loggedInUser = document.getElementById("loggedInUser");
-const profileAvatar = document.getElementById("profileAvatar");
-
-const loginModal = document.getElementById("loginModal");
-const loginModalClose = document.getElementById("loginModalClose");
-const loginAccountType = document.getElementById("loginAccountType");
-const loginNameInput = document.getElementById("loginName");
-const loginPinInput = document.getElementById("loginPin");
-const loginSubmit = document.getElementById("loginSubmit");
-const loginError = document.getElementById("loginError");
-
-const invoicesModal = document.getElementById("invoicesModal");
-const invoicesModalClose = document.getElementById("invoicesModalClose");
-const invoicesList = document.getElementById("invoicesList");
-const invoicesSubtitle = document.getElementById("invoicesSubtitle");
-const invoicesCloseBtn = document.getElementById("invoicesCloseBtn");
-const invoiceDetailModal = document.getElementById("invoiceDetailModal");
-const invoiceDetailClose = document.getElementById("invoiceDetailClose");
-const invoiceDetailContent = document.getElementById("invoiceDetailContent");
-
+const INV_COUNTER_KEY = "sallah_invoice_counter";
+const BRANCHES_KEY = "sallah_branches";
+const DEFAULT_BRANCHES = ["فرع الحمدانية - Hamdanya","فرع الطائف - Altayf","فرع السامر - Al-Samer","فرع المعمل - Almamal"];
 const COLUMNS_PER_INVOICE_ROW = 3;
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
 const ARABIC_DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 
-function escapeHTML(value){
-  return String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-}
-
-function getItemQty(item){
-  const qty = parseInt(item.qty,10);
-  return isNaN(qty) || qty < 1 ? 1 : qty;
-}
-
-function getProductImage(item){
-  if(item.image && typeof item.image === "string" && item.image.trim() !== "") return item.image;
-  return "images/noimg.jpg";
-}
-
-function saveCart(){ localStorage.setItem("cart",JSON.stringify(cart)); }
-function getCartTotalQty(){ return cart.reduce((sum,item)=>sum + getItemQty(item),0); }
-
-function formatArabicDate(date){
-  const d = date instanceof Timestamp ? date.toDate() : (date?.toDate ? date.toDate() : new Date(date));
-  return `${ARABIC_DAYS[d.getDay()]} ${ARABIC_MONTHS[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
-}
-
-/* ========================
-   AUTH / SESSION
-   ======================== */
-
-function loadSession(){
-  const stored = localStorage.getItem(SESSION_KEY);
-  if(stored){
-    try{
-      const data = JSON.parse(stored);
-      currentCustomer = { id:data.id, name:data.name, accountType:data.accountType||"", permissions:data.permissions||{} };
-      currentCustomerPin = data.pin || "";
-      updateAuthUI();
-    }catch(e){ currentCustomer = null; }
-  }
-}
-
-function saveSession(customer, pin){
-  currentCustomer = customer;
-  currentCustomerPin = pin || "";
-  const sessionData = { id:customer.id, name:customer.name, pin:currentCustomerPin, accountType:customer.accountType||"", permissions:customer.permissions||{} };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-  updateAuthUI();
-}
-
-function clearSession(){
-  currentCustomer = null;
-  currentCustomerPin = "";
-  localStorage.removeItem(SESSION_KEY);
-  updateAuthUI();
-}
-
-function updateAuthUI(){
-  if(currentCustomer){
-    if(loginBtn) loginBtn.style.display = "none";
-    if(userProfile) userProfile.style.display = "inline-flex";
-    if(loggedInUser) loggedInUser.textContent = currentCustomer.name;
-    if(profileName) profileName.textContent = currentCustomer.name;
-    if(profileType) profileType.textContent = currentCustomer.accountType || "غير محدد";
-    if(profileAvatar) profileAvatar.textContent = (currentCustomer.name || "?")[0];
-  }else{
-    if(loginBtn) loginBtn.style.display = "inline-flex";
-    if(userProfile) userProfile.style.display = "none";
-  }
-}
-
-/* ========================
-   LOCAL CUSTOMER STORAGE
-   ======================== */
-
-function getLocalCustomers(){
-  try{ return JSON.parse(localStorage.getItem(CUSTOMERS_LOCAL_KEY)) || []; }catch(e){ return []; }
-}
-function saveLocalCustomers(arr){ localStorage.setItem(CUSTOMERS_LOCAL_KEY, JSON.stringify(arr)); }
-
-function getCustomerByName(name){
-  const trimmed = name.trim().toLowerCase();
-  return customersCache.find(c => String(c.name || "").trim().toLowerCase() === trimmed) || null;
-}
-
-async function loadCustomersCache(){
-  customersCache = getLocalCustomers();
-  customersCacheLoaded = true;
-  try{
-    const snapshot = await getDocs(collection(db, CUSTOMERS_COLLECTION));
-    const firestoreCustomers = snapshot.docs.map(d => ({ id:d.id, ...d.data() }));
-    const localIds = new Set(customersCache.map(c => c.id));
-    const localNames = new Set(customersCache.map(c => String(c.name || "").trim().toLowerCase()));
-    let changed = false;
-    firestoreCustomers.forEach(fc => {
-      if(!localIds.has(fc.id) && !localNames.has(String(fc.name || "").trim().toLowerCase())){
-        customersCache.push(fc); localIds.add(fc.id); localNames.add(String(fc.name || "").trim().toLowerCase()); changed = true;
-      }
-    });
-    if(changed) saveLocalCustomers(customersCache);
-  }catch(e){}
-}
-
-function populateCustomerDropdown(accountType){
-  if(!loginNameInput) return;
-  loginNameInput.innerHTML = '<option value="">-- اختر الاسم --</option>';
-  let filtered = customersCache;
-  if(accountType) filtered = customersCache.filter(c => (c.accountType || "") === accountType);
-  const sorted = [...filtered].sort((a,b) => String(a.name || "").localeCompare(String(b.name || ""), "ar"));
-  sorted.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c.name;
-    opt.textContent = c.name;
-    loginNameInput.appendChild(opt);
-  });
-}
-
-/* ========================
-   LOGIN MODAL (no registration)
-   ======================== */
-
-function openLoginModal(){
-  if(!loginModal) return;
-  if(!customersCacheLoaded || !customersCache.length) loadCustomersCache();
-  loginModal.hidden = false;
-  loginModal.setAttribute("aria-hidden","false");
-  if(loginAccountType) loginAccountType.style.display = "block";
-  if(loginAccountType) loginAccountType.value = "";
-  if(loginNameInput) loginNameInput.style.display = "none";
-  if(loginNameInput) loginNameInput.value = "";
-  if(loginPinInput) loginPinInput.style.display = "none";
-  if(loginPinInput) loginPinInput.value = "";
-  if(loginSubmit) loginSubmit.style.display = "none";
-  if(loginError) loginError.textContent = "";
-  requestAnimationFrame(()=> loginModal.classList.add("active"));
-}
-
-function closeLoginModal(){
-  if(!loginModal) return;
-  loginModal.classList.remove("active");
-  loginModal.setAttribute("aria-hidden","true");
-  setTimeout(()=>{ loginModal.hidden = true; },200);
-}
-
-loginAccountType?.addEventListener("change", function(){
-  const val = this.value;
-  if(val){
-    populateCustomerDropdown(val);
-    if(loginNameInput) loginNameInput.style.display = "block";
-    if(loginPinInput) loginPinInput.style.display = "none";
-    if(loginSubmit) loginSubmit.style.display = "none";
-  }else{
-    if(loginNameInput) loginNameInput.style.display = "none";
-    if(loginPinInput) loginPinInput.style.display = "none";
-    if(loginSubmit) loginSubmit.style.display = "none";
-  }
-});
-
-loginNameInput?.addEventListener("change", function(){
-  if(this.value){
-    if(loginPinInput) loginPinInput.style.display = "block";
-    if(loginSubmit) loginSubmit.style.display = "block";
-  }else{
-    if(loginPinInput) loginPinInput.style.display = "none";
-    if(loginSubmit) loginSubmit.style.display = "none";
-  }
-});
-
-loginPinInput?.addEventListener("keydown", e => { if(e.key === "Enter") loginSubmit?.click(); });
-
-loginSubmit?.addEventListener("click", () => {
-  if(loginError) loginError.textContent = "";
-  const name = loginNameInput ? loginNameInput.value.trim() : "";
-  const pin = loginPinInput ? loginPinInput.value.trim() : "";
-  const accountType = loginAccountType ? loginAccountType.value : "";
-
-  if(!accountType){ if(loginError) loginError.textContent = "اختر نوع الحساب"; return; }
-  if(!name){ if(loginError) loginError.textContent = "اختر الاسم"; return; }
-  if(!pin || pin.length !== 4){ if(loginError) loginError.textContent = "كلمة المرور 4 أرقام"; return; }
-
-  const match = getCustomerByName(name);
-  if(!match){ if(loginError) loginError.textContent = "الحساب غير موجود"; return; }
-  if(String(match.pin) === pin){
-    saveSession({ id:match.id, name:match.name, accountType:match.accountType || accountType, permissions:match.permissions || {} }, pin);
-    closeLoginModal();
-  }else{
-    if(loginError) loginError.textContent = "كلمة المرور خاطئة";
-  }
-});
-
-loginBtn?.addEventListener("click", openLoginModal);
-loginModalClose?.addEventListener("click", closeLoginModal);
-loginModal?.addEventListener("click", e => { if(e.target === loginModal) closeLoginModal(); });
-
-/* ========================
-   PROFILE DROPDOWN
-   ======================== */
-
-profileToggle?.addEventListener("click", e => { e.stopPropagation(); profileDropdown?.classList.toggle("show"); });
-document.addEventListener("click", e => { if(profileDropdown?.classList.contains("show") && !profileDropdown.contains(e.target) && e.target !== profileToggle) profileDropdown.classList.remove("show"); });
-
-profileLogoutBtn?.addEventListener("click", () => {
-  profileDropdown?.classList.remove("show");
-  if(confirm("هل تريد تسجيل الخروج؟")) clearSession();
-});
-
-profileTogglePin?.addEventListener("click", () => {
-  if(!profilePin) return;
-  if(profilePin.textContent === "****"){ profilePin.textContent = currentCustomerPin || "N/A"; profileTogglePin.textContent = "إخفاء"; }
-  else{ profilePin.textContent = "****"; profileTogglePin.textContent = "إظهار"; }
-});
-
-profileChangePinBtn?.addEventListener("click", async () => {
-  profileDropdown?.classList.remove("show");
-  const newPin = prompt("أدخل كلمة المرور الجديدة (4 أرقام):");
-  if(!newPin || !/^\d{4}$/.test(newPin)){ alert("يجب أن تكون 4 أرقام"); return; }
-  currentCustomerPin = newPin;
-  const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
-  stored.pin = newPin;
-  localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
-  const localCustomers = getLocalCustomers();
-  const idx = localCustomers.findIndex(c => c.id === currentCustomer.id);
-  if(idx !== -1){ localCustomers[idx].pin = newPin; saveLocalCustomers(localCustomers); customersCache = getLocalCustomers(); }
-  try{
-    const customerRef = doc(db, CUSTOMERS_COLLECTION, currentCustomer.id);
-    await updateDoc(customerRef, { pin: newPin });
-  }catch(e){}
-  alert("تم تغيير كلمة المرور");
-});
-
-profileInvoicesBtn?.addEventListener("click", () => {
-  profileDropdown?.classList.remove("show");
-  openInvoicesModal();
-});
-
-/* ========================
-   INVOICES MODAL
-   ======================== */
-
-function openInvoicesModal(){
-  if(!invoicesModal) return;
-  invoicesModal.hidden = false;
-  invoicesModal.setAttribute("aria-hidden","false");
-  if(invoicesList) invoicesList.innerHTML = '<div class="loading-text">جاري تحميل الفواتير...</div>';
-  if(invoicesSubtitle) invoicesSubtitle.textContent = `العميل: ${currentCustomer?.name || ""}`;
-  requestAnimationFrame(()=> invoicesModal.classList.add("active"));
-  loadCustomerInvoices();
-}
-
-function closeInvoicesModal(){
-  if(!invoicesModal) return;
-  invoicesModal.classList.remove("active");
-  invoicesModal.setAttribute("aria-hidden","true");
-  setTimeout(()=>{ invoicesModal.hidden = true; },200);
-}
-
-function openInvoiceDetailModal(inv){
-  if(!invoiceDetailModal || !invoiceDetailContent) return;
-  const dateStr = formatArabicDate(inv.createdAt || inv.date);
-  let itemsHtml = "";
-  if(inv.items && inv.items.length){
-    inv.items.forEach((item,idx) => {
-      itemsHtml += `<tr><td>${idx+1}</td><td>${escapeHTML(item.name||"")}</td><td>${escapeHTML(item.code||"")}</td><td>${getItemQty(item)}</td></tr>`;
-    });
-  }
-  const displayName = inv.branchName || inv.invoiceNo || "";
-  const invShortNo = (inv.invoiceNo || "").replace("INV-","");
-  const accType = inv.accountType || "";
-  invoiceDetailContent.innerHTML = `
-    <div style="text-align:center;margin-bottom:14px;">
-      <img src="images/logo.png" style="width:80px;height:auto;margin:0 auto 6px;" alt="Logo" onerror="this.style.display='none'">
-      <h2 style="color:var(--dark);font-size:20px;">تفاصيل الفاتورة</h2>
-    </div>
-    <div class="invoice-detail-meta">
-      <div><span>رقم الفاتورة</span><strong>${escapeHTML(invShortNo)}</strong></div>
-      <div><span>العميل</span><strong>${escapeHTML(inv.customerName||"")}</strong></div>
-      <div><span>التاريخ</span><strong>${escapeHTML(dateStr)}</strong></div>
-      ${accType ? `<div><span>نوع الحساب</span><strong>${escapeHTML(accType)}</strong></div>` : ""}
-    </div>
-    <table class="invoice-detail-table">
-      <thead><tr><th>#</th><th>المنتج</th><th>KOD</th><th>الكمية</th></tr></thead>
-      <tbody>${itemsHtml}</tbody>
-    </table>
-    <div class="invoice-detail-summary">
-      <span>المنتجات: ${inv.totalItems||0}</span>
-      <span>الكمية: ${inv.totalQty||0}</span>
-    </div>
-    <div style="text-align:center;margin-top:14px;">
-      <button id="detailPrintBtn" class="inv-print-small-btn" type="button" style="width:auto;padding:8px 24px;font-size:14px;">🖨 طباعة PDF</button>
-    </div>
-  `;
-  invoiceDetailContent.querySelector("#detailPrintBtn")?.addEventListener("click", ()=> downloadInvoicePdf(inv));
-  invoiceDetailModal.hidden = false;
-  invoiceDetailModal.setAttribute("aria-hidden","false");
-  requestAnimationFrame(()=> invoiceDetailModal.classList.add("active"));
-}
-
-function closeInvoiceDetailModal(){
-  if(!invoiceDetailModal) return;
-  invoiceDetailModal.classList.remove("active");
-  invoiceDetailModal.setAttribute("aria-hidden","true");
-  setTimeout(()=>{ invoiceDetailModal.hidden = true; },200);
-}
-
-async function loadCustomerInvoices(){
-  if(!currentCustomer || !invoicesList) return;
-  try{
-    const invoicesRef = collection(db, INVOICES_COLLECTION);
-    let snapshot;
-    try{
-      const q = query(invoicesRef, where("customerId","==",currentCustomer.id), orderBy("createdAt","desc"));
-      snapshot = await getDocs(q);
-    }catch(e){
-      const q = query(invoicesRef, where("customerId","==",currentCustomer.id));
-      snapshot = await getDocs(q);
-    }
-    if(snapshot.empty){ invoicesList.innerHTML = '<div class="empty-text">لا توجد فواتير</div>'; return; }
-    invoicesList.innerHTML = "";
-    snapshot.forEach(doc => {
-      const inv = doc.data();
-      const dateStr = formatArabicDate(inv.createdAt || inv.date);
-      let itemsPreview = "";
-      if(inv.items && inv.items.length){
-        itemsPreview = inv.items.slice(0,3).map(i=>i.name).join("، ");
-        if(inv.items.length > 3) itemsPreview += `...+${inv.items.length-3}`;
-      }
-      const accType = inv.accountType || "";
-      const div = document.createElement("div");
-      div.className = "invoice-history-card";
-      div.innerHTML = `
-        <div class="invoice-history-top">
-          <strong class="invoice-history-no">${escapeHTML(inv.branchName || inv.invoiceNo || "")}</strong>
-          <span class="invoice-history-date">${dateStr}</span>
-        </div>
-        ${accType ? `<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px;">${escapeHTML(accType)}</div>` : ""}
-        <div class="invoice-history-items">${escapeHTML(itemsPreview)}</div>
-        <div class="invoice-history-footer">
-          <span>المنتجات: ${inv.totalItems||0}</span>
-          <span>الكمية: ${inv.totalQty||0}</span>
-        </div>
-        <div style="margin-top:8px;"><button class="inv-print-small-btn" type="button">🖨 طباعة</button></div>
-      `;
-      div.querySelector(".inv-print-small-btn").addEventListener("click", e => { e.stopPropagation(); downloadInvoicePdf(inv); });
-      div.addEventListener("click", ()=> openInvoiceDetailModal(inv));
-      invoicesList.appendChild(div);
-    });
-  }catch(e){
-    invoicesList.innerHTML = '<div class="error-text">حدث خطأ</div>';
-  }
-}
-
-invoicesModalClose?.addEventListener("click", closeInvoicesModal);
-invoicesCloseBtn?.addEventListener("click", closeInvoicesModal);
-invoicesModal?.addEventListener("click", e => { if(e.target === invoicesModal) closeInvoicesModal(); });
-invoiceDetailClose?.addEventListener("click", closeInvoiceDetailModal);
-invoiceDetailModal?.addEventListener("click", e => { if(e.target === invoiceDetailModal) closeInvoiceDetailModal(); });
-
-/* ========================
-   CART RENDER
-   ======================== */
-
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let currentCustomer = null;
+let currentCustomerPin = "";
+let customersCache = [];
 let cartCategory = "all";
 
-function getFilteredCart(){
-  if(cartCategory === "all") return cart;
-  return cart.filter(item => (item.category || "") === cartCategory);
+const cartItems = document.getElementById("cartItems");
+const cartTotal = document.getElementById("cartTotal");
+const cartSearch = document.getElementById("cartSearch");
+const branchNameInput = document.getElementById("branchName");
+const invoiceTemplate = document.getElementById("invoiceTemplate");
+const createInvoiceButton = document.getElementById("createInvoice");
+const clearCartButton = document.getElementById("clearCartBtn");
+const clearCartModal = document.getElementById("clearCartConfirmModal");
+const confirmClearInput = document.getElementById("confirmClearInput");
+const cancelClearCartButton = document.getElementById("cancelClearCart");
+const confirmClearCartButton = document.getElementById("confirmClearCart");
+const loginBtn = document.getElementById("loginBtn");
+const userProfile = document.getElementById("userProfile");
+const loginModal = document.getElementById("loginModal");
+const loginAccountType = document.getElementById("loginAccountType");
+const loginNameInput = document.getElementById("loginName");
+const loginPinInput = document.getElementById("loginPin");
+const loginSubmitBtn = document.getElementById("loginSubmit");
+const loginError = document.getElementById("loginError");
+const invoicesModal = document.getElementById("invoicesModal");
+const invoicesList = document.getElementById("invoicesList");
+const invoiceDetailModal = document.getElementById("invoiceDetailModal");
+const invoiceDetailContent = document.getElementById("invoiceDetailContent");
+const cartMain = document.getElementById("cartMain");
+const loginRequiredOverlay = document.getElementById("loginRequiredOverlay");
+const cartCategoryFilter = document.getElementById("cartCategoryFilter");
+
+function escapeHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+function getItemQty(item){ const q=parseInt(item.qty,10); return isNaN(q)||q<1?1:q; }
+function getProductImage(item){ if(item.image&&typeof item.image==="string"&&item.image.trim()!=="") return item.image; return "images/noimg.jpg"; }
+function saveCart(){ localStorage.setItem("cart",JSON.stringify(cart)); }
+function getCartTotalQty(){ return cart.reduce((s,i)=>s+getItemQty(i),0); }
+function formatArabicDate(date){ const d=date instanceof Timestamp?date.toDate():(date?.toDate?date.toDate():new Date(date)); return `${ARABIC_DAYS[d.getDay()]} ${ARABIC_MONTHS[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`; }
+function getBranches(){ try{const d=localStorage.getItem(BRANCHES_KEY);if(d){const p=JSON.parse(d);if(Array.isArray(p)&&p.length)return p;}}catch(e){} return [...DEFAULT_BRANCHES]; }
+function getLocalCustomers(){ try{return JSON.parse(localStorage.getItem(CUSTOMERS_LOCAL_KEY))||[];}catch(e){return [];} }
+function saveLocalCustomers(a){ localStorage.setItem(CUSTOMERS_LOCAL_KEY,JSON.stringify(a)); }
+
+/* LANG */
+const LANG_KEY="sallah_lang";
+function getLang(){ return localStorage.getItem(LANG_KEY)||"ar"; }
+function initLang(){ const b=document.getElementById("langToggle"); if(b) b.textContent=getLang()==="ar"?"EN":"عربي"; }
+document.getElementById("langToggle")?.addEventListener("click",()=>{
+  localStorage.setItem(LANG_KEY,getLang()==="ar"?"en":"ar");
+  initLang();
+});
+
+/* AUTH */
+function loadSession(){
+  const s=localStorage.getItem(SESSION_KEY);
+  if(s){try{const d=JSON.parse(s);currentCustomer={id:d.id,name:d.name,accountType:d.accountType||"",permissions:d.permissions||{}};currentCustomerPin=d.pin||"";updateAuthUI();showCart();}catch(e){currentCustomer=null;}}
+}
+function saveSession(c,p){
+  currentCustomer=c;currentCustomerPin=p||"";
+  localStorage.setItem(SESSION_KEY,JSON.stringify({id:c.id,name:c.name,pin:currentCustomerPin,accountType:c.accountType||"",permissions:c.permissions||{}}));
+  updateAuthUI();showCart();
+}
+function clearSession(){ currentCustomer=null;currentCustomerPin="";localStorage.removeItem(SESSION_KEY);updateAuthUI();hideCart(); }
+function updateAuthUI(){
+  if(currentCustomer){
+    if(loginBtn)loginBtn.style.display="none";
+    if(userProfile)userProfile.style.display="inline-flex";
+    document.getElementById("loggedInUser").textContent=currentCustomer.name;
+    document.getElementById("profileName").textContent=currentCustomer.name;
+    document.getElementById("profileType").textContent=currentCustomer.accountType||"غير محدد";
+    document.getElementById("profileAvatar").textContent=(currentCustomer.name||"?")[0];
+  }else{
+    if(loginBtn)loginBtn.style.display="inline-flex";
+    if(userProfile)userProfile.style.display="none";
+  }
+}
+function showCart(){
+  if(loginRequiredOverlay)loginRequiredOverlay.classList.add("hidden");
+  if(cartMain)cartMain.style.display="";
+  if(cartCategoryFilter)cartCategoryFilter.style.display="";
+  applyPermissions();renderCart();
+}
+function hideCart(){
+  if(loginRequiredOverlay)loginRequiredOverlay.classList.remove("hidden");
+  if(cartMain)cartMain.style.display="none";
+  if(cartCategoryFilter)cartCategoryFilter.style.display="none";
 }
 
-function renderCart(){
-  if(!cartItems) return;
-  cartItems.innerHTML = "";
-  const searchText = cartSearch ? cartSearch.value.trim().toLowerCase() : "";
-  let visibleItems = 0;
-  const filtered = getFilteredCart();
-
-  filtered.forEach(item => {
-    const productText = `${item.name||""} ${item.description||""} ${item.code||""}`.toLowerCase();
-    if(searchText && !productText.includes(searchText)) return;
-    visibleItems++;
-    cartItems.insertAdjacentHTML("beforeend",`
-      <div class="cart-item">
-        <img src="${escapeHTML(getProductImage(item))}" alt="${escapeHTML(item.name||"")}" onerror="this.src='images/noimg.jpg'">
-        <div class="info">
-          <h3>${escapeHTML(item.name||"")}</h3>
-          <p>${escapeHTML(item.description||"")}</p>
-          <p style="font-size:12px;color:var(--card);">SKU: ${escapeHTML(item.code||"")} | ${escapeHTML(item.category||"")}</p>
-          <div class="qty-controls">
-            <button type="button" data-action="decrease" data-id="${escapeHTML(item.id)}">-</button>
-            <input type="number" min="1" value="${getItemQty(item)}" class="qty-input" data-id="${escapeHTML(item.id)}">
-            <button type="button" data-action="increase" data-id="${escapeHTML(item.id)}">+</button>
-          </div>
-        </div>
-        <button type="button" class="delete-cart-item" data-action="delete" data-id="${escapeHTML(item.id)}">🗑 حذف</button>
-      </div>
-    `);
+/* PERMISSIONS */
+const CATEGORY_PERMISSIONS={"حساب معمل":["قسم المعمل","قسم المستودع","طلبات المعمل"],"حساب فرع":["قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
+function getAllowedCategories(){
+  if(!currentCustomer)return[];
+  return CATEGORY_PERMISSIONS[currentCustomer.accountType||""]||["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","طلبات المعمل"];
+}
+function applyPermissions(){
+  const allowed=getAllowedCategories();
+  document.querySelectorAll("#cartCategoryFilter .cat-card").forEach(c=>{
+    const cat=c.dataset.cat;
+    if(cat==="all"){c.style.display="";return;}
+    c.style.display=allowed.includes(cat)?"":"none";
   });
+}
 
-  if(cart.length === 0){
-    cartItems.innerHTML = '<div class="cart-item"><div class="info"><h3>🛒 السلة فارغة</h3><p>أضف منتجات من المتجر</p></div></div>';
-  }else if(visibleItems === 0){
-    cartItems.innerHTML = '<div class="cart-item"><div class="info"><h3>لا توجد نتائج مطابقة</h3></div></div>';
-  }
+/* LOGIN (FIXED: fetches from Firestore) */
+async function loadCustomersFromFirestore(){
+  customersCache=getLocalCustomers();
+  try{
+    const snap=await getDocs(collection(db,"customers"));
+    const fc=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const ids=new Set(customersCache.map(c=>c.id));
+    const names=new Set(customersCache.map(c=>String(c.name||"").trim().toLowerCase()));
+    let changed=false;
+    fc.forEach(f=>{
+      const fn=String(f.name||"").trim().toLowerCase();
+      const byId=customersCache.find(c=>c.id===f.id);
+      const byName=customersCache.find(c=>String(c.name||"").trim().toLowerCase()===fn);
+      if(byId){Object.assign(byId,f);}
+      else if(byName){Object.assign(byName,f);}
+      else{customersCache.push(f);changed=true;}
+    });
+    saveLocalCustomers(customersCache);
+  }catch(e){console.warn("Firestore sync failed:",e);}
+}
+function openLoginModal(){
+  if(!loginModal)return;
+  loginModal.hidden=false;loginModal.setAttribute("aria-hidden","false");
+  if(loginAccountType)loginAccountType.value="";
+  if(loginNameInput){loginNameInput.style.display="none";loginNameInput.value="";}
+  if(loginPinInput){loginPinInput.style.display="none";loginPinInput.value="";}
+  if(loginSubmitBtn)loginSubmitBtn.style.display="none";
+  if(loginError)loginError.textContent="";
+  requestAnimationFrame(()=>loginModal.classList.add("active"));
+  loadCustomersFromFirestore();
+}
+function closeLoginModal(){if(!loginModal)return;loginModal.classList.remove("active");loginModal.setAttribute("aria-hidden","true");setTimeout(()=>{loginModal.hidden=true;},200);}
+function populateCustomerDropdown(at){
+  if(!loginNameInput)return;
+  loginNameInput.innerHTML='<option value="">-- اختر الاسم --</option>';
+  let f=customersCache;if(at)f=customersCache.filter(c=>(c.accountType||"")===at);
+  [...f].sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ar")).forEach(c=>{const o=document.createElement("option");o.value=c.name;o.textContent=c.name;loginNameInput.appendChild(o);});
+}
+loginAccountType?.addEventListener("change",function(){if(this.value){populateCustomerDropdown(this.value);if(loginNameInput)loginNameInput.style.display="block";if(loginPinInput)loginPinInput.style.display="none";if(loginSubmitBtn)loginSubmitBtn.style.display="none";}else{if(loginNameInput)loginNameInput.style.display="none";if(loginPinInput)loginPinInput.style.display="none";if(loginSubmitBtn)loginSubmitBtn.style.display="none";}});
+loginNameInput?.addEventListener("change",function(){if(this.value){if(loginPinInput)loginPinInput.style.display="block";if(loginSubmitBtn)loginSubmitBtn.style.display="block";}else{if(loginPinInput)loginPinInput.style.display="none";if(loginSubmitBtn)loginSubmitBtn.style.display="none";}});
+loginPinInput?.addEventListener("keydown",e=>{if(e.key==="Enter")loginSubmitBtn?.click();});
+loginSubmitBtn?.addEventListener("click",()=>{
+  if(loginError)loginError.textContent="";
+  const name=loginNameInput?.value.trim()||"";
+  const pin=loginPinInput?.value.trim()||"";
+  const at=loginAccountType?.value||"";
+  if(!at){loginError.textContent="اختر نوع الحساب";return;}
+  if(!name){loginError.textContent="اختر الاسم";return;}
+  if(!pin||pin.length!==4){loginError.textContent="كلمة المرور 4 أرقام";return;}
+  const match=customersCache.find(c=>String(c.name||"").trim().toLowerCase()===name.trim().toLowerCase());
+  if(!match){loginError.textContent="الحساب غير موجود";return;}
+  if(String(match.pin)===pin){saveSession({id:match.id,name:match.name,accountType:match.accountType||at,permissions:match.permissions||{}},pin);closeLoginModal();}
+  else{loginError.textContent="كلمة المرور خاطئة";}
+});
+document.getElementById("loginRequiredBtn")?.addEventListener("click",openLoginModal);
+loginBtn?.addEventListener("click",openLoginModal);
+document.getElementById("loginModalClose")?.addEventListener("click",closeLoginModal);
+loginModal?.addEventListener("click",e=>{if(e.target===loginModal)closeLoginModal();});
 
-  if(cartTotal) cartTotal.textContent = getCartTotalQty();
+/* PROFILE */
+const profileToggle=document.getElementById("profileToggle");
+const profileDropdown=document.getElementById("profileDropdown");
+profileToggle?.addEventListener("click",e=>{e.stopPropagation();profileDropdown?.classList.toggle("show");});
+document.addEventListener("click",e=>{if(profileDropdown?.classList.contains("show")&&!profileDropdown.contains(e.target)&&e.target!==profileToggle)profileDropdown.classList.remove("show");});
+document.getElementById("profileLogoutBtn")?.addEventListener("click",()=>{profileDropdown?.classList.remove("show");if(confirm("هل تريد تسجيل الخروج؟"))clearSession();});
+document.getElementById("profileTogglePin")?.addEventListener("click",()=>{const el=document.getElementById("profilePin");if(!el)return;if(el.textContent==="****"){el.textContent=currentCustomerPin||"N/A";document.getElementById("profileTogglePin").textContent="إخفاء";}else{el.textContent="****";document.getElementById("profileTogglePin").textContent="إظهار";}});
+document.getElementById("profileChangePinBtn")?.addEventListener("click",async()=>{profileDropdown?.classList.remove("show");const np=prompt("كلمة المرور الجديدة (4 أرقام):");if(!np||!/^\d{4}$/.test(np)){alert("يجب أن تكون 4 أرقام");return;}currentCustomerPin=np;const s=JSON.parse(localStorage.getItem(SESSION_KEY)||"{}");s.pin=np;localStorage.setItem(SESSION_KEY,JSON.stringify(s));try{const{doc:d,updateDoc}=await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");const{db:dbRef}=await import("./firebase.js");await updateDoc(d(dbRef,"customers",currentCustomer.id),{pin:np});}catch(e){}alert("تم تغيير كلمة المرور");});
+document.getElementById("profileInvoicesBtn")?.addEventListener("click",()=>{profileDropdown?.classList.remove("show");openInvoicesModal();});
+
+/* INVOICES MODAL */
+function openInvoicesModal(){if(!invoicesModal)return;invoicesModal.hidden=false;invoicesModal.setAttribute("aria-hidden","false");if(invoicesList)invoicesList.innerHTML='<div class="loading-text">جاري تحميل الفواتير...</div>';document.getElementById("invoicesSubtitle").textContent=`العميل: ${currentCustomer?.name||""}`;requestAnimationFrame(()=>invoicesModal.classList.add("active"));loadCustomerInvoices();}
+function closeInvoicesModal(){if(!invoicesModal)return;invoicesModal.classList.remove("active");invoicesModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoicesModal.hidden=true;},200);}
+async function loadCustomerInvoices(){
+  if(!currentCustomer||!invoicesList)return;
+  try{const{collection:col,query:q,where:wh,orderBy:ob,getDocs:gd}=await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");const{db:d}=await import("./firebase.js");
+  let snap;try{snap=await gd(q(col(d,"invoices"),wh("customerId","==",currentCustomer.id),ob("createdAt","desc")));}catch(e){snap=await gd(q(col(d,"invoices"),wh("customerId","==",currentCustomer.id)));}
+  if(snap.empty){invoicesList.innerHTML='<div class="empty-text">لا توجد فواتير</div>';return;}
+  invoicesList.innerHTML="";
+  snap.forEach(doc=>{const inv=doc.data();const div=document.createElement("div");div.className="invoice-history-card";
+  div.innerHTML=`<div class="invoice-history-top"><strong class="invoice-history-no">${escapeHTML(inv.branchName||inv.invoiceNo||"")}</strong><span class="invoice-history-date">${inv.date||""}</span></div><div class="invoice-history-items">${escapeHTML((inv.items||[]).slice(0,3).map(i=>i.name).join("، "))}</div><div class="invoice-history-footer"><span>المنتجات: ${inv.totalItems||0}</span><span>الكمية: ${inv.totalQty||0}</span></div>`;
+  div.addEventListener("click",()=>openInvoiceDetail(inv));invoicesList.appendChild(div);});
+  }catch(e){invoicesList.innerHTML='<div class="error-text">حدث خطأ</div>';}
+}
+function openInvoiceDetail(inv){
+  if(!invoiceDetailModal||!invoiceDetailContent)return;
+  let h=`<div style="text-align:center;margin-bottom:14px;"><img src="images/logo.png" style="width:80px;height:auto;margin:0 auto 6px;" onerror="this.style.display='none'"><h2 style="color:var(--dark);">تفاصيل الفاتورة</h2></div>`;
+  h+=`<div class="invoice-detail-meta"><div><span>رقم الفاتورة</span><strong>${escapeHTML((inv.invoiceNo||"").replace("INV-",""))}</strong></div><div><span>العميل</span><strong>${escapeHTML(inv.customerName||"")}</strong></div><div><span>التاريخ</span><strong>${escapeHTML(inv.date||"")}</strong></div></div>`;
+  h+='<table class="invoice-detail-table"><thead><tr><th>#</th><th>المنتج</th><th>KOD</th><th>الكمية</th></tr></thead><tbody>';
+  (inv.items||[]).forEach((it,i)=>{h+=`<tr><td>${i+1}</td><td>${escapeHTML(it.name||"")}</td><td>${escapeHTML(it.code||"")}</td><td>${getItemQty(it)}</td></tr>`;});
+  h+=`</tbody></table><div class="invoice-detail-summary"><span>المنتجات: ${inv.totalItems||0}</span><span>الكمية: ${inv.totalQty||0}</span></div>`;
+  h+=`<div style="text-align:center;margin-top:14px;"><button onclick="document.getElementById('invoiceDetailModal').classList.remove('active');document.getElementById('invoiceDetailModal').hidden=true;" style="padding:10px 24px;border:none;border-radius:10px;background:rgba(122,102,85,.1);color:var(--dark);font-weight:700;cursor:pointer;">إغلاق</button></div>`;
+  invoiceDetailContent.innerHTML=h;
+  invoiceDetailModal.hidden=false;invoiceDetailModal.setAttribute("aria-hidden","false");
+  requestAnimationFrame(()=>invoiceDetailModal.classList.add("active"));
+}
+document.getElementById("invoicesModalClose")?.addEventListener("click",closeInvoicesModal);
+document.getElementById("invoicesCloseBtn")?.addEventListener("click",closeInvoicesModal);
+invoicesModal?.addEventListener("click",e=>{if(e.target===invoicesModal)closeInvoicesModal();});
+document.getElementById("invoiceDetailClose")?.addEventListener("click",()=>{if(invoiceDetailModal){invoiceDetailModal.classList.remove("active");invoiceDetailModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoiceDetailModal.hidden=true;},200);}});
+invoiceDetailModal?.addEventListener("click",e=>{if(e.target===invoiceDetailModal){invoiceDetailModal.classList.remove("active");invoiceDetailModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoiceDetailModal.hidden=true;},200);}});
+
+/* CART RENDER */
+function getFilteredCart(){if(cartCategory==="all")return cart;return cart.filter(i=>(i.category||"")===cartCategory);}
+function renderCart(){
+  if(!cartItems)return;
+  cartItems.innerHTML="";
+  const sv=cartSearch?cartSearch.value.trim().toLowerCase():"";
+  let vis=0;
+  getFilteredCart().forEach(item=>{
+    const pt=`${item.name||""} ${item.description||""} ${item.code||""}`.toLowerCase();
+    if(sv&&!pt.includes(sv))return;
+    vis++;
+    cartItems.insertAdjacentHTML("beforeend",`<div class="cart-item"><img src="${escapeHTML(getProductImage(item))}" alt="${escapeHTML(item.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="info"><h3>${escapeHTML(item.name||"")}</h3><p>${escapeHTML(item.description||"")}</p><p style="font-size:12px;color:var(--card);">SKU: ${escapeHTML(item.code||"")} | ${escapeHTML(item.category||"")}</p><div class="qty-controls"><button type="button" data-action="decrease" data-id="${escapeHTML(item.id)}">-</button><input type="number" min="1" value="${getItemQty(item)}" class="qty-input" data-id="${escapeHTML(item.id)}"><button type="button" data-action="increase" data-id="${escapeHTML(item.id)}">+</button></div></div><button type="button" class="delete-cart-item" data-action="delete" data-id="${escapeHTML(item.id)}">🗑 حذف</button></div>`);
+  });
+  if(cart.length===0)cartItems.innerHTML='<div class="cart-item"><div class="info"><h3>🛒 السلة فارغة</h3></div></div>';
+  else if(vis===0)cartItems.innerHTML='<div class="cart-item"><div class="info"><h3>لا توجد نتائج</h3></div></div>';
+  if(cartTotal)cartTotal.textContent=getCartTotalQty();
   saveCart();
 }
-
-function findItem(id){ return cart.find(item => String(item.id) === String(id)); }
-function increaseQty(id){ const item = findItem(id); if(!item) return; item.qty = getItemQty(item)+1; renderCart(); }
-function decreaseQty(id){
-  const item = findItem(id);
-  if(!item) return;
-  item.qty = getItemQty(item)-1;
-  if(item.qty <= 0) cart = cart.filter(p => String(p.id) !== String(id));
-  renderCart();
-}
-function updateQty(id,value){ const item = findItem(id); if(!item) return; const qty = parseInt(value,10); item.qty = isNaN(qty) || qty < 1 ? 1 : qty; renderCart(); }
-function deleteItem(id){ cart = cart.filter(p => String(p.id) !== String(id)); renderCart(); }
+function findItem(id){return cart.find(i=>String(i.id)===String(id));}
+function increaseQty(id){const i=findItem(id);if(!i)return;i.qty=getItemQty(i)+1;renderCart();}
+function decreaseQty(id){const i=findItem(id);if(!i)return;i.qty=getItemQty(i)-1;if(i.qty<=0)cart=cart.filter(p=>String(p.id)!==String(id));renderCart();}
+function updateQty(id,v){const i=findItem(id);if(!i)return;const q=parseInt(v,10);i.qty=isNaN(q)||q<1?1:q;renderCart();}
+function deleteItem(id){cart=cart.filter(p=>String(p.id)!==String(id));renderCart();}
 
 /* CART CATEGORY FILTER */
-document.querySelectorAll("#cartCategoryFilter .cat-card").forEach(card => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll("#cartCategoryFilter .cat-card").forEach(c => c.classList.remove("active"));
-    card.classList.add("active");
-    cartCategory = card.dataset.cat;
-    renderCart();
+document.querySelectorAll("#cartCategoryFilter .cat-card").forEach(card=>{
+  card.addEventListener("click",()=>{
+    document.querySelectorAll("#cartCategoryFilter .cat-card").forEach(c=>c.classList.remove("active"));
+    card.classList.add("active");cartCategory=card.dataset.cat;renderCart();
   });
 });
 
-/* ========================
-   CLEAR CART
-   ======================== */
+/* CLEAR CART */
+function isClearCartConfirmed(){return confirmClearInput&&confirmClearInput.value.trim().toLowerCase()==="yes";}
+function openClearCartModal(){if(cart.length===0){alert("السلة فارغة");return;}if(!clearCartModal||!confirmClearInput||!confirmClearCartButton)return;confirmClearInput.value="";confirmClearCartButton.disabled=true;clearCartModal.classList.add("active");clearCartModal.setAttribute("aria-hidden","false");setTimeout(()=>confirmClearInput.focus(),50);}
+function closeClearCartModal(){if(!clearCartModal)return;clearCartModal.classList.remove("active");clearCartModal.setAttribute("aria-hidden","true");if(confirmClearInput)confirmClearInput.value="";if(confirmClearCartButton)confirmClearCartButton.disabled=true;}
+function clearCart(){cart=[];saveCart();renderCart();closeClearCartModal();}
 
-function isClearCartConfirmed(){ return confirmClearInput && confirmClearInput.value.trim().toLowerCase() === "yes"; }
+/* INVOICE */
+function makeInvoiceNumber(){let c=1;try{const v=localStorage.getItem(INV_COUNTER_KEY);if(v)c=parseInt(v,10)||1;}catch(e){}const n=String(c).padStart(4,"0");localStorage.setItem(INV_COUNTER_KEY,String(c+1));return`INV-${n}`;}
+function formatInvoiceDate(){return new Date().toLocaleString("en-GB",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});}
+function populateBranchDropdown(){if(!branchNameInput)return;const cv=branchNameInput.value;branchNameInput.innerHTML='<option value="">-- اختر الفرع --</option>';getBranches().forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;branchNameInput.appendChild(o);});if(cv)branchNameInput.value=cv;}
+function createInvoiceCells(item){const desc=item.description||"";return `<td class="invoice-check-cell"><span class="invoice-check-box"></span></td><td class="invoice-product-cell"><div class="invoice-product-main"><span class="invoice-product-number invoice-product-qty">${getItemQty(item)}</span><strong><bdi>${escapeHTML(item.name||"")}</bdi></strong></div>${desc?`<div class="invoice-product-details" dir="ltr" style="padding-right:80px;font-size:11px;color:#000;">${escapeHTML(desc)}</div>`:""}</td>`;}
+function createEmptyCells(){return '<td class="invoice-check-cell invoice-empty-cell"></td><td class="invoice-product-cell invoice-empty-cell"></td>';}
+function createInvoiceRowsFromCart(){const r=[];for(let i=0;i<cart.length;i+=COLUMNS_PER_INVOICE_ROW)r.push(cart.slice(i,i+COLUMNS_PER_INVOICE_ROW));return r;}
+function renderInvoiceRows(rows){if(!invoiceProducts)return;invoiceProducts.innerHTML="";rows.forEach(ri=>{let h="";ri.forEach(it=>{h+=createInvoiceCells(it);});for(let e=ri.length;e<COLUMNS_PER_INVOICE_ROW;e++)h+=createEmptyCells();invoiceProducts.insertAdjacentHTML("beforeend",`<tr>${h}</tr>`);}
+)}
+function setFooterVisible(v){const s=invoiceTemplate?.querySelector(".invoice-summary-row");const d=invoiceTemplate?.querySelector(".invoice-delivery-info");const ds=v?"":"none";if(s)s.style.display=ds;if(d)d.style.display=ds;}
+function getMaxHeight(){const w=invoiceTemplate?invoiceTemplate.scrollWidth:1120;return Math.floor(w*(A4_HEIGHT_MM/A4_WIDTH_MM))-24;}
+function splitPages(rows){const pages=[];const mh=getMaxHeight();let s=0;while(s<rows.length){let e=s+1;let lg=e;while(e<=rows.length){renderInvoiceRows(rows.slice(s,e));setFooterVisible(e===rows.length);if(invoiceTemplate.scrollHeight<=mh){lg=e;e++;}else break;}pages.push(rows.slice(s,lg));s=lg;}return pages;}
+function waitForImages(c){return Promise.all(Array.from(c.querySelectorAll("img")).map(i=>new Promise(r=>{if(i.complete){r();return;}i.onload=()=>r();i.onerror=()=>r();setTimeout(r,2000);})));}
 
-function openClearCartModal(){
-  if(cart.length === 0){ alert("السلة فارغة"); return; }
-  if(!clearCartModal || !confirmClearInput || !confirmClearCartButton){ return; }
-  confirmClearInput.value = "";
-  confirmClearCartButton.disabled = true;
-  clearCartModal.classList.add("active");
-  clearCartModal.setAttribute("aria-hidden","false");
-  setTimeout(()=> confirmClearInput.focus(), 50);
-}
-
-function closeClearCartModal(){
-  if(!clearCartModal) return;
-  clearCartModal.classList.remove("active");
-  clearCartModal.setAttribute("aria-hidden","true");
-  if(confirmClearInput) confirmClearInput.value = "";
-  if(confirmClearCartButton) confirmClearCartButton.disabled = true;
-}
-
-function clearCart(){ cart = []; saveCart(); renderCart(); closeClearCartModal(); }
-
-/* ========================
-   INVOICE
-   ======================== */
-
-const INV_COUNTER_KEY = "sallah_invoice_counter";
-
-function makeInvoiceNumber(){
-  let counter = 1;
-  try{ const val = localStorage.getItem(INV_COUNTER_KEY); if(val) counter = parseInt(val,10)||1; }catch(e){}
-  const num = String(counter).padStart(4,"0");
-  localStorage.setItem(INV_COUNTER_KEY, String(counter+1));
-  return `INV-${num}`;
-}
-
-function formatInvoiceDate(){
-  return new Date().toLocaleString("en-GB",{ year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false });
-}
-
-const BRANCHES_KEY = "sallah_branches";
-const DEFAULT_BRANCHES = ["فرع الحمدانية - Hamdanya","فرع الطائف - Altayf","فرع السامر - Al-Samer","فرع المعمل - Almamal"];
-
-function getBranches(){
-  try{ const data = localStorage.getItem(BRANCHES_KEY); if(data){ const parsed = JSON.parse(data); if(Array.isArray(parsed) && parsed.length) return parsed; } }catch(e){}
-  return [...DEFAULT_BRANCHES];
-}
-function saveBranches(list){ localStorage.setItem(BRANCHES_KEY, JSON.stringify(list)); }
-
-function populateBranchDropdown(){
-  if(!branchNameInput) return;
-  const currentVal = branchNameInput.value;
-  branchNameInput.innerHTML = '<option value="">-- اختر الفرع --</option>';
-  getBranches().forEach(b => {
-    const opt = document.createElement("option");
-    opt.value = b;
-    opt.textContent = b;
-    branchNameInput.appendChild(opt);
-  });
-  if(currentVal) branchNameInput.value = currentVal;
-}
-
-function getBranchName(){ return branchNameInput ? branchNameInput.value.trim() : "No Branch"; }
-
-function createInvoiceCells(item){
-  const description = item.description || "";
-  return `
-    <td class="invoice-check-cell"><span class="invoice-check-box"></span></td>
-    <td class="invoice-product-cell">
-      <div class="invoice-product-main">
-        <span class="invoice-product-number invoice-product-qty" title="Quantity">${getItemQty(item)}</span>
-        <strong><bdi>${escapeHTML(item.name||"")}</bdi></strong>
-      </div>
-      ${description ? `<div class="invoice-product-details" dir="ltr" style="padding-right:80px;font-size:11px;color:#000000;">${escapeHTML(description)}</div>` : ""}
-    </td>
-  `;
-}
-
-function createEmptyInvoiceCells(){ return '<td class="invoice-check-cell invoice-empty-cell"></td><td class="invoice-product-cell invoice-empty-cell"></td>'; }
-
-function createInvoiceRowsFromCart(){
-  const rows = [];
-  for(let i = 0; i < cart.length; i += COLUMNS_PER_INVOICE_ROW) rows.push(cart.slice(i, i + COLUMNS_PER_INVOICE_ROW));
-  return rows;
-}
-
-function renderInvoiceRows(rows){
-  if(!invoiceProducts) return;
-  invoiceProducts.innerHTML = "";
-  rows.forEach(rowItems => {
-    let rowHTML = "";
-    rowItems.forEach(item => { rowHTML += createInvoiceCells(item); });
-    for(let e = rowItems.length; e < COLUMNS_PER_INVOICE_ROW; e++) rowHTML += createEmptyInvoiceCells();
-    invoiceProducts.insertAdjacentHTML("beforeend", `<tr>${rowHTML}</tr>`);
-  });
-}
-
-function setInvoiceFooterVisible(isVisible){
-  const summary = invoiceTemplate ? invoiceTemplate.querySelector(".invoice-summary-row") : null;
-  const delivery = invoiceTemplate ? invoiceTemplate.querySelector(".invoice-delivery-info") : null;
-  const display = isVisible ? "" : "none";
-  if(summary) summary.style.display = display;
-  if(delivery) delivery.style.display = display;
-}
-
-function getInvoiceMaxPageHeight(){
-  const width = invoiceTemplate ? invoiceTemplate.scrollWidth : 1120;
-  return Math.floor(width * (A4_HEIGHT_MM / A4_WIDTH_MM)) - 24;
-}
-
-function splitInvoiceRowsIntoPages(rows){
-  const pages = [];
-  const maxHeight = getInvoiceMaxPageHeight();
-  let start = 0;
-  while(start < rows.length){
-    let end = start + 1;
-    let lastGoodEnd = end;
-    while(end <= rows.length){
-      renderInvoiceRows(rows.slice(start,end));
-      setInvoiceFooterVisible(end === rows.length);
-      if(invoiceTemplate.scrollHeight <= maxHeight){ lastGoodEnd = end; end++; }else break;
-    }
-    pages.push(rows.slice(start, lastGoodEnd));
-    start = lastGoodEnd;
-  }
-  return pages;
-}
-
-function waitForImages(container){
-  return Promise.all(Array.from(container.querySelectorAll("img")).map(img => new Promise(resolve => {
-    if(img.complete){ resolve(); return; }
-    img.onload = ()=>resolve(); img.onerror = ()=>resolve(); setTimeout(resolve,2000);
-  })));
-}
-
-async function renderInvoicePageToCanvas(){
-  await waitForImages(invoiceTemplate);
-  return html2canvas(invoiceTemplate,{ scale:2, useCORS:true, backgroundColor:"#ffffff", windowWidth:invoiceTemplate.scrollWidth, windowHeight:invoiceTemplate.scrollHeight });
-}
-
-async function saveInvoiceToFirestore(invoiceNo, customerName){
-  try{
-    const items = cart.map(item => ({
-      id:item.id, name:item.name||"", description:item.description||"", code:item.code||"", category:item.category||"", qty:getItemQty(item)
-    }));
-    const branchName = getBranchName();
-    const invoiceData = {
-      invoiceNo, branchName,
-      customerId: currentCustomer ? currentCustomer.id : "guest",
-      customerName,
-      accountType: currentCustomer ? (currentCustomer.accountType || "") : "",
-      items, totalItems:cart.length, totalQty:getCartTotalQty(),
-      createdAt:serverTimestamp(), date:new Date().toISOString()
-    };
-    await addDoc(collection(db, INVOICES_COLLECTION), invoiceData);
-    console.log("Invoice saved:", invoiceNo);
-  }catch(error){
-    console.error("Error saving invoice:", error);
-  }
-}
-
-async function downloadInvoicePdf(invoiceData){
-  try{ await generateInvoicePdf(invoiceData); }catch(e){ console.error("PDF error:", e); alert("Error generating PDF"); }
+async function saveInvoiceToFirestore(invoiceNo,customerName){
+  try{const items=cart.map(it=>({id:it.id,name:it.name||"",description:it.description||"",code:it.code||"",category:it.category||"",qty:getItemQty(it)}));const bn=branchNameInput?branchNameInput.value.trim():"";
+  await addDoc(collection(db,"invoices"),{invoiceNo,branchName:bn,customerId:currentCustomer?currentCustomer.id:"guest",customerName,accountType:currentCustomer?(currentCustomer.accountType||""):"",items,totalItems:cart.length,totalQty:getCartTotalQty(),createdAt:serverTimestamp(),date:new Date().toISOString()});
+  }catch(e){console.error("Error saving invoice:",e);}
 }
 
 async function createInvoice(){
-  if(cart.length === 0){ alert("السلة فارغة"); return; }
-  if(!currentCustomer){ alert("سجل الدخول أولاً لإنشاء فاتورة"); openLoginModal(); return; }
-  const branchName = getBranchName();
-  if(!branchName){ alert("اختر الفرع أولاً"); if(branchNameInput) branchNameInput.focus(); return; }
-  if(!invoiceTemplate || !invoiceNoElement || !invoiceDateElement || !invoiceCustomerElement || !invoiceTotalElement || !invoiceQtyElement){ alert("قالب الفاتورة غير موجود"); return; }
-
-  const invoiceNo = makeInvoiceNumber();
-  invoiceNoElement.textContent = invoiceNo;
-  invoiceDateElement.textContent = formatInvoiceDate();
-  invoiceCustomerElement.textContent = currentCustomer.name;
-  invoiceTotalElement.textContent = cart.length;
-  invoiceQtyElement.textContent = getCartTotalQty();
-
-  const recvBranchEl = document.getElementById("invRecvBranch");
-  if(recvBranchEl){
-    const parts = branchName.split(" - ");
-    recvBranchEl.textContent = parts.length === 2 ? parts[1]+" - "+parts[0] : branchName;
+  if(cart.length===0){alert("السلة فارغة");return;}
+  if(!currentCustomer){alert("سجل الدخول أولاً");openLoginModal();return;}
+  const bn=branchNameInput?branchNameInput.value.trim():"";
+  if(!bn){alert("اختر الفرع أولاً");branchNameInput?.focus();return;}
+  const no=makeInvoiceNumber();
+  document.getElementById("invoiceNo").textContent=no;
+  document.getElementById("invoiceDate").textContent=formatInvoiceDate();
+  document.getElementById("invoiceCustomer").textContent=currentCustomer.name;
+  document.getElementById("invoiceTotal").textContent=cart.length;
+  document.getElementById("invoiceQty").textContent=getCartTotalQty();
+  const rv=document.getElementById("invRecvBranch");if(rv){const p=bn.split(" - ");rv.textContent=p.length===2?p[1]+" - "+p[0]:bn;}
+  const rows=createInvoiceRowsFromCart();const pages=splitPages(rows);
+  const pdf=new window.jspdf.jsPDF("P","mm","A4");
+  for(let pi=0;pi<pages.length;pi++){
+    renderInvoiceRows(pages[pi]);setFooterVisible(pi===pages.length-1);
+    const th=invoiceTemplate?.querySelector("#invoiceTable thead");if(th)th.style.display=pi>0?"none":"";
+    await waitForImages(invoiceTemplate);
+    const canvas=await html2canvas(invoiceTemplate,{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:invoiceTemplate.scrollWidth,windowHeight:invoiceTemplate.scrollHeight});
+    const imgData=canvas.toDataURL("image/png");const imgH=Math.min((canvas.height*A4_WIDTH_MM)/canvas.width,A4_HEIGHT_MM);
+    if(pi>0)pdf.addPage();pdf.addImage(imgData,"PNG",0,0,A4_WIDTH_MM,imgH);
   }
-
-  const invoiceRows = createInvoiceRowsFromCart();
-  const invoicePages = splitInvoiceRowsIntoPages(invoiceRows);
-  const pdf = new window.jspdf.jsPDF("P","mm","A4");
-
-  for(let pi = 0; pi < invoicePages.length; pi++){
-    const isLastPage = pi === invoicePages.length - 1;
-    renderInvoiceRows(invoicePages[pi]);
-    setInvoiceFooterVisible(isLastPage);
-    const thead = invoiceTemplate.querySelector("#invoiceTable thead");
-    if(thead) thead.style.display = pi > 0 ? "none" : "";
-    const canvas = await renderInvoicePageToCanvas();
-    const imgData = canvas.toDataURL("image/png");
-    const imgHeight = Math.min((canvas.height * A4_WIDTH_MM) / canvas.width, A4_HEIGHT_MM);
-    if(pi > 0) pdf.addPage();
-    pdf.addImage(imgData,"PNG",0,0,A4_WIDTH_MM,imgHeight);
-  }
-  const thead = invoiceTemplate.querySelector("#invoiceTable thead");
-  if(thead) thead.style.display = "";
-  setInvoiceFooterVisible(true);
-  pdf.save(`${branchName}-${invoiceNo}.pdf`);
-
-  await saveInvoiceToFirestore(invoiceNo, currentCustomer.name);
+  const th=invoiceTemplate?.querySelector("#invoiceTable thead");if(th)th.style.display="";setFooterVisible(true);
+  pdf.save(`${bn}-${no}.pdf`);
+  await saveInvoiceToFirestore(no,currentCustomer.name);
 }
 
-/* ========================
-   EVENT LISTENERS
-   ======================== */
-
+/* EVENTS */
 if(cartItems){
-  cartItems.addEventListener("click", event => {
-    const btn = event.target.closest("button[data-action]");
-    if(!btn) return;
-    const {action, id} = btn.dataset;
-    if(action === "increase") increaseQty(id);
-    if(action === "decrease") decreaseQty(id);
-    if(action === "delete") deleteItem(id);
-  });
-  cartItems.addEventListener("change", event => {
-    const input = event.target.closest(".qty-input");
-    if(input) updateQty(input.dataset.id, input.value);
-  });
+  cartItems.addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const{action,id}=b.dataset;if(action==="increase")increaseQty(id);if(action==="decrease")decreaseQty(id);if(action==="delete")deleteItem(id);});
+  cartItems.addEventListener("change",e=>{const i=e.target.closest(".qty-input");if(i)updateQty(i.dataset.id,i.value);});
 }
+if(cartSearch)cartSearch.addEventListener("input",renderCart);
+if(createInvoiceButton)createInvoiceButton.addEventListener("click",createInvoice);
+document.getElementById("whatsappBtn")?.addEventListener("click",()=>window.open("https://wa.me/966541429240","_blank"));
+if(clearCartButton)clearCartButton.addEventListener("click",openClearCartModal);
+if(confirmClearInput&&confirmClearCartButton){confirmClearInput.addEventListener("input",()=>{confirmClearCartButton.disabled=!isClearCartConfirmed();});confirmClearInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&isClearCartConfirmed())clearCart();});}
+if(cancelClearCartButton)cancelClearCartButton.addEventListener("click",closeClearCartModal);
+if(confirmClearCartButton)confirmClearCartButton.addEventListener("click",()=>{if(isClearCartConfirmed())clearCart();});
+if(clearCartModal)clearCartModal.addEventListener("click",e=>{if(e.target===clearCartModal)closeClearCartModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){clearCartModal?.classList.contains("active")&&closeClearCartModal();loginModal?.classList.contains("active")&&closeLoginModal();invoicesModal?.classList.contains("active")&&closeInvoicesModal();if(invoiceDetailModal?.classList.contains("active")){invoiceDetailModal.classList.remove("active");invoiceDetailModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoiceDetailModal.hidden=true;},200);}}});
 
-if(cartSearch) cartSearch.addEventListener("input", renderCart);
-if(createInvoiceButton) createInvoiceButton.addEventListener("click", createInvoice);
-if(whatsappButton) whatsappButton.addEventListener("click", ()=> window.open("https://wa.me/966541429240","_blank"));
-if(clearCartButton) clearCartButton.addEventListener("click", openClearCartModal);
-
-if(confirmClearInput && confirmClearCartButton){
-  confirmClearInput.addEventListener("input", ()=>{ confirmClearCartButton.disabled = !isClearCartConfirmed(); });
-  confirmClearInput.addEventListener("keydown", e => { if(e.key === "Enter" && isClearCartConfirmed()) clearCart(); });
-}
-if(cancelClearCartButton) cancelClearCartButton.addEventListener("click", closeClearCartModal);
-if(confirmClearCartButton) confirmClearCartButton.addEventListener("click", ()=>{ if(isClearCartConfirmed()) clearCart(); });
-if(clearCartModal) clearCartModal.addEventListener("click", e => { if(e.target === clearCartModal) closeClearCartModal(); });
-
-document.addEventListener("keydown", e => {
-  if(e.key === "Escape"){
-    if(clearCartModal?.classList.contains("active")) closeClearCartModal();
-    if(loginModal?.classList.contains("active")) closeLoginModal();
-    if(invoicesModal?.classList.contains("active")) closeInvoicesModal();
-    if(invoiceDetailModal?.classList.contains("active")) closeInvoiceDetailModal();
-  }
-});
-
-/* ========================
-   INIT
-   ======================== */
-
+/* INIT */
+initLang();
 loadSession();
-loadCustomersCache();
 populateBranchDropdown();
 renderCart();
