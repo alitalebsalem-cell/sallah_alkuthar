@@ -568,15 +568,15 @@ a{text-decoration:none;color:inherit;}
 .invoice-check-col{width:32px;}
 .invoice-check-cell{text-align:center;}
 .invoice-check-box{display:inline-block;width:14px;height:14px;border:1.5px solid #111;background:#fff;}
-.invoice-product-cell{text-align:right;overflow:hidden;}
-.invoice-product-main{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:5px;line-height:1.2;}
+.invoice-product-cell{text-align:right;}
+.invoice-product-main{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:5px;line-height:1.6;}
 .invoice-product-number,.invoice-product-qty{
   display:inline-flex;align-items:center;justify-content:center;
   width:24px;min-width:24px;height:24px;border:1.5px solid #555;
   border-radius:2px;background:#fff;font-size:11px;font-weight:900;color:#111;
 }
-.invoice-product-main strong{font-size:12px;font-weight:800;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.invoice-product-details{margin-top:3px;padding-right:35px;font-size:11px;color:#000;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.invoice-product-main strong{font-size:12px;font-weight:800;color:#111;line-height:1.5;}
+.invoice-product-details{margin-top:3px;padding-right:35px;font-size:11px;color:#000;font-weight:600;}
 .invoice-empty-cell{background:#fafafa;}
 .invoice-summary-row{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:8px;border:1px solid #222;}
 .invoice-summary-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;}
