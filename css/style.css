@@ -809,6 +809,16 @@ body.admin-locked{overflow:hidden;}
 .empty-msg{text-align:center;color:var(--secondary);padding:30px;font-size:15px;}
 .loading-msg{text-align:center;color:var(--accent);padding:20px;font-size:15px;}
 
+/* CATEGORY PICKER */
+.cat-pick-card{
+  padding:20px 14px;border:1.5px solid rgba(199,178,153,.25);
+  border-radius:var(--radius);background:var(--white);color:var(--dark);
+  font-weight:700;font-size:14px;cursor:pointer;text-align:center;
+  transition:var(--transition);box-shadow:var(--shadow);line-height:1.6;
+}
+.cat-pick-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--accent);}
+.cat-pick-card:active{transform:scale(.97);}
+
 /* ADMIN BOX */
 .admin-box{max-width:1400px;margin:auto;padding:20px;}
 .admin-box h1,.admin-box h2{text-align:center;margin-bottom:20px;color:var(--dark);}
