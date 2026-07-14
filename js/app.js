@@ -1,5 +1,6 @@
 import { db } from "./firebase.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getLang, setLang, t, catLabel, applyFullLang } from "./i18n.js";
 
 const SESSION_KEY = "sallah_customer_session";
 const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
@@ -36,190 +37,18 @@ function getCartTotalQty(){ return cart.reduce((sum,item) => sum + getItemQty(it
 /* ========================
    LANGUAGE TOGGLE
    ======================== */
-const LANG_KEY = "sallah_lang";
-const translations = {
-  ar: {
-    searchPlaceholder: "🔍 ابحث عن منتج...",
-    login: "🔑 دخول",
-    loginTitle: "تسجيل الدخول",
-    loginSubtitle: "اختر نوع الحساب والاسم وأدخل كلمة المرور",
-    accountType: "-- نوع الحساب --",
-    accountTypeLab: "حساب معمل",
-    accountTypeBranch: "حساب فرع",
-    selectName: "-- اختر الاسم --",
-    pinPlaceholder: "كلمة المرور (4 أرقام)",
-    submit: "دخول",
-    name: "الاسم:",
-    type: "النوع:",
-    pin: "PIN:",
-    show: "إظهار",
-    hide: "إخفاء",
-    changePin: "🔑 تغيير كلمة المرور",
-    myInvoices: "📄 فواتيري",
-    logout: "🚪 تسجيل الخروج",
-    logoutConfirm: "هل تريد تسجيل الخروج؟",
-    welcomeMsg: "مرحباً بك في سمسم",
-    welcomeSub: "سجّل دخولك للوصول إلى المنتجات",
-    loginBtnOverlay: "🔑 تسجيل الدخول",
-    addedToCart: "تمت الإضافة",
-    addToCart: "إضافة إلى السلة",
-    noProducts: "لا توجد منتجات في هذا القسم",
-    loading: "جاري تحميل المنتجات...",
-    allCategories: "الكل",
-    selectAccountType: "اختر نوع الحساب",
-    selectNameErr: "اختر الاسم",
-    pinFourDigits: "كلمة المرور 4 أرقام",
-    accountNotFound: "الحساب غير موجود",
-    wrongPassword: "كلمة المرور خاطئة",
-    invoiceNum: "رقم الفاتورة",
-    customer: "العميل",
-    date: "التاريخ",
-    products: "المنتجات",
-    qty: "الكمية",
-    close: "إغلاق",
-    myInvoicesTitle: "📄 فواتيري",
-    loadingInvoices: "جاري تحميل الفواتير...",
-    noInvoices: "لا توجد فواتير",
-    invoiceDetails: "تفاصيل الفاتورة",
-    items: "المنتجات",
-    changePinPrompt: "أدخل كلمة المرور الجديدة (4 أرقام):",
-    pinMustBeFour: "يجب أن تكون 4 أرقام",
-    pinChanged: "تم تغيير كلمة المرور",
-    menuStore: "المتجر",
-    menuCart: "السلة",
-    menuAdmin: "لوحة الإدارة",
-    menuInvoices: "عرض الفواتير",
-    menuDashboard: "Dashboard",
-  },
-  en: {
-    searchPlaceholder: "🔍 Search products...",
-    login: "🔑 Login",
-    loginTitle: "Login",
-    loginSubtitle: "Select account type, name and enter PIN",
-    accountType: "-- Account Type --",
-    accountTypeLab: "Lab Account",
-    accountTypeBranch: "Branch Account",
-    selectName: "-- Select Name --",
-    pinPlaceholder: "PIN (4 digits)",
-    submit: "Login",
-    name: "Name:",
-    type: "Type:",
-    pin: "PIN:",
-    show: "Show",
-    hide: "Hide",
-    changePin: "🔑 Change PIN",
-    myInvoices: "📄 My Invoices",
-    logout: "🚪 Logout",
-    logoutConfirm: "Are you sure you want to logout?",
-    welcomeMsg: "Welcome to SimSim",
-    welcomeSub: "Login to access products",
-    loginBtnOverlay: "🔑 Login",
-    addedToCart: "Added!",
-    addToCart: "Add to Cart",
-    noProducts: "No products in this section",
-    loading: "Loading products...",
-    allCategories: "All",
-    selectAccountType: "Select account type",
-    selectNameErr: "Select a name",
-    pinFourDigits: "PIN must be 4 digits",
-    accountNotFound: "Account not found",
-    wrongPassword: "Wrong PIN",
-    invoiceNum: "Invoice No",
-    customer: "Customer",
-    date: "Date",
-    products: "Products",
-    qty: "Qty",
-    close: "Close",
-    myInvoicesTitle: "📄 My Invoices",
-    loadingInvoices: "Loading invoices...",
-    noInvoices: "No invoices yet",
-    invoiceDetails: "Invoice Details",
-    items: "Items",
-    changePinPrompt: "Enter new PIN (4 digits):",
-    pinMustBeFour: "Must be 4 digits",
-    pinChanged: "PIN changed successfully",
-    menuStore: "Store",
-    menuCart: "Cart",
-    menuAdmin: "Admin Panel",
-    menuInvoices: "Invoices",
-    menuDashboard: "Dashboard",
-  }
-};
-const CAT_LABELS = {
-  ar: {"قسم المعمل":"قسم المعمل","قسم السوبرماركت":"قسم السوبرماركت","قسم محلات الجملة":"محلات الجملة","قسم المستودع":"قسم المستودع","احتياجات المعمل":"احتياجات المعمل","الكل":"الكل"},
-  en: {"قسم المعمل":"Lab","قسم السوبرماركت":"Supermarket","قسم محلات الجملة":"Wholesale","قسم المستودع":"Warehouse","احتياجات المعمل":"Lab Needs","الكل":"All"}
-};
-function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
-function t(key){ return translations[getLang()][key] || key; }
-function catLabel(catKey){ return (CAT_LABELS[getLang()] || CAT_LABELS.ar)[catKey] || catKey; }
 function applyLang(){
-  const lang = getLang();
-  const isEn = lang === "en";
-  document.documentElement.lang = lang;
-  document.documentElement.dir = isEn ? "ltr" : "rtl";
-  const btn = document.getElementById("langToggle");
-  if(btn) btn.textContent = isEn ? "عربي" : "EN";
-  if(searchInput) searchInput.placeholder = t("searchPlaceholder");
-  const loginBtnEl = document.getElementById("loginBtn");
-  if(loginBtnEl) loginBtnEl.innerHTML = t("login");
-  if(loginRequiredBtn) loginRequiredBtn.textContent = t("loginBtnOverlay");
-  const wMsg = document.querySelector("#loginRequiredOverlay h2");
-  if(wMsg) wMsg.textContent = t("welcomeMsg");
-  const wSub = document.querySelector("#loginRequiredOverlay p");
-  if(wSub) wSub.textContent = t("welcomeSub");
-  const lmTitle = document.querySelector("#loginModal h2");
-  if(lmTitle) lmTitle.textContent = t("loginTitle");
-  const lmSub = document.querySelector("#loginModal .login-subtitle");
-  if(lmSub) lmSub.textContent = t("loginSubtitle");
-  if(loginAccountType){
-    const opts = loginAccountType.options;
-    if(opts[0]) opts[0].textContent = t("accountType");
-    if(opts[1]) opts[1].textContent = t("accountTypeLab");
-    if(opts[2]) opts[2].textContent = t("accountTypeBranch");
-  }
-  if(loginNameInput){
-    const def = loginNameInput.querySelector('option[value=""]');
-    if(def) def.textContent = t("selectName");
-  }
-  if(loginPinInput) loginPinInput.placeholder = t("pinPlaceholder");
-  if(loginSubmitBtn) loginSubmitBtn.textContent = t("submit");
-  document.querySelectorAll(".cat-label").forEach(el => {
-    const key = el.getAttribute("data-i18n-cat");
-    if(key) el.textContent = catLabel(key);
-  });
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.getAttribute("data-i18n");
-    if(el.tagName === "INPUT" || el.tagName === "SELECT") el.placeholder = t(key);
-    else el.textContent = t(key);
-  });
-  const ddItems = document.querySelectorAll(".profile-dropdown-item");
-  if(ddItems[0]){ ddItems[0].querySelector("strong").textContent = t("name"); }
-  if(ddItems[1]){ ddItems[1].querySelector("strong").textContent = t("type"); }
-  if(ddItems[3]){ const b = ddItems[3].querySelector("button"); if(b) b.textContent = t("changePin"); }
-  if(ddItems[4]){ const b = ddItems[4].querySelector("button"); if(b) b.textContent = t("myInvoices"); }
-  if(ddItems[5]){ const b = ddItems[5].querySelector("button"); if(b) b.textContent = t("logout"); }
-  const profileTogglePin = document.getElementById("profileTogglePin");
-  if(profileTogglePin && currentCustomer){
-    const el = document.getElementById("profilePin");
-    if(el) profileTogglePin.textContent = el.textContent === "****" ? t("show") : t("hide");
-  }
-  if(currentCustomer){
-    const pt = document.getElementById("profileType");
-    if(pt) pt.textContent = currentCustomer.accountType || (isEn ? "Not set" : "غير محدد");
-  }
-  const menuLinks = document.querySelectorAll("#dashMenuDropdown a");
-  if(menuLinks[0]) menuLinks[0].innerHTML = `<span class="dash-icon">🛒</span> ${t("menuStore")}`;
-  if(menuLinks[1]) menuLinks[1].innerHTML = `<span class="dash-icon">📋</span> ${t("menuCart")}`;
-  if(menuLinks[2]) menuLinks[2].innerHTML = `<span class="dash-icon">⚙️</span> ${t("menuAdmin")}`;
-  if(menuLinks[3]) menuLinks[3].innerHTML = `<span class="dash-icon">📄</span> ${t("menuInvoices")}`;
-  if(menuLinks[4]) menuLinks[4].innerHTML = `<span class="dash-icon">🏠</span> ${t("menuDashboard")}`;
-  document.querySelectorAll(".product-cart-btn span:last-child").forEach(el => {
-    if(!el.closest(".is-added")) el.textContent = t("addToCart");
+  applyFullLang({
+    langToggle: "langToggle",
+    search: "search",
+    loginBtn: "loginBtn",
+    loginRequiredOverlay: "loginRequiredOverlay",
+    loginModal: "loginModal",
+    profile: true,
   });
 }
 document.getElementById("langToggle")?.addEventListener("click", () => {
-  const next = getLang() === "ar" ? "en" : "ar";
-  localStorage.setItem(LANG_KEY, next);
+  setLang(getLang() === "ar" ? "en" : "ar");
   applyLang();
 });
 
