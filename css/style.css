@@ -673,6 +673,20 @@ body.admin-locked{overflow:hidden;}
 }
 .sort-buttons button:hover{border-color:var(--accent);transform:translateY(-1px);}
 
+.excel-toolbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0;}
+.excel-toolbar button{
+  padding:12px 22px;border:none;border-radius:var(--radius-sm);
+  font-size:14px;font-weight:800;cursor:pointer;transition:var(--transition);
+  box-shadow:var(--shadow);
+}
+.excel-toolbar button:first-child{
+  background:linear-gradient(135deg,#325247,#414935);color:#fff;
+}
+.excel-toolbar button:last-child{
+  background:linear-gradient(135deg,#705f34,#8a7a4a);color:#fff;
+}
+.excel-toolbar button:hover{transform:translateY(-2px);opacity:.92;}
+
 .admin-search-box{
   width:100%;padding:12px;margin-bottom:12px;
   border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);
