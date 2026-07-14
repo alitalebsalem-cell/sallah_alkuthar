@@ -211,7 +211,8 @@ async function loadCustomerInvoices(){
   if(snap.empty){invoicesList.innerHTML='<div class="empty-text">لا توجد فواتير</div>';return;}
   invoicesList.innerHTML="";
   snap.forEach(doc=>{const inv=doc.data();const div=document.createElement("div");div.className="invoice-history-card";
-  div.innerHTML=`<div class="invoice-history-top"><strong class="invoice-history-no">${escapeHTML(inv.branchName||inv.invoiceNo||"")}</strong><span class="invoice-history-date">${inv.date||""}</span></div><div class="invoice-history-items">${escapeHTML((inv.items||[]).slice(0,3).map(i=>i.name).join("، "))}</div><div class="invoice-history-footer"><span>المنتجات: ${inv.totalItems||0}</span><span>الكمية: ${inv.totalQty||0}</span></div>`;
+  div.innerHTML=`<div class="invoice-history-top"><strong class="invoice-history-no">${escapeHTML(inv.branchName||inv.invoiceNo||"")}</strong><span class="invoice-history-date">${inv.date||""}</span></div><div class="invoice-history-items">${escapeHTML((inv.items||[]).slice(0,3).map(i=>i.name).join("، "))}</div><div class="invoice-history-footer" style="display:flex;justify-content:space-between;align-items:center;"><span>المنتجات: ${inv.totalItems||0} | الكمية: ${inv.totalQty||0}</span><button class="inv-pdf-btn" type="button" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(220,53,69,.1);color:#dc3545;font-size:12px;font-weight:700;cursor:pointer;">📥 PDF</button></div>`;
+  div.querySelector(".inv-pdf-btn")?.addEventListener("click",e=>{e.stopPropagation();generateInvoicePdf(inv);});
   div.addEventListener("click",()=>openInvoiceDetail(inv));invoicesList.appendChild(div);});
   }catch(e){invoicesList.innerHTML='<div class="error-text">حدث خطأ</div>';}
 }

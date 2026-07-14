@@ -1,6 +1,7 @@
 import { db } from "./firebase.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel, applyFullLang } from "./i18n.js";
+import { generateInvoicePdf } from "./invoice-pdf.js";
 
 const SESSION_KEY = "sallah_customer_session";
 const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
@@ -516,11 +517,12 @@ async function loadCustomerInvoices(){
           <span class="invoice-history-date">${inv.date||""}</span>
         </div>
         <div class="invoice-history-items">${escapeHTML((inv.items||[]).slice(0,3).map(i=>i.name).join("، "))}</div>
-        <div class="invoice-history-footer">
-          <span>${t("products")}: ${inv.totalItems||0}</span>
-          <span>${t("qty")}: ${inv.totalQty||0}</span>
+        <div class="invoice-history-footer" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>${t("products")}: ${inv.totalItems||0} | ${t("qty")}: ${inv.totalQty||0}</span>
+          <button class="inv-pdf-btn" type="button" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(220,53,69,.1);color:#dc3545;font-size:12px;font-weight:700;cursor:pointer;">📥 PDF</button>
         </div>
       `;
+      div.querySelector(".inv-pdf-btn")?.addEventListener("click", e => { e.stopPropagation(); generateInvoicePdf(inv); });
       div.addEventListener("click", () => openInvoiceDetail(inv));
       list.appendChild(div);
     });
