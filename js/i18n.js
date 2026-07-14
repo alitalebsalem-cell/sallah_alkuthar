@@ -3,6 +3,13 @@ const CAT_LABELS = {
   ar: {"قسم المعمل":"قسم المعمل","قسم السوبرماركت":"قسم السوبرماركت","قسم محلات الجملة":"محلات الجملة","قسم المستودع":"قسم المستودع","احتياجات المعمل":"احتياجات المعمل","الكل":"الكل"},
   en: {"قسم المعمل":"Lab","قسم السوبرماركت":"Supermarket","قسم محلات الجملة":"Wholesale","قسم المستودع":"Warehouse","احتياجات المعمل":"Lab Needs","الكل":"All"}
 };
+const CAT_IMAGES = {
+  "قسم المعمل":      { ar: "images/almamal-ar.png",       en: "images/almamal-en.png" },
+  "قسم السوبرماركت": { ar: "images/supermarket-ar.png",   en: "images/supermarket-en.png" },
+  "قسم محلات الجملة": { ar: "images/aljumllah-ar.png",    en: "images/aljumllah-en.png" },
+  "قسم المستودع":    { ar: "images/almstodaa-ar.png",     en: "images/almstodaa-en.png" },
+  "احتياجات المعمل":  { ar: "images/almamsuplesl-ar.png",  en: "images/almamsuplesl-en.png" }
+};
 const T = {
   ar: {
     searchPlaceholder: "🔍 ابحث عن منتج...",
@@ -184,6 +191,14 @@ const T = {
     editBtn: "تعديل",
     deleteBtn: "حذف",
     registrationDate: "تاريخ التسجيل:",
+    allProducts: "جميع المنتجات",
+    uploadImage: "📷 إدراج من معرض الصور",
+    importExcelLabel: "📥 استيراد من ملف إكسل",
+    exportExcelLabel: "📤 تصدير إلى إكسل",
+    accountTypeLab: "حساب معمل 🔬",
+    accountTypeBranch: "حساب فرع 🏪",
+    noProductsInCategory: "لا توجد منتجات في هذا القسم",
+    productsInCategory: "منتجات القسم",
   },
   en: {
     searchPlaceholder: "🔍 Search products...",
@@ -365,6 +380,14 @@ const T = {
     editBtn: "Edit",
     deleteBtn: "Delete",
     registrationDate: "Registration date:",
+    allProducts: "All Products",
+    uploadImage: "📷 Upload from Gallery",
+    importExcelLabel: "📥 Import from Excel",
+    exportExcelLabel: "📤 Export to Excel",
+    accountTypeLab: "Lab Account 🔬",
+    accountTypeBranch: "Branch Account 🏪",
+    noProductsInCategory: "No products in this category",
+    productsInCategory: "Category Products",
   }
 };
 
@@ -372,6 +395,7 @@ export function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
 export function setLang(lang){ localStorage.setItem(LANG_KEY, lang); }
 export function t(key){ return (T[getLang()] || T.ar)[key] || key; }
 export function catLabel(catKey){ return (CAT_LABELS[getLang()] || CAT_LABELS.ar)[catKey] || catKey; }
+export function catImage(catKey){ const imgs = CAT_IMAGES[catKey]; if(!imgs) return null; return imgs[getLang()] || imgs.ar; }
 
 export function applyMenuLang(){
   const lang = getLang();

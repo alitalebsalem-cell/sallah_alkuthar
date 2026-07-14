@@ -4,7 +4,7 @@ import {
   collection, addDoc, getDocs, deleteDoc, updateDoc, doc,
   query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { getLang, setLang, t, catLabel, applyFullLang, applyMenuLang } from "./i18n.js";
+import { getLang, setLang, t, catLabel, catImage, applyFullLang, applyMenuLang } from "./i18n.js";
 
 let editingId = null;
 let allProducts = [];
@@ -66,7 +66,16 @@ async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
-async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);}
+async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();}
+
+function updateCategoryBadges(){
+  document.querySelectorAll(".cat-pick-card").forEach(c => {
+    const cat = c.dataset.cat;
+    const count = allProducts.filter(p => p.category === cat).length;
+    const badge = c.querySelector(".cat-pick-badge");
+    if(badge) badge.textContent = count;
+  });
+}
 
 /* CATEGORY PICKER */
 let selectedAdminCategory = null;
@@ -79,13 +88,38 @@ function showCategoryPicker(){
   if(categoryPicker) categoryPicker.style.display = "";
   if(productFormSection) productFormSection.style.display = "none";
   selectedAdminCategory = null;
+  const catProducts = document.getElementById("categoryProductsSection");
+  if(catProducts) catProducts.style.display = "none";
+  // Re-render all products
+  renderProducts(allProducts);
 }
 function showProductForm(cat){
   selectedAdminCategory = cat;
   if(categoryPicker) categoryPicker.style.display = "none";
   if(productFormSection) productFormSection.style.display = "";
-  if(selectedCategoryName) selectedCategoryName.textContent = cat;
+  if(selectedCategoryName) selectedCategoryName.textContent = catLabel(cat);
   if(categorySelect){ categorySelect.value = cat; }
+  // Show category products below the form
+  renderCategoryProducts(cat);
+}
+
+function renderCategoryProducts(cat){
+  const section = document.getElementById("categoryProductsSection");
+  if(!section) return;
+  const list = document.getElementById("categoryProductsList");
+  const title = document.getElementById("categoryProductsTitle");
+  if(!list) return;
+  const catProducts = allProducts.filter(p => p.category === cat);
+  if(title) title.textContent = `${t("productsInCategory")} - ${catLabel(cat)} (${catProducts.length})`;
+  if(catProducts.length === 0){
+    list.innerHTML = `<div class="empty-msg">${t("noProductsInCategory")}</div>`;
+  } else {
+    list.innerHTML = "";
+    catProducts.forEach(p => {
+      list.insertAdjacentHTML("beforeend",`<div class="admin-product"><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.name||"")}</h3><p>${escapeHTML(p.description||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
+    });
+  }
+  section.style.display = "";
 }
 
 document.querySelectorAll(".cat-pick-card").forEach(card => {
@@ -107,7 +141,7 @@ function renderProducts(products){
   if(!productsTable)return;
   productsTable.innerHTML="";
   products.forEach(p=>{
-    productsTable.insertAdjacentHTML("beforeend",`<div class="admin-product"><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.name||"")}</h3><p>${escapeHTML(p.description||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p><p style="color:var(--accent);font-weight:700;">${escapeHTML(p.category||"")}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">تعديل</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">حذف</button></div></div>`);
+    productsTable.insertAdjacentHTML("beforeend",`<div class="admin-product"><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.name||"")}</h3><p>${escapeHTML(p.description||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p><p style="color:var(--accent);font-weight:700;">${escapeHTML(catLabel(p.category||""))}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
   });
 }
 
@@ -301,15 +335,28 @@ function applyAdminLang(){
     if(tabKeys[i]) tab.textContent = t(tabKeys[i]);
   });
 
-  // Products section
-  const pickerTitle = document.querySelector("#categoryPicker h2");
+  // Category picker title
+  const pickerTitle = document.querySelector("#categoryPicker h2:first-child");
   if(pickerTitle) pickerTitle.textContent = t("selectCategory");
+
+  // Category picker cards - use images
   document.querySelectorAll(".cat-pick-card").forEach(c => {
     const cat = c.dataset.cat;
-    const icon = c.querySelector(".cat-icon");
-    const iconText = icon ? icon.textContent : c.innerHTML.split("<br>")[0].trim();
-    c.innerHTML = `<span class="cat-icon">${iconText}</span><br>${catLabel(cat)}`;
+    const img = catImage(cat);
+    const lbl = catLabel(cat);
+    const count = allProducts.filter(p => p.category === cat).length;
+    if(img){
+      c.innerHTML = `<img src="${img}" alt="${lbl}" class="cat-pick-img" onerror="this.style.display='none'"><span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${lbl}</span>`;
+    } else {
+      c.innerHTML = `<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${lbl}</span>`;
+    }
   });
+
+  // All Products heading
+  const allProdH2 = document.querySelector("#categoryPicker > hr + h2");
+  if(allProdH2) allProdH2.textContent = t("allProducts");
+
+  // Product form
   const backBtn = document.getElementById("backToCategories");
   if(backBtn) backBtn.textContent = t("backToCategories");
   const addTitle = document.querySelector("#productFormSection h2");
@@ -321,6 +368,18 @@ function applyAdminLang(){
   });
   const saveBtn = document.getElementById("save");
   if(saveBtn) saveBtn.textContent = t("saveProduct");
+
+  // Upload image label
+  const uploadLabel = document.querySelector("label[for='imageFile']");
+  if(uploadLabel) uploadLabel.textContent = t("uploadImage");
+
+  // Import/Export Excel buttons
+  const importBtn = document.getElementById("importExcel");
+  if(importBtn) importBtn.textContent = t("importExcelLabel");
+  const exportBtn = document.getElementById("exportExcel");
+  if(exportBtn) exportBtn.textContent = t("exportExcelLabel");
+
+  // Search and sort
   const searchAdmin = document.getElementById("searchAdmin");
   if(searchAdmin) searchAdmin.placeholder = t("searchProduct");
   const sortBtns = {sortNewest:"sortNewest",sortOldest:"sortOldest",sortNameAsc:"sortNameAsc"};
@@ -351,6 +410,13 @@ function applyAdminLang(){
   const custSearch = document.getElementById("customerSearch");
   if(custSearch) custSearch.placeholder = t("searchCustomer");
 
+  // Account type dropdown
+  const accSel = document.getElementById("newCustAccountType");
+  if(accSel && accSel.options.length >= 2){
+    accSel.options[0].textContent = t("accountTypeLab");
+    accSel.options[1].textContent = t("accountTypeBranch");
+  }
+
   // Branches section
   const brTitle = document.querySelector("#section-branches h2");
   if(brTitle) brTitle.textContent = t("manageBranches");
@@ -371,6 +437,9 @@ function applyAdminLang(){
 
   // Floating menu
   applyMenuLang();
+
+  // Re-render category products if a category is selected
+  if(selectedAdminCategory) renderCategoryProducts(selectedAdminCategory);
 }
 getElement("adminLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");

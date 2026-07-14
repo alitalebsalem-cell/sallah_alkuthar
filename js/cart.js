@@ -70,6 +70,13 @@ function applyLang(){
     loginModal: "loginModal",
     profile: true,
   });
+  // Swap category images
+  const lang = getLang();
+  document.querySelectorAll(".cat-card .cat-img").forEach(img => {
+    const ar = img.getAttribute("data-img-ar");
+    const en = img.getAttribute("data-img-en");
+    if(ar && en) img.src = lang === "en" ? en : ar;
+  });
 }
 document.getElementById("langToggle")?.addEventListener("click",()=>{
   setLang(getLang()==="ar"?"en":"ar");
@@ -329,7 +336,21 @@ if(clearCartModal)clearCartModal.addEventListener("click",e=>{if(e.target===clea
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){clearCartModal?.classList.contains("active")&&closeClearCartModal();loginModal?.classList.contains("active")&&closeLoginModal();invoicesModal?.classList.contains("active")&&closeInvoicesModal();if(invoiceDetailModal?.classList.contains("active")){invoiceDetailModal.classList.remove("active");invoiceDetailModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoiceDetailModal.hidden=true;},200);}}});
 
 /* INIT */
+async function loadCategoryCounts(){
+  try{
+    const snap = await getDocs(collection(db,"products"));
+    const counts = {};
+    snap.forEach(d => { const cat = d.data().category; if(cat) counts[cat] = (counts[cat]||0)+1; });
+    document.querySelectorAll("[data-cat-count]").forEach(badge => {
+      const cat = badge.getAttribute("data-cat-count");
+      const count = counts[cat] || 0;
+      badge.textContent = count;
+      badge.style.display = count > 0 ? "" : "none";
+    });
+  }catch(e){}
+}
 applyLang();
 loadSession();
 populateBranchDropdown();
 renderCart();
+loadCategoryCounts();

@@ -46,6 +46,13 @@ function applyLang(){
     loginModal: "loginModal",
     profile: true,
   });
+  // Swap category images
+  const lang = getLang();
+  document.querySelectorAll(".cat-card .cat-img").forEach(img => {
+    const ar = img.getAttribute("data-img-ar");
+    const en = img.getAttribute("data-img-en");
+    if(ar && en) img.src = lang === "en" ? en : ar;
+  });
 }
 document.getElementById("langToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");
@@ -160,6 +167,18 @@ async function loadProducts(){
   allProducts = [];
   querySnapshot.forEach(doc => allProducts.push({id:doc.id,...doc.data()}));
   if(currentCustomer) renderProducts(getFilteredProducts());
+  updateCategoryBadges();
+}
+
+function updateCategoryBadges(){
+  const cats = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+  cats.forEach(cat => {
+    const count = allProducts.filter(p => p.category === cat).length;
+    document.querySelectorAll(`[data-cat-count="${cat}"]`).forEach(badge => {
+      badge.textContent = count;
+      badge.style.display = count > 0 ? "" : "none";
+    });
+  });
 }
 
 function getFilteredProducts(){
