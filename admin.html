@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة الإدارة</title>
-  <link rel="stylesheet" href="css/style.css?v=20260714-1">
+  <link rel="stylesheet" href="css/style.css?v=20260714-2">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -31,6 +31,10 @@
     <a href="dashboard.html"><img src="images/logo.png" class="logo" alt="Logo" style="width:120px;height:auto;"></a>
   </div>
 
+  <div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">
+    <button id="adminLangToggle" class="lang-toggle-btn" type="button">EN</button>
+  </div>
+
   <div class="admin-tabs">
     <button class="admin-tab active" data-tab="products">🛒 المنتجات</button>
     <button class="admin-tab" data-tab="invoices">📄 الفواتير</button>
@@ -41,38 +45,50 @@
 
   <!-- PRODUCTS TAB -->
   <div class="admin-section active" id="section-products">
-    <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">إضافة / تعديل منتج</h2>
-    <div class="form-grid">
-      <input id="name" placeholder="الاسم بالعربي">
-      <input id="description" placeholder="الاسم بالإنجليزي">
-      <input id="code" placeholder="كود المنتج">
-      <select id="category">
-        <option value="قسم المعمل">قسم المعمل 🔬</option>
-        <option value="قسم السوبرماركت">قسم السوبرماركت 🛒</option>
-        <option value="قسم محلات الجملة">قسم محلات الجملة 🏪</option>
-        <option value="قسم المستودع">قسم المستودع 🏭</option>
-        <option value="طلبات المعمل">طلبات المعمل 📋</option>
-      </select>
-      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none">
-      <input id="image" placeholder="رابط الصورة">
-      <label for="imageFile" class="upload-btn">📷 إدراج من معرض الصور</label>
-      <input type="file" id="imageFile" accept="image/*" style="display:none">
-      <button id="importExcel" type="button">📥 استيراد من ملف إكسل</button>
-      <button id="exportExcel" type="button">📤 تصدير إلى إكسل</button>
+    <!-- CATEGORY PICKER (shown first) -->
+    <div id="categoryPicker">
+      <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">📦 اختر القسم لإضافة منتج جديد</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
+        <button class="cat-pick-card" type="button" data-cat="قسم المعمل">🔬<br>قسم المعمل</button>
+        <button class="cat-pick-card" type="button" data-cat="قسم السوبرماركت">🛒<br>قسم السوبرماركت</button>
+        <button class="cat-pick-card" type="button" data-cat="قسم محلات الجملة">🏪<br>محلات الجملة</button>
+        <button class="cat-pick-card" type="button" data-cat="قسم المستودع">🏭<br>قسم المستودع</button>
+        <button class="cat-pick-card" type="button" data-cat="احتياجات المعمل">📋<br>احتياجات المعمل</button>
+      </div>
+      <hr style="margin:20px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
+      <h2 style="color:var(--dark);text-align:center;margin-bottom:12px;">جميع المنتجات</h2>
+      <input id="searchAdmin" class="admin-search-box" placeholder="🔍 البحث عن منتج...">
+      <div class="sort-buttons">
+        <button id="sortNewest" type="button">الأحدث</button>
+        <button id="sortOldest" type="button">الأقدم</button>
+        <button id="sortNameAsc" type="button">أ → ي</button>
+      </div>
+      <div id="productsTable"></div>
     </div>
-    <div style="text-align:center;margin:15px 0;">
-      <img id="previewImage" src="images/noimg.jpg" style="width:130px;height:130px;object-fit:contain;border:1.5px solid rgba(199,178,153,.3);border-radius:var(--radius);padding:8px;background:var(--white);">
+
+    <!-- PRODUCT FORM (hidden until category selected) -->
+    <div id="productFormSection" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <button id="backToCategories" type="button" style="padding:8px 14px;border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);background:var(--white);color:var(--dark);font-weight:700;cursor:pointer;">← العودة</button>
+        <h2 style="color:var(--dark);margin:0;">إضافة إلى: <span id="selectedCategoryName" style="color:var(--accent);"></span></h2>
+      </div>
+      <div class="form-grid">
+        <input id="name" placeholder="الاسم بالعربي">
+        <input id="description" placeholder="الاسم بالإنجليزي">
+        <input id="code" placeholder="كود المنتج">
+        <select id="category" style="display:none;"></select>
+        <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none">
+        <input id="image" placeholder="رابط الصورة">
+        <label for="imageFile" class="upload-btn">📷 إدراج من معرض الصور</label>
+        <input type="file" id="imageFile" accept="image/*" style="display:none">
+        <button id="importExcel" type="button">📥 استيراد من ملف إكسل</button>
+        <button id="exportExcel" type="button">📤 تصدير إلى إكسل</button>
+      </div>
+      <div style="text-align:center;margin:15px 0;">
+        <img id="previewImage" src="images/noimg.jpg" style="width:130px;height:130px;object-fit:contain;border:1.5px solid rgba(199,178,153,.3);border-radius:var(--radius);padding:8px;background:var(--white);">
+      </div>
+      <button id="save" type="button">💾 حفظ المنتج</button>
     </div>
-    <button id="save" type="button">💾 حفظ المنتج</button>
-    <hr style="margin:20px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
-    <h2 style="color:var(--dark);text-align:center;margin-bottom:12px;">جميع المنتجات</h2>
-    <input id="searchAdmin" class="admin-search-box" placeholder="🔍 البحث عن منتج...">
-    <div class="sort-buttons">
-      <button id="sortNewest" type="button">الأحدث</button>
-      <button id="sortOldest" type="button">الأقدم</button>
-      <button id="sortNameAsc" type="button">أ → ي</button>
-    </div>
-    <div id="productsTable"></div>
   </div>
 
   <!-- INVOICES TAB -->
@@ -136,7 +152,7 @@
     if(document.querySelector("script[data-admin-module='true']")) return;
     const script = document.createElement("script");
     script.type = "module";
-    script.src = "js/admin.js?v=20260714-1";
+    script.src = "js/admin.js?v=20260714-2";
     script.dataset.adminModule = "true";
     document.body.appendChild(script);
   }
