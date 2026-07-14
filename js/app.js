@@ -402,6 +402,18 @@ async function loadCustomersFromFirestore(){
         changed = true;
       }
     });
+    customersCache.forEach(c => {
+      if(!c.accountType || c.accountType.trim() === ""){
+        c.accountType = "حساب معمل";
+        if(c.id && !String(c.id).startsWith("local_")){
+          import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js").then(({doc,updateDoc}) => {
+            import("./firebase.js").then(({db:d}) => {
+              updateDoc(doc(d,"customers",c.id),{accountType:"حساب معمل"}).catch(()=>{});
+            });
+          });
+        }
+      }
+    });
     saveLocalCustomers(customersCache);
   }catch(e){
     console.warn("Firestore sync failed:", e);
@@ -415,7 +427,12 @@ function populateCustomerDropdown(accountType){
   if(!loginNameInput) return;
   loginNameInput.innerHTML = '<option value="">-- اختر الاسم --</option>';
   let filtered = customersCache;
-  if(accountType) filtered = customersCache.filter(c => (c.accountType || "") === accountType);
+  if(accountType){
+    filtered = customersCache.filter(c => {
+      const t = (c.accountType || "").trim();
+      return t === accountType || t === "";
+    });
+  }
   const sorted = [...filtered].sort((a,b) => String(a.name||"").localeCompare(String(b.name||""), "ar"));
   sorted.forEach(c => {
     const opt = document.createElement("option");

@@ -146,6 +146,7 @@ async function loadAllCustomers(){
   try{const snap=await getDocs(customersCollection);const fids=new Set();
   snap.forEach(d=>{fids.add(d.id);const data=d.data();if(!allCustomers.find(c=>c.id===d.id))allCustomers.push({id:d.id,name:data.name,pin:data.pin,accountType:data.accountType||"",createdAt:data.createdAt});});
   const lids=new Set(allCustomers.map(c=>c.id));fids.forEach(fid=>{if(!lids.has(fid))allCustomers=allCustomers.filter(c=>c.id!==fid);});
+  allCustomers.forEach(c=>{const s=snap.docs.find(dd=>dd.id===c.id);if(s&&!s.data().accountType){try{updateDoc(doc(db,"customers",c.id),{accountType:"حساب معمل"});c.accountType="حساب معمل";}catch(e){}}});
   saveLocalCustomers(allCustomers);}catch(e){}
   renderAllCustomers(allCustomers);
 }
