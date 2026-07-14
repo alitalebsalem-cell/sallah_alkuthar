@@ -105,10 +105,10 @@ function hideCart(){
 }
 
 /* PERMISSIONS */
-const CATEGORY_PERMISSIONS={"حساب معمل":["قسم المعمل","قسم المستودع","طلبات المعمل"],"حساب فرع":["قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
+const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
 function getAllowedCategories(){
   if(!currentCustomer)return[];
-  return CATEGORY_PERMISSIONS[currentCustomer.accountType||""]||["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","طلبات المعمل"];
+  return CATEGORY_PERMISSIONS[currentCustomer.accountType||""]||["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 }
 function applyPermissions(){
   const allowed=getAllowedCategories();

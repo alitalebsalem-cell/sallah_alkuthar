@@ -10,7 +10,7 @@ let allProducts = [];
 let allInvoices = [];
 let allCustomers = [];
 
-const NEW_CATEGORIES = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","طلبات المعمل"];
+const NEW_CATEGORIES = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 const ARABIC_DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 
@@ -67,6 +67,41 @@ function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.ad
 /* PRODUCTS */
 async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);}
 
+/* CATEGORY PICKER */
+let selectedAdminCategory = null;
+const categoryPicker = document.getElementById("categoryPicker");
+const productFormSection = document.getElementById("productFormSection");
+const categorySelect = document.getElementById("category");
+const selectedCategoryName = document.getElementById("selectedCategoryName");
+
+function showCategoryPicker(){
+  if(categoryPicker) categoryPicker.style.display = "";
+  if(productFormSection) productFormSection.style.display = "none";
+  selectedAdminCategory = null;
+}
+function showProductForm(cat){
+  selectedAdminCategory = cat;
+  if(categoryPicker) categoryPicker.style.display = "none";
+  if(productFormSection) productFormSection.style.display = "";
+  if(selectedCategoryName) selectedCategoryName.textContent = cat;
+  if(categorySelect){ categorySelect.value = cat; }
+}
+
+document.querySelectorAll(".cat-pick-card").forEach(card => {
+  card.addEventListener("click", () => showProductForm(card.dataset.cat));
+});
+getElement("backToCategories")?.addEventListener("click", () => {
+  showCategoryPicker();
+  clearForm();
+  editingId = null;
+});
+
+document.querySelectorAll(".admin-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    if(tab.dataset.tab === "products") showCategoryPicker();
+  });
+});
+
 function renderProducts(products){
   if(!productsTable)return;
   productsTable.innerHTML="";
@@ -91,7 +126,7 @@ getElement("save")?.addEventListener("click",async()=>{
 });
 
 window.deleteProduct=async function(id){if(!confirm("حذف المنتج؟"))return;try{await deleteDoc(doc(db,"products",id));await loadProducts();}catch(e){alert("حدث خطأ");}};
-window.editProduct=function(id){const p=allProducts.find(i=>String(i.id)===String(id));if(!p)return;editingId=id;getElement("name").value=p.name||"";getElement("description").value=p.description||"";getElement("code").value=p.code||"";getElement("category").value=p.category||"";getElement("image").value=p.image||"";const pi=getElement("previewImage");if(pi)pi.src=getProductImage(p);window.scrollTo({top:0,behavior:"smooth"});};
+window.editProduct=function(id){const p=allProducts.find(i=>String(i.id)===String(id));if(!p)return;editingId=id;showProductForm(p.category||"قسم المعمل");getElement("name").value=p.name||"";getElement("description").value=p.description||"";getElement("code").value=p.code||"";getElement("image").value=p.image||"";const pi=getElement("previewImage");if(pi)pi.src=getProductImage(p);window.scrollTo({top:0,behavior:"smooth"});};
 
 getElement("searchAdmin")?.addEventListener("input",function(){const v=normalizeText(this.value);renderProducts(allProducts.filter(p=>normalizeText(`${p.name||""} ${p.description||""} ${p.code||""} ${p.category||""}`).includes(v)));});
 getElement("sortNewest")?.addEventListener("click",()=>renderProducts([...allProducts].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))));
@@ -104,7 +139,7 @@ function makeExcelFileName(){const n=new Date();return`products-${n.getFullYear(
 
 getElement("importExcel")?.addEventListener("click",async()=>{try{await loadXLSXLibrary();getElement("excelFile")?.click();}catch(e){alert("تعذر تحميل مكتبة Excel");}});
 getElement("excelFile")?.addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;try{const XLSX=await loadXLSXLibrary();const d=await f.arrayBuffer();const wb=XLSX.read(d,{type:"array"});const sh=wb.Sheets[wb.SheetNames[0]];const prods=XLSX.utils.sheet_to_json(sh,{defval:""});const snap=await getDocs(productsCollection);let mc=9999;snap.forEach(i=>{const c=parseInt(i.data().code,10);if(!isNaN(c)&&c>mc)mc=c;});let nc=mc+1;const existing=allProducts.map(p=>normalizeText(p.name));let imp=0;for(const p of prods){const pn=normalizeText(p.name);if(!pn||existing.includes(pn))continue;await addDoc(productsCollection,{name:p.name||"",description:p.description||"",code:p.code||String(nc++),category:p.category||"",image:p.image||"images/noimg.jpg",createdAt:Date.now()});imp++;}e.target.value="";alert(`${imp} منتج تم استيراده`);await loadProducts();}catch(e){alert("حدث خطأ أثناء الاستيراد");}});
-getElement("exportExcel")?.addEventListener("click",async()=>{const btn=getElement("exportExcel");const orig=btn?btn.innerHTML:"";try{if(btn){btn.disabled=true;btn.textContent="جاري التصدير...";}const XLSX=await loadXLSXLibrary();const rows=allProducts.map(p=>[p.name||"",p.description||"",p.category||"",getExportImageValue(p.image)]);if(!rows.length){alert("لا توجد منتجات");return;}const ws=XLSX.utils.aoa_to_sheet([["name","description","category","image"],...rows]);ws["!cols"]=[{wch:34},{wch:40},{wch:24},{wch:70}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Products");XLSX.writeFile(wb,makeExcelFileName(),{compression:true});}catch(e){alert("حدث خطأ أثناء التصدير");}finally{if(btn){btn.disabled=false;btn.innerHTML=orig;}}});
+getElement("exportExcel")?.addEventListener("click",async()=>{const btn=getElement("exportExcel");const orig=btn?btn.innerHTML:"";try{if(btn){btn.disabled=true;btn.textContent="جاري التصدير...";}const XLSX=await loadXLSXLibrary();const rows=allProducts.map(p=>[p.name||"",p.description||"",getExportImageValue(p.image),p.category||""]);if(!rows.length){alert("لا توجد منتجات");return;}const ws=XLSX.utils.aoa_to_sheet([["الاسم بالعربي","English Name","Image","Category"],...rows]);ws["!cols"]=[{wch:34},{wch:40},{wch:70},{wch:24}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Products");XLSX.writeFile(wb,makeExcelFileName(),{compression:true});}catch(e){alert("حدث خطأ أثناء التصدير");}finally{if(btn){btn.disabled=false;btn.innerHTML=orig;}}});
 
 /* INVOICES */
 async function loadAllInvoices(){
@@ -242,5 +277,30 @@ getElement("addBranchBtn")?.addEventListener("click",function(){const n=getInput
 async function downloadInvoicePdf(inv){try{await generateInvoicePdf(inv);const fn=`${(inv.branchName||(inv.invoiceNo||"").replace("INV-","")||"invoice")}.pdf`;const m=document.getElementById("pdfSuccessMsg");if(m){m.textContent=`تم تحميل ${fn}`;setTimeout(()=>{m.textContent="";},3000);}}catch(e){alert("خطأ في إنشاء PDF");}}
 
 /* INIT */
-async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed)return;sessionStorage.setItem(AUTH_KEY,"true");initTabs();await loadTabContent("products");}
+const ADMIN_LANG_KEY = "sallah_lang";
+function getAdminLang(){ return localStorage.getItem(ADMIN_LANG_KEY) || "ar"; }
+function applyAdminLang(){
+  const lang = getAdminLang();
+  const isEn = lang === "en";
+  document.documentElement.lang = lang;
+  document.documentElement.dir = isEn ? "ltr" : "rtl";
+  const btn = document.getElementById("adminLangToggle");
+  if(btn) btn.textContent = isEn ? "عربي" : "EN";
+  document.querySelectorAll(".cat-pick-card").forEach(c => {
+    const cat = c.dataset.cat;
+    const labels = {
+      ar: {"قسم المعمل":"قسم المعمل 🔬","قسم السوبرماركت":"قسم السوبرماركت 🛒","قسم محلات الجملة":"محلات الجملة 🏪","قسم المستودع":"قسم المستودع 🏭","احتياجات المعمل":"احتياجات المعمل 📋"},
+      en: {"قسم المعمل":"Lab 🔬","قسم السوبرماركت":"Supermarket 🛒","قسم محلات الجملة":"Wholesale 🏪","قسم المستودع":"Warehouse 🏭","احتياجات المعمل":"Lab Needs 📋"}
+    };
+    const lbl = (isEn ? labels.en : labels.ar)[cat] || cat;
+    const icon = c.textContent.trim().split("\n")[0].trim();
+    c.innerHTML = `${icon}<br>${lbl}`;
+  });
+}
+getElement("adminLangToggle")?.addEventListener("click", () => {
+  localStorage.setItem(ADMIN_LANG_KEY, getAdminLang() === "ar" ? "en" : "ar");
+  applyAdminLang();
+});
+
+async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed)return;sessionStorage.setItem(AUTH_KEY,"true");applyAdminLang();initTabs();await loadTabContent("products");}
 init();
