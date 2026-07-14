@@ -23,6 +23,7 @@
     <button type="submit">دخول</button>
     <div id="adminLoginError" class="admin-login-error"></div>
   </form>
+  <button id="adminLoginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:16px;left:16px;">EN</button>
 </section>
 
 <!-- ADMIN PANEL -->
@@ -148,6 +149,34 @@
   const loginError = document.getElementById("adminLoginError");
   const adminPanel = document.getElementById("adminPanel");
 
+  const LANG_KEY = "sallah_lang";
+  function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
+  const T_LOGIN = {
+    ar: { title:"لوحة الإدارة", subtitle:"الرجاء إدخال اسم المستخدم وكلمة المرور", user:"اسم المستخدم", pass:"كلمة السر", btn:"دخول", err1:"أدخل اسم المستخدم وكلمة المرور", checking:"جاري التحقق...", toggle:"EN" },
+    en: { title:"Admin Panel", subtitle:"Enter username and password", user:"Username", pass:"Password", btn:"Login", err1:"Enter username and password", checking:"Checking...", toggle:"عربي" }
+  };
+  function applyLoginLang(){
+    const lang = getLang();
+    const tr = T_LOGIN[lang] || T_LOGIN.ar;
+    const h1 = loginScreen.querySelector("h1");
+    const p = loginScreen.querySelector("p");
+    const btn = loginForm.querySelector("button[type='submit']");
+    const toggle = document.getElementById("adminLoginLangToggle");
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
+    if(h1) h1.textContent = tr.title;
+    if(p) p.textContent = tr.subtitle;
+    if(usernameInput) usernameInput.placeholder = tr.user;
+    if(passwordInput) passwordInput.placeholder = tr.pass;
+    if(btn) btn.textContent = tr.btn;
+    if(toggle) toggle.textContent = tr.toggle;
+  }
+  applyLoginLang();
+  document.getElementById("adminLoginLangToggle")?.addEventListener("click", function(){
+    localStorage.setItem(LANG_KEY, getLang() === "ar" ? "en" : "ar");
+    applyLoginLang();
+  });
+
   function loadAdminScript(){
     if(document.querySelector("script[data-admin-module='true']")) return;
     const script = document.createElement("script");
@@ -165,10 +194,12 @@
 
   loginForm.addEventListener("submit", function(e){
     e.preventDefault();
+    const lang = getLang();
+    const tr = T_LOGIN[lang] || T_LOGIN.ar;
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
-    if(!username || !password){ loginError.textContent = "أدخل اسم المستخدم وكلمة المرور"; return; }
-    loginError.textContent = "جاري التحقق...";
+    if(!username || !password){ loginError.textContent = tr.err1; return; }
+    loginError.textContent = tr.checking;
     sessionStorage.setItem("admin_login_attempt", JSON.stringify({username, password}));
     loadAdminScript();
   });
@@ -289,11 +320,11 @@
 <!-- FLOATING MENU -->
 <button class="dash-menu-btn" id="dashMenuBtn" aria-label="القائمة"><span></span><span></span><span></span></button>
 <div class="dash-menu-dropdown" id="dashMenuDropdown">
-  <a href="index.html"><span class="dash-icon">🛒</span> المتجر</a>
-  <a href="cart.html"><span class="dash-icon">📋</span> السلة</a>
-  <a href="admin.html"><span class="dash-icon">⚙️</span> لوحة الإدارة</a>
-  <a href="invoices-view.html"><span class="dash-icon">📄</span> عرض الفواتير</a>
-  <a href="dashboard.html"><span class="dash-icon">🏠</span> Dashboard</a>
+  <a href="index.html" data-i18n-menu="menuStore"><span class="dash-icon">🛒</span> المتجر</a>
+  <a href="cart.html" data-i18n-menu="menuCart"><span class="dash-icon">📋</span> السلة</a>
+  <a href="admin.html" data-i18n-menu="menuAdmin"><span class="dash-icon">⚙️</span> لوحة الإدارة</a>
+  <a href="invoices-view.html" data-i18n-menu="menuInvoices"><span class="dash-icon">📄</span> عرض الفواتير</a>
+  <a href="dashboard.html" data-i18n-menu="menuDashboard"><span class="dash-icon">🏠</span> Dashboard</a>
 </div>
 <script>
 document.addEventListener("click",function(e){

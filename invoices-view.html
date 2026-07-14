@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoices View</title>
+  <title>عرض الفواتير</title>
   <link rel="stylesheet" href="css/style.css?v=20260705-2">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -155,20 +155,33 @@
       font-size: 16px;
     }
     .v-btns { display: flex; gap: 6px; }
+    .lang-toggle-btn {
+      background: rgba(255,255,255,.2);
+      border: 1.5px solid rgba(255,255,255,.4);
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      transition: all .2s;
+    }
+    .lang-toggle-btn:hover { background: rgba(255,255,255,.3); }
   </style>
 </head>
 <body>
 
   <div class="view-header">
     <img src="images/logo.png" class="logo" alt="Logo">
-    <h1>📄 Invoices View</h1>
-    <span>Read-only invoice listing</span>
+    <h1 id="viewTitle">📄 عرض الفواتير</h1>
+    <span id="viewSub">عرض الفواتير - للقراءة فقط</span>
+    <button id="viewLangToggle" class="lang-toggle-btn" type="button">EN</button>
   </div>
 
   <div class="view-container">
-    <input type="text" id="viewSearch" class="view-search" placeholder="Search by customer or invoice number...">
+    <input type="text" id="viewSearch" class="view-search" placeholder="🔍 البحث بالعميل أو رقم الفاتورة...">
     <div class="view-grid" id="viewList">
-      <div class="view-loading">Loading invoices...</div>
+      <div class="view-loading">جاري تحميل الفواتير...</div>
     </div>
   </div>
 
@@ -192,6 +205,52 @@
 
     let allInvoices = [];
 
+    const LANG_KEY = "sallah_lang";
+    function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
+    function setLang(l){ localStorage.setItem(LANG_KEY, l); }
+    const T_VIEW = {
+      ar: {
+        title:"📄 عرض الفواتير", sub:"عرض الفواتير - للقراءة فقط",
+        search:"🔍 البحث بالعميل أو رقم الفاتورة...", loading:"جاري تحميل الفواتير...",
+        empty:"لا توجد فواتير", show:"عرض التفاصيل", hide:"إخفاء", print:"🖨 طباعة",
+        items:"المنتجات", qty:"الكمية", product:"المنتج", sku:"KOD", noItems:"لا توجد منتجات",
+        customer:"العميل", toggle:"EN"
+      },
+      en: {
+        title:"📄 Invoices View", sub:"Read-only invoice listing",
+        search:"🔍 Search by customer or invoice number...", loading:"Loading invoices...",
+        empty:"No invoices found", show:"Show Details", hide:"Hide", print:"🖨 Print",
+        items:"Items", qty:"Qty", product:"Product", sku:"SKU", noItems:"No items",
+        customer:"Customer", toggle:"عربي"
+      }
+    };
+    function tt(key){ return (T_VIEW[getLang()] || T_VIEW.ar)[key] || key; }
+
+    function applyViewLang(){
+      const lang = getLang();
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
+      document.getElementById("viewTitle").textContent = tt("title");
+      document.getElementById("viewSub").textContent = tt("sub");
+      document.getElementById("viewSearch").placeholder = tt("search");
+      document.getElementById("viewLangToggle").textContent = tt("toggle");
+      // Translate floating menu
+      const menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard"}};
+      const mtr=menuT[lang]||menuT.ar;
+      document.querySelectorAll("#dashMenuDropdown a").forEach(a=>{
+        const key=a.getAttribute("data-i18n-menu");
+        if(!key||!mtr[key])return;
+        const icon=a.querySelector(".dash-icon");const iconHtml=icon?icon.outerHTML:"";
+        a.innerHTML=iconHtml+" "+mtr[key];
+      });
+    }
+    applyViewLang();
+    document.getElementById("viewLangToggle")?.addEventListener("click", function(){
+      setLang(getLang() === "ar" ? "en" : "ar");
+      applyViewLang();
+      renderInvoices(allInvoices);
+    });
+
     function escapeHTML(str){
       return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
@@ -207,7 +266,7 @@
       const container = document.getElementById("viewList");
       if(!container) return;
       if(list.length === 0){
-        container.innerHTML = '<div class="view-empty">No invoices found</div>';
+        container.innerHTML = `<div class="view-empty">${tt("empty")}</div>`;
         return;
       }
       container.innerHTML = "";
@@ -241,18 +300,18 @@
           <div class="v-customer">${escapeHTML(inv.customerName || "Direct Customer")}</div>
           <div class="v-items-preview">${escapeHTML(itemsPreview)}</div>
           <div class="v-footer">
-            <span>Items: ${inv.totalItems || 0}</span>
-            <span>Qty: ${inv.totalQty || 0}</span>
+            <span>${tt("items")}: ${inv.totalItems || 0}</span>
+            <span>${tt("qty")}: ${inv.totalQty || 0}</span>
           </div>
           <div class="v-btns">
-            <button class="v-toggle-btn" type="button">Show Details</button>
-            <button class="v-print-btn" type="button">🖨 Print</button>
+            <button class="v-toggle-btn" type="button">${tt("show")}</button>
+            <button class="v-print-btn" type="button">${tt("print")}</button>
           </div>
           <table class="v-detail-table">
             <thead><tr>
-              <th>#</th><th>Product</th><th>SKU</th><th>Qty</th>
+              <th>#</th><th>${tt("product")}</th><th>${tt("sku")}</th><th>${tt("qty")}</th>
             </tr></thead>
-            <tbody>${itemsTableRows || '<tr><td colspan="4" style="padding:8px;text-align:center;color:#888;">No items</td></tr>'}</tbody>
+            <tbody>${itemsTableRows || `<tr><td colspan="4" style="padding:8px;text-align:center;color:#888;">${tt("noItems")}</td></tr>`}</tbody>
           </table>
         `;
 
@@ -260,7 +319,7 @@
         const detailTable = card.querySelector(".v-detail-table");
         toggleBtn.addEventListener("click", () => {
           detailTable.classList.toggle("show");
-          toggleBtn.textContent = detailTable.classList.contains("show") ? "Hide Details" : "Show Details";
+          toggleBtn.textContent = detailTable.classList.contains("show") ? tt("hide") : tt("show");
         });
 
         const printBtn = card.querySelector(".v-print-btn");
@@ -316,19 +375,7 @@
     loadInvoices();
   </script>
 
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Materials Delivery Form</title>
-<style>
-body { margin:0; padding:20px; background:#f5f5f5; font-family:Arial,'Segoe UI',Tahoma,sans-serif; }
-</style>
-</head>
-<body>
-
-<!-- INVOICE TEMPLATE (hidden, used for PDF generation) -->
+<!-- INVOICE TEMPLATE (hidden, for PDF) -->
 <div id="invoiceTemplate" aria-hidden="true" style="position:fixed;left:-99999px;top:0;width:1120px;background:#fff;padding:14px;direction:rtl;">
   <div class="invoice-box" style="width:100%;background:#fff;color:#111;font-family:Arial,'Segoe UI',Tahoma,sans-serif;direction:rtl;">
     <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;">
@@ -350,7 +397,6 @@ body { margin:0; padding:20px; background:#f5f5f5; font-family:Arial,'Segoe UI',
       <thead><tr><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">✔</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">Item</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">✔</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">Item</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">✔</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">Item</th></tr></thead>
       <tbody id="invoiceProducts"></tbody>
     </table>
-
     <div class="invoice-summary-row" style="display:grid;grid-template-columns:1fr 1fr;margin-top:8px;border:1px solid #222;">
       <div class="invoice-summary-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;border-left:1px solid #222;">
         <strong id="invoiceTotal" style="font-size:15px;">0</strong>
@@ -361,7 +407,6 @@ body { margin:0; padding:20px; background:#f5f5f5; font-family:Arial,'Segoe UI',
         <span>Total Qty</span>
       </div>
     </div>
-
     <div class="invoice-delivery-info" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:18px;padding-top:10px;border-top:1px solid #222;direction:ltr;text-align:left;">
       <div class="inv-delivery-col" style="font-size:11px;color:#333;">
         <div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Sent by:</div>
@@ -385,13 +430,14 @@ body { margin:0; padding:20px; background:#f5f5f5; font-family:Arial,'Segoe UI',
   </div>
 </div>
 
+<!-- FLOATING MENU -->
 <button class="dash-menu-btn" id="dashMenuBtn" aria-label="القائمة"><span></span><span></span><span></span></button>
 <div class="dash-menu-dropdown" id="dashMenuDropdown">
-  <a href="index.html"><span class="dash-icon">🛒</span> المتجر / Store</a>
-  <a href="cart.html"><span class="dash-icon">📋</span> السلة / Cart</a>
-  <a href="admin.html"><span class="dash-icon">⚙️</span> لوحة الإدارة / Admin</a>
-  <a href="invoices-view.html"><span class="dash-icon">📄</span> عرض الفواتير / Invoices</a>
-  <a href="dashboard.html"><span class="dash-icon">🏠</span> Dashboard</a>
+  <a href="index.html" data-i18n-menu="menuStore"><span class="dash-icon">🛒</span> المتجر</a>
+  <a href="cart.html" data-i18n-menu="menuCart"><span class="dash-icon">📋</span> السلة</a>
+  <a href="admin.html" data-i18n-menu="menuAdmin"><span class="dash-icon">⚙️</span> لوحة الإدارة</a>
+  <a href="invoices-view.html" data-i18n-menu="menuInvoices"><span class="dash-icon">📄</span> عرض الفواتير</a>
+  <a href="dashboard.html" data-i18n-menu="menuDashboard"><span class="dash-icon">🏠</span> Dashboard</a>
 </div>
 <script>
 document.addEventListener("click",function(e){
@@ -400,6 +446,20 @@ document.addEventListener("click",function(e){
   if(btn.contains(e.target)){btn.classList.toggle("active");menu.classList.toggle("show");}
   else{btn.classList.remove("active");menu.classList.remove("show");}
 });
+(function(){
+  var LANG_KEY="sallah_lang";
+  function getLang(){return localStorage.getItem(LANG_KEY)||"ar";}
+  var menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard"}};
+  function applyMenu(){
+    var lang=getLang();var tr=menuT[lang]||menuT.ar;
+    document.querySelectorAll("#dashMenuDropdown a").forEach(function(a){
+      var key=a.getAttribute("data-i18n-menu");if(!key||!tr[key])return;
+      var icon=a.querySelector(".dash-icon");var iconHtml=icon?icon.outerHTML:"";
+      a.innerHTML=iconHtml+" "+tr[key];
+    });
+  }
+  applyMenu();
+})();
 </script>
 </body>
 </html>
