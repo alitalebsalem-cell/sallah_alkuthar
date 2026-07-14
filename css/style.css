@@ -687,6 +687,21 @@ body.admin-locked{overflow:hidden;}
 }
 .excel-toolbar button:hover{transform:translateY(-2px);opacity:.92;}
 
+.bulk-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:10px 14px;background:var(--white);border-radius:var(--radius-sm);border:1.5px solid rgba(199,178,153,.25);}
+.bulk-select-all{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--dark);cursor:pointer;}
+.bulk-select-all input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+.bulk-count{font-size:13px;font-weight:800;color:var(--accent);min-width:20px;text-align:center;}
+.bulk-category-select{padding:8px 12px;border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);font-size:13px;font-weight:600;background:var(--bg);color:var(--dark);outline:none;flex:1;min-width:140px;}
+.bulk-category-select:focus{border-color:var(--accent);}
+.bulk-change-btn{padding:8px 18px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,#325247,#414935);color:#fff;font-size:13px;font-weight:800;cursor:pointer;transition:var(--transition);}
+.bulk-change-btn:disabled{opacity:.4;cursor:not-allowed;}
+.bulk-change-btn:hover:not(:disabled){transform:translateY(-1px);opacity:.92;}
+.prod-check{display:flex;align-items:center;padding:0 6px 0 2px;}
+.prod-check input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+.admin-product{display:grid;grid-template-columns:auto 90px 1fr auto;gap:12px;align-items:center;padding:14px;margin-bottom:8px;background:var(--white);border-radius:var(--radius);border:1.5px solid rgba(199,178,153,.15);transition:var(--transition);}
+.admin-product:hover{border-color:var(--card);box-shadow:var(--shadow);}
+
+
 .admin-search-box{
   width:100%;padding:12px;margin-bottom:12px;
   border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);
@@ -696,13 +711,6 @@ body.admin-locked{overflow:hidden;}
 
 #productsTable{margin-top:16px;display:flex;flex-direction:column;gap:12px;}
 
-.admin-product{
-  display:flex;align-items:center;gap:16px;padding:16px;
-  background:var(--white);border-radius:var(--radius);
-  box-shadow:var(--shadow);border:1.5px solid rgba(199,178,153,.15);
-  transition:var(--transition);
-}
-.admin-product:hover{box-shadow:var(--shadow-lg);}
 .admin-product img{
   width:90px;height:90px;object-fit:contain;border-radius:var(--radius-sm);
   border:1px solid rgba(199,178,153,.2);background:var(--bg);padding:4px;flex-shrink:0;
