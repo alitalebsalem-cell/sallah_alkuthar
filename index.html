@@ -9,11 +9,11 @@
 content="width=device-width, initial-scale=1.0">
 
 <title>
-تموينات سنابل الكوثر
+سـمـسـم
 </title>
 
 <link rel="stylesheet"
-href="css/style.css">
+href="css/style.css?v=20260705-3">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -39,7 +39,7 @@ class="cart-icon">
 
 <!-- HEADER -->
 
-<header>
+<header class="store-header">
 
 <img
 src="images/logo.png"
@@ -51,7 +51,7 @@ alt="Logo">
 <input
 type="text"
 id="search"
-placeholder="Search">
+placeholder="Search Product / البحث عن منتج">
 
 </header>
 
@@ -61,7 +61,8 @@ placeholder="Search">
 
 <button
 class="cat-btn"
-data-cat="all">
+data-cat="all"
+type="button">
 
 All Products
 <br>
@@ -71,7 +72,8 @@ All Products
 
 <button
 class="cat-btn"
-data-cat="مواد غذائية">
+data-cat="مواد غذائية"
+type="button">
 
 Foodstuffs
 <br>
@@ -81,7 +83,8 @@ Foodstuffs
 
 <button
 class="cat-btn"
-data-cat="خضار">
+data-cat="خضار"
+type="button">
 
 Vegetables
 <br>
@@ -91,7 +94,8 @@ Vegetables
 
 <button
 class="cat-btn"
-data-cat="منظفات">
+data-cat="منظفات"
+type="button">
 
 Detergents
 <br>
@@ -101,7 +105,8 @@ Detergents
 
 <button
 class="cat-btn"
-data-cat="مستلزمات">
+data-cat="مستلزمات"
+type="button">
 
 Supplies
 <br>
@@ -125,9 +130,133 @@ Supplies
 
 </main>
 
+<!-- PRODUCT DETAILS MODAL -->
+
+<div
+id="productModal"
+class="product-modal-overlay"
+aria-hidden="true"
+hidden>
+
+<div
+class="product-modal"
+role="dialog"
+aria-modal="true"
+aria-labelledby="modalProductName">
+
+<button
+id="closeProductModal"
+class="product-modal-close"
+type="button"
+aria-label="Close product details">
+
+×
+
+</button>
+
+<div class="product-modal-media">
+
+<img
+id="modalProductImage"
+src="images/noimg.jpg"
+alt="Product Image"
+onerror="this.src='images/noimg.jpg'">
+
+</div>
+
+<div class="product-modal-info">
+
+<span
+id="modalProductCategory"
+class="product-modal-category">
+</span>
+
+<h2 id="modalProductName">
+</h2>
+
+<p
+id="modalProductDescription"
+class="product-modal-description">
+</p>
+
+<div class="product-modal-meta">
+
+<div>
+<span>SKU</span>
+<strong id="modalProductCode"></strong>
+</div>
+
+<div class="modal-qty-box">
+<span>Quantity / الكمية</span>
+
+<div class="modal-qty-controls">
+<button
+id="modalQtyDecrease"
+type="button"
+aria-label="Decrease quantity">
+
+-
+
+</button>
+
+<strong id="modalQtyValue">
+1
+</strong>
+
+<button
+id="modalQtyIncrease"
+type="button"
+aria-label="Increase quantity">
+
++
+
+</button>
+</div>
+</div>
+
+</div>
+
+<button
+id="modalAddToCart"
+class="product-modal-cart-btn"
+type="button"
+data-id="">
+
+<span class="cart-btn-icon" aria-hidden="true">+</span>
+
+<span class="cart-btn-label">
+<span>Add To Cart</span>
+<span>إضافة للسلة</span>
+</span>
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
 <script
 type="module"
-src="js/app.js">
+src="js/app.js?v=20260705-3">
+</script>
+
+<button class="dash-menu-btn" id="dashMenuBtn" aria-label="القائمة"><span></span><span></span><span></span></button>
+<div class="dash-menu-dropdown" id="dashMenuDropdown">
+  <a href="index.html"><span class="dash-icon">🛒</span> المتجر / Store</a>
+  <a href="cart.html"><span class="dash-icon">📋</span> السلة / Cart</a>
+  <a href="admin.html"><span class="dash-icon">⚙️</span> لوحة الإدارة / Admin</a>
+  <a href="invoices-view.html"><span class="dash-icon">📄</span> عرض الفواتير / Invoices</a>
+  <a href="dashboard.html"><span class="dash-icon">🏠</span> Dashboard</a>
+</div>
+<script>
+document.addEventListener("click",function(e){
+  var btn=document.getElementById("dashMenuBtn"),menu=document.getElementById("dashMenuDropdown");
+  if(!btn||!menu)return;
+  if(btn.contains(e.target)){btn.classList.toggle("active");menu.classList.toggle("show");}
+  else{btn.classList.remove("active");menu.classList.remove("show");}
+});
 </script>
 
 </body>

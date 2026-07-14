@@ -2,263 +2,693 @@
 <html lang="ar" dir="rtl">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration Panel / لوحة الإدارة</title>
+  <link rel="stylesheet" href="css/style.css?v=20260705-1">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
-<meta charset="UTF-8">
+  <style>
+    .admin-login-screen{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:radial-gradient(circle at top,#F2EFEA 0%,rgba(242,239,234,0) 34%),linear-gradient(135deg,#f7f7f7 0%,#ffffff 100%);
+    }
+    .admin-login-card{
+      width:min(440px,100%);
+      background:#fff;
+      border:1px solid #e5e5e5;
+      border-radius:22px;
+      padding:30px;
+      text-align:center;
+      box-shadow:0 18px 55px rgba(0,0,0,.12);
+    }
+    .admin-login-card img{
+      width:110px;
+      height:auto;
+      margin-bottom:14px;
+    }
+    .admin-login-card h1{
+      color:#54433C;
+      font-size:30px;
+      line-height:1.35;
+      margin-bottom:8px;
+    }
+    .admin-login-card p{
+      color:#666;
+      font-size:15px;
+      line-height:1.7;
+      margin-bottom:18px;
+    }
+    .admin-login-card input{
+      width:100%;
+      padding:15px;
+      border:1px solid #ddd;
+      border-radius:14px;
+      text-align:center;
+      font-size:18px;
+      font-weight:800;
+      outline:none;
+      background:#fafafa;
+      margin-bottom:10px;
+    }
+    .admin-login-card input:focus{
+      border-color:#54433C;
+      background:#fff;
+      box-shadow:0 0 0 4px rgba(84,67,60,.12);
+    }
+    .admin-login-card button{
+      width:100%;
+      margin-top:14px;
+      padding:15px;
+      border:none;
+      border-radius:14px;
+      background:#54433C;
+      color:#fff;
+      font-size:18px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.25s;
+      box-shadow:0 10px 22px rgba(84,67,60,.22);
+    }
+    .admin-login-card button:hover{
+      background:#3D2F2A;
+      transform:translateY(-2px);
+    }
+    .admin-login-error{
+      min-height:24px;
+      margin-top:12px;
+      color:#dc3545;
+      font-weight:800;
+      font-size:14px;
+    }
+    body.admin-locked{ overflow:hidden; }
+    [hidden]{ display:none !important; }
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+    .admin-tabs{
+      display:flex;
+      gap:8px;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .admin-tab{
+      min-width:140px;
+      padding:12px 18px;
+      border:1px solid #ddd;
+      border-radius:12px;
+      background:#f8f8f8;
+      color:#333;
+      font-weight:700;
+      font-size:14px;
+      cursor:pointer;
+      transition:.25s;
+      text-align:center;
+      line-height:1.3;
+    }
+    .admin-tab:hover{
+      background:#F2EFEA;
+      border-color:#54433C;
+    }
+    .admin-tab.active{
+      background:#54433C;
+      color:#fff;
+      border-color:#54433C;
+    }
+    .admin-section{ display:none; }
+    .admin-section.active{ display:block; }
 
-<title>
-Administration Panel / لوحة الإدارة
-</title>
+    .invoice-admin-card{
+      background:#fff;
+      border:1px solid #e0e0e0;
+      border-radius:14px;
+      padding:16px;
+      margin-bottom:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,.06);
+    }
+    .invoice-admin-card .inv-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .invoice-admin-card .inv-header strong{
+      color:#54433C;
+      font-size:16px;
+    }
+    .invoice-admin-card .inv-header span{
+      color:#666;
+      font-size:13px;
+    }
+    .invoice-admin-card .inv-customer{
+      color:#333;
+      font-weight:700;
+      margin-bottom:6px;
+    }
+    .invoice-admin-card .inv-items-preview{
+      color:#777;
+      font-size:13px;
+      margin-bottom:6px;
+    }
+    .invoice-admin-card .inv-footer{
+      display:flex;
+      gap:16px;
+      font-size:13px;
+      color:#555;
+    }
+    .invoice-admin-card .inv-toggle-btn{
+      background:#54433C;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:6px 14px;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:700;
+      margin-top:8px;
+    }
+    .invoice-admin-card .inv-toggle-btn:hover{
+      background:#3D2F2A;
+    }
+    .inv-print-btn{
+      background:#ffc107;
+      color:#333;
+      border:none;
+      border-radius:8px;
+      padding:6px 14px;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:700;
+    }
+    .inv-print-btn:hover{
+      background:#e0a800;
+    }
+    #pdfSuccessMsg{
+      text-align:center;
+      color:#54433C;
+      font-weight:700;
+      font-size:14px;
+      padding:8px;
+      min-height:30px;
+    }
+    .invoice-admin-card .inv-detail-table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      display:none;
+    }
+    .invoice-admin-card .inv-detail-table.show{ display:table; }
+    .invoice-admin-card .inv-detail-table th{
+      background:#f2f2f2;
+      padding:8px 10px;
+      border:1px solid #ddd;
+      font-size:13px;
+    }
+    .invoice-admin-card .inv-detail-table td{
+      padding:6px 10px;
+      border:1px solid #ddd;
+      font-size:13px;
+    }
 
-<link rel="stylesheet"
-href="css/style.css">
+    .customer-admin-card{
+      background:#fff;
+      border:1px solid #e0e0e0;
+      border-radius:14px;
+      padding:16px;
+      margin-bottom:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,.06);
+    }
+    .customer-admin-card .cust-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .customer-admin-card .cust-header strong{
+      color:#54433C;
+      font-size:17px;
+    }
+    .customer-admin-card .cust-header span{
+      color:#888;
+      font-size:13px;
+    }
+    .customer-admin-card .cust-toggle-btn{
+      background:#54433C;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:6px 14px;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:700;
+      margin-top:8px;
+    }
+    .customer-admin-card .cust-invoices{
+      margin-top:10px;
+      display:none;
+    }
+    .customer-admin-card .cust-invoices.show{ display:block; }
 
+    .admin-user-card{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:#fff;
+      border:1px solid #e0e0e0;
+      border-radius:12px;
+      padding:14px 16px;
+      margin-bottom:8px;
+    }
+    .admin-user-card strong{ font-size:15px; }
+    .admin-user-card .del-admin-btn{
+      background:#dc3545;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:6px 12px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:12px;
+    }
+    .add-admin-form,
+    .add-customer-form{
+      display:grid;
+      grid-template-columns:1fr 1fr auto;
+      gap:10px;
+      margin:16px 0;
+      align-items:end;
+    }
+    .add-admin-form input,
+    .add-customer-form input{
+      padding:12px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      font-size:14px;
+    }
+    .add-admin-form button,
+    .add-customer-form button{
+      background:#54433C;
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      padding:12px 20px;
+      cursor:pointer;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .add-admin-form button:hover,
+    .add-customer-form button:hover{ background:#3D2F2A; }
+
+    .admin-search-box{
+      width:100%;
+      padding:12px;
+      margin-bottom:14px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      font-size:15px;
+    }
+
+    .empty-msg{
+      text-align:center;
+      color:#888;
+      padding:30px;
+      font-size:16px;
+    }
+    .loading-msg{
+      text-align:center;
+      color:#54433C;
+      padding:20px;
+      font-size:16px;
+    }
+    .add-branch-form{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      margin:16px 0;
+      align-items:end;
+    }
+    .add-branch-form input{
+      padding:12px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      font-size:14px;
+    }
+    .add-branch-form button{
+      background:#54433C;
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      padding:12px 20px;
+      cursor:pointer;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .add-branch-form button:hover{ background:#3D2F2A; }
+  </style>
 </head>
 
-<body>
+<body class="admin-locked">
 
-<div class="admin-box">
+<section id="adminLoginScreen" class="admin-login-screen">
+  <form id="adminLoginForm" class="admin-login-card" autocomplete="off">
+    <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'">
+    <h1>لوحة الإدارة<br>Admin Panel</h1>
+    <p>الرجاء إدخال اسم المستخدم وكلمة المرور</p>
+    <input type="text" id="adminUsername" placeholder="Username / اسم المستخدم" autocomplete="username" spellcheck="false">
+    <input type="password" id="adminPassword" placeholder="Password / كلمة السر" autocomplete="current-password">
+    <button type="submit">دخول<br>Login</button>
+    <div id="adminLoginError" class="admin-login-error"></div>
+  </form>
+</section>
 
-<h1>
+<div class="admin-box" id="adminPanel" hidden>
 
-Add / Edit Product
-<br>
-إضافة / تعديل منتج
+  <img src="images/logo.png" class="logo" alt="Logo" style="margin-bottom:10px;">
 
-</h1>
-<div class="form-grid">
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="products">🛒 Products<br>المنتجات</button>
+    <button class="admin-tab" data-tab="invoices">📄 Invoices<br>الفواتير</button>
+    <button class="admin-tab" data-tab="customers">👥 Customers<br>العملاء</button>
+    <button class="admin-tab" data-tab="branches">🏪 Branches<br>الفروع</button>
+    <button class="admin-tab" data-tab="admins">🔐 Admins<br>المدراء</button>
+  </div>
 
-<input
-id="name"
-placeholder="Arabic Name / الاسم بالعربي">
+  <!-- PRODUCTS TAB -->
+  <div class="admin-section active" id="section-products">
+    <h1>Add / Edit Product<br>إضافة / تعديل منتج</h1>
+    <div class="form-grid">
+      <input id="name" placeholder="Arabic Name / الاسم بالعربي">
+      <input id="description" placeholder="English Name / الاسم بالإنجليزي">
+      <input id="code" placeholder="Product Code / كود المنتج">
+      <select id="category">
+        <option value="مواد غذائية">Foodstuffs / مواد غذائية</option>
+        <option value="خضار">Vegetables / خضار</option>
+        <option value="منظفات">Detergents / منظفات</option>
+        <option value="مستلزمات">Supplies / مستلزمات</option>
+      </select>
+      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none">
+      <input id="image" placeholder="Image URL / رابط الصورة">
+      <label for="imageFile" class="upload-btn">إدراج من معرض الصور<br>Insert From Gallery</label>
+      <input type="file" id="imageFile" accept="image/*" style="display:none">
+      <button id="importExcel" type="button">Import Excel<br>استيراد منتجات من ملف إكسل</button>
+      <button id="exportExcel" type="button">Export Excel<br>تصدير المنتجات كاملة إلى ملف إكسل</button>
+    </div>
+    <div style="text-align:center;margin:15px 0;">
+      <img id="previewImage" src="https://via.placeholder.com/150" style="width:150px;height:150px;object-fit:contain;border:1px solid #ddd;border-radius:10px;padding:10px;background:white;">
+    </div>
+    <button id="save" type="button">Save Product / حفظ المنتج</button>
+    <hr>
+    <h2>All Products / جميع المنتجات</h2>
+    <input id="searchAdmin" class="admin-search-box" placeholder="Search Product / البحث عن منتج">
+    <div class="sort-buttons">
+      <button id="sortNewest" type="button">Newest First<br>الأحدث</button>
+      <button id="sortOldest" type="button">Oldest First<br>الأقدم</button>
+      <button id="sortNameAsc" type="button">A → Z<br>أ → ي</button>
+    </div>
+    <div class="stats-box">
+      <div class="stat-card"><h3>Total Products</h3><span id="totalProducts">0</span></div>
+      <div class="stat-card"><h3>Foodstuffs</h3><span id="foodCount">0</span></div>
+      <div class="stat-card"><h3>Vegetables</h3><span id="vegCount">0</span></div>
+      <div class="stat-card"><h3>Detergents</h3><span id="detCount">0</span></div>
+      <div class="stat-card"><h3>Supplies</h3><span id="supCount">0</span></div>
+    </div>
+    <div id="productsTable"></div>
+  </div>
 
-<input
-id="description"
-placeholder="English Name / الاسم بالإنجليزي">
+  <!-- INVOICES TAB -->
+  <div class="admin-section" id="section-invoices">
+    <h1>📄 All Invoices<br>جميع الفواتير</h1>
+    <div id="pdfSuccessMsg"></div>
+    <input type="text" id="invoiceSearch" class="admin-search-box" placeholder="Search by customer or invoice...">
+    <div id="allInvoicesList"></div>
+  </div>
 
-<input
-id="code"
-placeholder="Product Code / كود المنتج">
+  <!-- CUSTOMERS TAB -->
+  <div class="admin-section" id="section-customers">
+    <h1>👥 Registered Customers<br>العملاء المسجلين</h1>
+    <div class="add-customer-form">
+      <input type="text" id="newCustName" placeholder="Customer Name / اسم العميل">
+      <input type="text" id="newCustPin" placeholder="PIN (4 digits)" maxlength="4" inputmode="numeric">
+      <button id="addCustBtn" type="button">➕ Add Customer<br>إضافة عميل</button>
+    </div>
+    <input type="text" id="customerSearch" class="admin-search-box" placeholder="Search customer...">
+    <div id="allCustomersList"></div>
+  </div>
 
-<select id="category">
+  <!-- BRANCHES TAB -->
+  <div class="admin-section" id="section-branches">
+    <h1>🏪 Branch Management<br>إدارة الفروع</h1>
+    <div class="add-branch-form">
+      <input type="text" id="newBranchName" placeholder="Branch Name / اسم الفرع">
+      <button id="addBranchBtn" type="button">➕ Add Branch<br>إضافة فرع</button>
+    </div>
+    <div id="branchesList"></div>
+  </div>
 
-<option value="مواد غذائية">
-Foodstuffs / مواد غذائية
-</option>
-
-<option value="خضار">
-Vegetables / خضار
-</option>
-
-<option value="منظفات">
-Detergents / منظفات
-</option>
-<option value="مستلزمات">
-Supplies / مستلزمات
-</option>
-</select>
-<input
-type="file"
-id="excelFile"
-accept=".xlsx,.csv"
-style="display:none">
-
-
-<input
-type="file"
-id="excelFile"
-accept=".xlsx,.csv"
-style="display:none">
-
-<input
-id="image"
-placeholder="Image URL / رابط الصورة">
-
-<label
-for="imageFile"
-class="upload-btn">
-
-🖼️ إدراج من معرض الصور
-<br>
-Insert From Gallery
-
-</label>
-
-<input
-type="file"
-id="imageFile"
-accept="image/*"
-style="display:none">
-
-<button id="importExcel">
-
-📥 Import Excel
-استيراد منتجات من ملف إكسل
-
-</button>
-
-<button id="exportExcel">
-
-📤 Export Excel
-تصدير المنتجات كامله الى ملف إكسل
-
-</button>
-</div>
-<div
-style="
-text-align:center;
-margin:15px 0;
-">
-
-<img
-id="previewImage"
-src="https://via.placeholder.com/150"
-
-style="
-width:150px;
-height:150px;
-object-fit:contain;
-border:1px solid #ddd;
-border-radius:10px;
-padding:10px;
-background:white;
-">
-
-</div>
-
-<button id="save">
-
-💾 Save Product / حفظ المنتج
-
-</button>
-
-<hr>
-
-<h2>
-
-All Products / جميع المنتجات
-
-</h2>
-
-<input
-id="searchAdmin"
-placeholder="Search Product / البحث عن منتج">
-
-<br><br>
-
-<div class="sort-buttons">
-
-<button id="sortNewest">
-
-Newest First
-<br>
-الأحدث
-
-</button>
-
-<button id="sortOldest">
-
-Oldest First
-<br>
-الأقدم
-
-</button>
-
-<button id="sortNameAsc">
-
-A → Z
-<br>
-أ → ي
-
-</button>
+  <!-- ADMINS TAB -->
+  <div class="admin-section" id="section-admins">
+    <h1>🔐 Admin Management<br>إدارة المدراء</h1>
+    <div class="add-admin-form">
+      <input type="text" id="newAdminUser" placeholder="Username / اسم المستخدم">
+      <input type="password" id="newAdminPass" placeholder="Password / كلمة السر">
+      <button id="addAdminBtn" type="button">➕ Add Admin<br>إضافة مدير</button>
+    </div>
+    <div id="adminsList"></div>
+  </div>
 
 </div>
-
-<br>
-<div class="stats-box">
-
-<div class="stat-card">
-
-<h3>Total Products</h3>
-
-<span id="totalProducts">
-0
-</span>
-
-</div>
-
-<div class="stat-card">
-
-<h3>Foodstuffs</h3>
-
-<span id="foodCount">
-0
-</span>
-
-</div>
-
-<div class="stat-card">
-
-<h3>Vegetables</h3>
-
-<span id="vegCount">
-0
-</span>
-
-</div>
-
-<div class="stat-card">
-
-<h3>Detergents</h3>
-
-<span id="detCount">
-0
-</span>
-<div class="stat-card">
-
-<h3>
-Supplies
-</h3>
-
-<span id="supCount">
-0
-</span>
-
-</div>
-</div>
-
-</div>
-<div id="productsTable">
-
-</div>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script
-type="module"
-src="js/admin.js">
-</script>
 
 <script>
+  (function(){
+    const AUTH_KEY = "sallah_admin_unlocked";
+    const body = document.body;
+    const loginScreen = document.getElementById("adminLoginScreen");
+    const loginForm = document.getElementById("adminLoginForm");
+    const usernameInput = document.getElementById("adminUsername");
+    const passwordInput = document.getElementById("adminPassword");
+    const loginError = document.getElementById("adminLoginError");
+    const adminPanel = document.getElementById("adminPanel");
 
-document
-.getElementById("image")
-.addEventListener("input",function(){
+    let previewIsReady = false;
 
-document
-.getElementById("previewImage")
-.src =
+    function initPreview(){
+      if(previewIsReady) return;
+      const imageInput = document.getElementById("image");
+      const previewImage = document.getElementById("previewImage");
+      if(imageInput && previewImage){
+        imageInput.addEventListener("input",function(){
+          previewImage.src = this.value || "https://via.placeholder.com/150";
+        });
+      }
+      previewIsReady = true;
+    }
 
-this.value ||
+    function loadAdminScript(){
+      if(document.querySelector("script[data-admin-module='true']")) return;
+      const script = document.createElement("script");
+      script.type = "module";
+      script.src = "js/admin.js?v=20260705-2";
+      script.dataset.adminModule = "true";
+      document.body.appendChild(script);
+    }
 
-"https://via.placeholder.com/150";
+    window.showAdminPanelUI = function(){
+      body.classList.remove("admin-locked");
+      loginScreen.hidden = true;
+      adminPanel.hidden = false;
+      if(!window._adminPreviewReady){
+        const imgInput = document.getElementById("image");
+        const previewImg = document.getElementById("previewImage");
+        if(imgInput && previewImg){
+          imgInput.addEventListener("input",function(){ previewImg.src = this.value || "https://via.placeholder.com/150"; });
+        }
+        window._adminPreviewReady = true;
+      }
+    };
 
-});
+    loginForm.addEventListener("submit",function(event){
+      event.preventDefault();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      if(!username || !password){
+        loginError.textContent = "Please enter username and password";
+        return;
+      }
+      loginError.textContent = "Verifying...";
+      sessionStorage.setItem("admin_login_attempt", JSON.stringify({username, password}));
+      loadAdminScript();
+    });
 
+    if(sessionStorage.getItem("sallah_admin_verified") === "true"){
+      showAdminPanelUI();
+      loadAdminScript();
+    }else{
+      sessionStorage.removeItem(AUTH_KEY);
+      setTimeout(function(){ passwordInput.focus(); },100);
+    }
+  })();
 </script>
 
-</body>
+<!-- DELETE CUSTOMER CONFIRM MODAL -->
+<div id="deleteCustomerModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="clear-cart-dialog">
+    <h3>Delete Customer / حذف العميل</h3>
+    <p>
+      Are you sure you want to delete <strong id="deleteCustName"></strong>?
+      <br><br>
+      Type <strong>Yes</strong> to confirm:
+    </p>
+    <input type="text" id="deleteCustConfirmInput" placeholder="Yes" autocomplete="off" spellcheck="false">
+    <div class="clear-cart-actions">
+      <button id="deleteCustCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteCustomerModal()">Cancel / إلغاء</button>
+      <button id="deleteCustConfirmBtn" class="confirm-clear-cart" type="button" disabled onclick="if(!this.disabled){this.disabled=true;confirmDeleteCustomer()}">Delete / حذف</button>
+    </div>
+  </div>
+</div>
 
+<!-- DELETE INVOICE CONFIRM MODAL -->
+<div id="deleteInvoiceModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="clear-cart-dialog">
+    <h3>Delete Invoice / حذف الفاتورة</h3>
+    <p>
+      Are you sure you want to delete invoice <strong id="deleteInvoiceName"></strong>?
+      <br><br>
+      Type <strong>Yes</strong> to confirm:
+    </p>
+    <input type="text" id="deleteInvoiceConfirmInput" placeholder="Yes" autocomplete="off" spellcheck="false">
+    <div class="clear-cart-actions">
+      <button id="deleteInvoiceCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteInvoiceModal()">Cancel / إلغاء</button>
+      <button id="deleteInvoiceConfirmBtn" class="confirm-clear-cart" type="button" disabled onclick="if(!this.disabled){this.disabled=true;confirmDeleteInvoice()}">Delete / حذف</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    /* Customer delete modal */
+    const delInput = document.getElementById("deleteCustConfirmInput");
+    const delConfirmBtn = document.getElementById("deleteCustConfirmBtn");
+    const delModal = document.getElementById("deleteCustomerModal");
+
+    if(delInput && delConfirmBtn){
+      delInput.addEventListener("input", function(){
+        delConfirmBtn.disabled = this.value.trim().toLowerCase() !== "yes";
+      });
+      delInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter" && delConfirmBtn.disabled === false) confirmDeleteCustomer();
+      });
+    }
+    if(delModal){
+      delModal.addEventListener("click", function(e){
+        if(e.target === delModal) closeDeleteCustomerModal();
+      });
+    }
+
+    /* Invoice delete modal */
+    const invDelInput = document.getElementById("deleteInvoiceConfirmInput");
+    const invDelConfirmBtn = document.getElementById("deleteInvoiceConfirmBtn");
+    const invDelModal = document.getElementById("deleteInvoiceModal");
+
+    if(invDelInput && invDelConfirmBtn){
+      invDelInput.addEventListener("input", function(){
+        invDelConfirmBtn.disabled = this.value.trim().toLowerCase() !== "yes";
+      });
+      invDelInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter" && invDelConfirmBtn.disabled === false) confirmDeleteInvoice();
+      });
+    }
+    if(invDelModal){
+      invDelModal.addEventListener("click", function(e){
+        if(e.target === invDelModal) closeDeleteInvoiceModal();
+      });
+    }
+
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape"){ closeDeleteCustomerModal(); closeDeleteInvoiceModal(); }
+    });
+  })();
+</script>
+<!-- INVOICE TEMPLATE (hidden, used for PDF generation) -->
+<div id="invoiceTemplate" aria-hidden="true" style="position:fixed;left:-99999px;top:0;width:1120px;background:#fff;padding:14px;direction:rtl;">
+  <div class="invoice-box" style="width:100%;background:#fff;color:#111;font-family:Arial,'Segoe UI',Tahoma,sans-serif;direction:rtl;">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;">
+      <div class="inv-branch-label" style="position:absolute;left:0;top:0;font-size:11px;font-weight:700;color:#000000;text-align:left;direction:ltr;">
+        Receiving Branch: <span class="inv-branch-line" id="invRecvBranch" style="color:#000000;font-weight:400;"></span>
+      </div>
+      <div class="invoice-brand" style="text-align:center;">
+        <img src="images/logo.png" class="invoice-logo" alt="Logo" style="display:block;width:80px;height:auto;margin:0 auto 4px;">
+        <div class="invoice-title-main" style="font-size:18px;font-weight:800;color:#111;text-align:center;">Materials Delivery Form</div>
+      </div>
+    </div>
+    <div class="invoice-info-row" style="display:flex;justify-content:space-between;padding:4px 8px;margin-bottom:8px;font-size:11px;color:#555;font-weight:600;border-bottom:1px solid #ddd;">
+      <span>Invoice No: <strong id="invoiceNo" style="color:#111;font-weight:800;">0001</strong></span>
+      <span>Customer: <strong id="invoiceCustomer" style="color:#111;font-weight:800;">Direct Customer</strong></span>
+      <span>Date: <strong id="invoiceDate" style="color:#111;font-weight:800;"></strong></span>
+    </div>
+    <table id="invoiceTable" class="invoice-table" style="width:100%;border-collapse:collapse;table-layout:fixed;direction:rtl;">
+      <colgroup><col style="width:32px;"><col><col style="width:32px;"><col><col style="width:32px;"><col></colgroup>
+      <thead><tr><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">✔</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">Item</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">✔</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">Item</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">✔</th><th style="background:#e9e9e9;color:#111;border:1px solid #222;padding:5px 4px;font-size:12px;font-weight:800;text-align:center;">Item</th></tr></thead>
+      <tbody id="invoiceProducts"></tbody>
+    </table>
+
+    <div class="invoice-summary-row" style="display:grid;grid-template-columns:1fr 1fr;margin-top:8px;border:1px solid #222;">
+      <div class="invoice-summary-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;border-left:1px solid #222;">
+        <strong id="invoiceTotal" style="font-size:15px;">0</strong>
+        <span>Total Items</span>
+      </div>
+      <div class="invoice-summary-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;">
+        <strong id="invoiceQty" style="font-size:15px;">0</strong>
+        <span>Total Qty</span>
+      </div>
+    </div>
+
+    <div class="invoice-delivery-info" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:18px;padding-top:10px;border-top:1px solid #222;direction:ltr;text-align:left;">
+      <div class="inv-delivery-col" style="font-size:11px;color:#333;">
+        <div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Sent by:</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div>
+      </div>
+      <div class="inv-delivery-col" style="font-size:11px;color:#333;">
+        <div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Transferred by:</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div>
+      </div>
+      <div class="inv-delivery-col" style="font-size:11px;color:#333;">
+        <div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Received by:</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div>
+        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="dash-menu-btn" id="dashMenuBtn" aria-label="القائمة"><span></span><span></span><span></span></button>
+<div class="dash-menu-dropdown" id="dashMenuDropdown">
+  <a href="index.html"><span class="dash-icon">🛒</span> المتجر / Store</a>
+  <a href="cart.html"><span class="dash-icon">📋</span> السلة / Cart</a>
+  <a href="admin.html"><span class="dash-icon">⚙️</span> لوحة الإدارة / Admin</a>
+  <a href="invoices-view.html"><span class="dash-icon">📄</span> عرض الفواتير / Invoices</a>
+  <a href="dashboard.html"><span class="dash-icon">🏠</span> Dashboard</a>
+</div>
+<script>
+document.addEventListener("click",function(e){
+  var btn=document.getElementById("dashMenuBtn"),menu=document.getElementById("dashMenuDropdown");
+  if(!btn||!menu)return;
+  if(btn.contains(e.target)){btn.classList.toggle("active");menu.classList.toggle("show");}
+  else{btn.classList.remove("active");menu.classList.remove("show");}
+});
+</script>
+</body>
 </html>
