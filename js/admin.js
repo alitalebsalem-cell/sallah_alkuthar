@@ -14,6 +14,8 @@ let allCustomers = [];
 const NEW_CATEGORIES = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 const ARABIC_DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const CAT_EN_NAMES_ADMIN = {"قسم المعمل":"Almamal","قسم السوبرماركت":"AlsuperNarket","قسم محلات الجملة":"Aljumllah","قسم المستودع":"Almstudaa","احتياجات المعمل":"AhtyagatAlmamal"};
+const CAT_ORDER_ADMIN = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 
 const productsTable = document.getElementById("productsTable");
 const productsCollection = collection(db,"products");
@@ -191,7 +193,29 @@ function renderAllInvoices(invoices){
   invoices.forEach(inv=>{
     const ds=formatArabicDate(inv.createdAt||inv.date);
     let preview="";if(inv.items?.length){preview=inv.items.slice(0,3).map(i=>i.name).join("، ");if(inv.items.length>3)preview+=`...+${inv.items.length-3}`;}
-    let rows="";if(inv.items?.length)inv.items.forEach((it,i)=>{rows+=`<tr><td>${i+1}</td><td>${escapeHTML(it.name||"")}</td><td>${escapeHTML(it.code||"")}</td><td>${it.qty||0}</td></tr>`;});
+    let rows="";
+    if(inv.items?.length){
+      let admItems = [...inv.items];
+      if(inv.accountType === "حساب معمل"){
+        admItems = admItems.filter(it => it.category === "احتياجات المعمل");
+      }
+      const admGroups = {};
+      admItems.forEach(it => {
+        const cat = it.category || "Other";
+        if(!admGroups[cat]) admGroups[cat] = [];
+        admGroups[cat].push(it);
+      });
+      let admIdx = 0;
+      CAT_ORDER_ADMIN.forEach(cat => {
+        const group = admGroups[cat];
+        if(!group || group.length === 0) return;
+        rows+=`<tr><td colspan="4" style="background:#d9d9d9;border:1px solid #bbb;padding:6px 10px;font-size:13px;font-weight:900;text-align:center;">${CAT_EN_NAMES_ADMIN[cat]||cat}</td></tr>`;
+        group.forEach(it => {
+          admIdx++;
+          rows+=`<tr><td>${admIdx}</td><td>${escapeHTML(it.name||"")}</td><td>${escapeHTML(it.code||"")}</td><td>${it.qty||0}</td></tr>`;
+        });
+      });
+    }
     const dn=inv.branchName||inv.invoiceNo||"";const acc=inv.accountType||"";
     const card=document.createElement("div");card.className="invoice-admin-card";
     card.innerHTML=`<div class="inv-header"><strong>${escapeHTML(dn)}</strong><span>${ds}</span></div><div class="inv-customer">👤 ${escapeHTML(inv.customerName||"")}</div>${acc?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px;">${escapeHTML(acc)}</div>`:""}<div class="inv-items-preview">${escapeHTML(preview)}</div><div class="inv-footer"><span>${t("products")}: ${inv.totalItems||0}</span><span>${t("qty")}: ${inv.totalQty||0}</span></div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="inv-toggle-btn" type="button">${t("showDetails")}</button><button class="inv-print-btn" type="button">📥 PDF</button><button class="inv-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><table class="inv-detail-table"><thead><tr><th>#</th><th>${t("products")}</th><th>KOD</th><th>${t("qty")}</th></tr></thead><tbody>${rows}</tbody></table>`;

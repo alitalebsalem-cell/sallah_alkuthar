@@ -16,6 +16,14 @@ const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
 const ARABIC_DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const CAT_EN_NAMES = {
+  "قسم المعمل": "Almamal",
+  "قسم السوبرماركت": "AlsuperNarket",
+  "قسم محلات الجملة": "Aljumllah",
+  "قسم المستودع": "Almstudaa",
+  "احتياجات المعمل": "AhtyagatAlmamal"
+};
+const CAT_ORDER = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 let currentCustomer = null;
@@ -242,6 +250,7 @@ function renderCart(){
   else if(vis===0)cartItems.innerHTML=`<div class="cart-item"><div class="info"><h3>${t("noResults")}</h3></div></div>`;
   if(cartTotal)cartTotal.textContent=getCartTotalQty();
   saveCart();
+  loadCategoryCounts();
 }
 function findItem(id){return cart.find(i=>String(i.id)===String(id));}
 function increaseQty(id){const i=findItem(id);if(!i)return;i.qty=getItemQty(i)+1;renderCart();}
@@ -269,9 +278,43 @@ function formatInvoiceDate(){return new Date().toLocaleString("en-GB",{year:"num
 function populateBranchDropdown(){if(!branchNameInput)return;const cv=branchNameInput.value;branchNameInput.innerHTML='<option value="">-- اختر الفرع --</option>';getBranches().forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;branchNameInput.appendChild(o);});if(cv)branchNameInput.value=cv;}
 function createInvoiceCells(item){const desc=item.description||"";return `<td class="invoice-check-cell"><span class="invoice-check-box"></span></td><td class="invoice-product-cell"><div class="invoice-product-main"><span class="invoice-product-number invoice-product-qty">${getItemQty(item)}</span><strong><bdi>${escapeHTML(item.name||"")}</bdi></strong></div>${desc?`<div class="invoice-product-details" dir="ltr" style="padding-right:80px;font-size:11px;color:#000;">${escapeHTML(desc)}</div>`:""}</td>`;}
 function createEmptyCells(){return '<td class="invoice-check-cell invoice-empty-cell"></td><td class="invoice-product-cell invoice-empty-cell"></td>';}
-function createInvoiceRowsFromCart(){const r=[];for(let i=0;i<cart.length;i+=COLUMNS_PER_INVOICE_ROW)r.push(cart.slice(i,i+COLUMNS_PER_INVOICE_ROW));return r;}
-function renderInvoiceRows(rows){if(!invoiceProducts)return;invoiceProducts.innerHTML="";rows.forEach(ri=>{let h="";ri.forEach(it=>{h+=createInvoiceCells(it);});for(let e=ri.length;e<COLUMNS_PER_INVOICE_ROW;e++)h+=createEmptyCells();invoiceProducts.insertAdjacentHTML("beforeend",`<tr>${h}</tr>`);}
-)}
+function createInvoiceRowsFromCart(){
+  let items = [...cart];
+  const accountType = currentCustomer?.accountType || "";
+  if(accountType === "حساب معمل"){
+    items = items.filter(i => i.category === "احتياجات المعمل");
+  }
+  const groups = {};
+  items.forEach(it => {
+    const cat = it.category || "Other";
+    if(!groups[cat]) groups[cat] = [];
+    groups[cat].push(it);
+  });
+  const rows = [];
+  CAT_ORDER.forEach(cat => {
+    const group = groups[cat];
+    if(!group || group.length === 0) return;
+    rows.push({ type: "header", catName: CAT_EN_NAMES[cat] || cat });
+    for(let i = 0; i < group.length; i += COLUMNS_PER_INVOICE_ROW){
+      rows.push({ type: "items", items: group.slice(i, i + COLUMNS_PER_INVOICE_ROW) });
+    }
+  });
+  return rows;
+}
+function renderInvoiceRows(rows){
+  if(!invoiceProducts) return;
+  invoiceProducts.innerHTML = "";
+  rows.forEach(ri => {
+    if(ri.type === "header"){
+      invoiceProducts.insertAdjacentHTML("beforeend", `<tr><td colspan="6" style="background:#d9d9d9;color:#111;border:1px solid #222;padding:6px 8px;font-size:14px;font-weight:900;text-align:center;">${ri.catName}</td></tr>`);
+    } else if(ri.type === "items"){
+      let h = "";
+      (ri.items || []).forEach(it => { h += createInvoiceCells(it); });
+      for(let e = (ri.items||[]).length; e < COLUMNS_PER_INVOICE_ROW; e++) h += createEmptyCells();
+      invoiceProducts.insertAdjacentHTML("beforeend", `<tr>${h}</tr>`);
+    }
+  });
+}
 function setFooterVisible(v){const s=invoiceTemplate?.querySelector(".invoice-summary-row");const d=invoiceTemplate?.querySelector(".invoice-delivery-info");const ds=v?"":"none";if(s)s.style.display=ds;if(d)d.style.display=ds;}
 function getMaxHeight(){const w=invoiceTemplate?invoiceTemplate.scrollWidth:1120;return Math.floor(w*(A4_HEIGHT_MM/A4_WIDTH_MM))-24;}
 function splitPages(rows){const pages=[];const mh=getMaxHeight();let s=0;while(s<rows.length){let e=s+1;let lg=e;while(e<=rows.length){renderInvoiceRows(rows.slice(s,e));setFooterVisible(e===rows.length);if(invoiceTemplate.scrollHeight<=mh){lg=e;e++;}else break;}pages.push(rows.slice(s,lg));s=lg;}return pages;}
@@ -299,13 +342,13 @@ async function createInvoice(){
   const pdf=new window.jspdf.jsPDF("P","mm","A4");
   for(let pi=0;pi<pages.length;pi++){
     renderInvoiceRows(pages[pi]);setFooterVisible(pi===pages.length-1);
-    const th=invoiceTemplate?.querySelector("#invoiceTable thead");if(th)th.style.display=pi>0?"none":"";
+    const th2=invoiceTemplate?.querySelector("#invoiceTable thead");if(th2)th2.style.display="none";
     await waitForImages(invoiceTemplate);
     const canvas=await html2canvas(invoiceTemplate,{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:invoiceTemplate.scrollWidth,windowHeight:invoiceTemplate.scrollHeight});
     const imgData=canvas.toDataURL("image/png");const imgH=Math.min((canvas.height*A4_WIDTH_MM)/canvas.width,A4_HEIGHT_MM);
     if(pi>0)pdf.addPage();pdf.addImage(imgData,"PNG",0,0,A4_WIDTH_MM,imgH);
   }
-  const th=invoiceTemplate?.querySelector("#invoiceTable thead");if(th)th.style.display="";setFooterVisible(true);
+  setFooterVisible(true);
   pdf.save(`${bn}-${no}.pdf`);
   await saveInvoiceToFirestore(no,currentCustomer.name);
 }
@@ -326,21 +369,20 @@ if(clearCartModal)clearCartModal.addEventListener("click",e=>{if(e.target===clea
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){clearCartModal?.classList.contains("active")&&closeClearCartModal();loginModal?.classList.contains("active")&&closeLoginModal();invoicesModal?.classList.contains("active")&&closeInvoicesModal();if(invoiceDetailModal?.classList.contains("active")){invoiceDetailModal.classList.remove("active");invoiceDetailModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoiceDetailModal.hidden=true;},200);}}});
 
 /* INIT */
-async function loadCategoryCounts(){
-  try{
-    const snap = await getDocs(collection(db,"products"));
-    const counts = {};
-    snap.forEach(d => { const cat = d.data().category; if(cat) counts[cat] = (counts[cat]||0)+1; });
-    document.querySelectorAll("[data-cat-count]").forEach(badge => {
-      const cat = badge.getAttribute("data-cat-count");
-      const count = counts[cat] || 0;
-      badge.textContent = count;
-      badge.style.display = count > 0 ? "" : "none";
-    });
-  }catch(e){}
+function loadCategoryCounts(){
+  const counts = {};
+  cart.forEach(item => {
+    const cat = item.category;
+    if(cat) counts[cat] = (counts[cat]||0) + 1;
+  });
+  document.querySelectorAll("[data-cat-count]").forEach(badge => {
+    const cat = badge.getAttribute("data-cat-count");
+    const count = counts[cat] || 0;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? "" : "none";
+  });
 }
 applyLang();
 loadSession();
 populateBranchDropdown();
 renderCart();
-loadCategoryCounts();
