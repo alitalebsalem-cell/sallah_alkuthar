@@ -68,6 +68,19 @@
         <button id="importExcel" type="button">📥 استيراد من ملف إكسل</button>
         <button id="exportExcel" type="button">📤 تصدير إلى إكسل</button>
       </div>
+      <div class="bulk-toolbar" id="bulkToolbar">
+        <label class="bulk-select-all"><input type="checkbox" id="selectAllCheckbox"> <span id="selectAllLabel">تحديد الكل</span></label>
+        <span id="selectedCount" class="bulk-count">0</span>
+        <select id="bulkCategorySelect" class="bulk-category-select">
+          <option value="">-- القسم الجديد --</option>
+          <option value="قسم المعمل">🔬 قسم المعمل</option>
+          <option value="قسم السوبرماركت">🛒 قسم السوبرماركت</option>
+          <option value="قسم محلات الجملة">🏪 محلات الجملة</option>
+          <option value="قسم المستودع">🏭 قسم المستودع</option>
+          <option value="احتياجات المعمل">📋 احتياجات المعمل</option>
+        </select>
+        <button id="bulkChangeCatBtn" type="button" class="bulk-change-btn" disabled>تغيير القسم</button>
+      </div>
       <div id="productsTable"></div>
     </div>
 
