@@ -9,232 +9,150 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #f4f6f9;
-      font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
-      color: #111;
-    }
-    .view-header {
-      background: #0a8f5a;
-      color: #fff;
-      padding: 18px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 10px rgba(0,0,0,.15);
-    }
-    .view-header h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 800;
-    }
-    .view-header span {
-      font-size: 14px;
-      opacity: .9;
-    }
-    .view-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .view-search {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 15px;
-      margin-bottom: 20px;
-      box-sizing: border-box;
-    }
-    .view-grid {
-      display: grid;
-      gap: 14px;
-    }
-    .view-card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
-    }
-    .view-card .v-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .view-card .v-header strong {
-      color: #0a8f5a;
-      font-size: 16px;
-    }
-    .view-card .v-header span {
-      color: #666;
-      font-size: 13px;
-    }
-    .view-card .v-customer {
-      font-weight: 700;
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-    .view-card .v-items-preview {
-      color: #777;
-      font-size: 13px;
-      margin-bottom: 6px;
-    }
-    .view-card .v-footer {
-      display: flex;
-      gap: 16px;
-      font-size: 13px;
-      color: #555;
-      margin-bottom: 8px;
-    }
-    .view-card .v-toggle-btn {
-      background: #0a8f5a;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 6px 14px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .view-card .v-print-btn {
-      background: #ffc107;
-      color: #333;
-      border: none;
-      border-radius: 8px;
-      padding: 6px 14px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-      margin-left: 6px;
-    }
-    .view-card .v-detail-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      display: none;
-    }
-    .view-card .v-detail-table.show { display: table; }
-    .view-card .v-detail-table th {
-      background: #f2f2f2;
-      padding: 8px 10px;
-      border: 1px solid #ddd;
-      font-size: 13px;
-    }
-    .view-card .v-detail-table td {
-      padding: 6px 10px;
-      border: 1px solid #ddd;
-      font-size: 13px;
-    }
-    .view-loading {
-      text-align: center;
-      padding: 40px;
-      color: #0a8f5a;
-      font-size: 16px;
-    }
-    .view-empty {
-      text-align: center;
-      padding: 40px;
-      color: #888;
-      font-size: 16px;
-    }
-    .view-error {
-      text-align: center;
-      padding: 40px;
-      color: #dc3545;
-      font-size: 16px;
-    }
-    .v-btns { display: flex; gap: 6px; }
-    .lang-toggle-btn {
-      background: rgba(255,255,255,.2);
-      border: 1.5px solid rgba(255,255,255,.4);
-      border-radius: 10px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      color: #fff;
-      transition: all .2s;
-    }
-    .lang-toggle-btn:hover { background: rgba(255,255,255,.3); }
+    html, body { margin:0; padding:0; background:#f4f6f9; font-family:Arial,'Segoe UI',Tahoma,sans-serif; color:#111; }
+    .view-header { background:#0a8f5a; color:#fff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; position:sticky; top:0; z-index:100; box-shadow:0 2px 10px rgba(0,0,0,.15); }
+    .view-header h1 { margin:0; font-size:22px; font-weight:800; }
+    .view-header span { font-size:14px; opacity:.9; }
+    .view-container { max-width:1200px; margin:0 auto; padding:20px; }
+    .view-search { width:100%; padding:12px 16px; border:1px solid #ddd; border-radius:10px; font-size:15px; margin-bottom:20px; box-sizing:border-box; }
+    .view-grid { display:grid; gap:14px; }
+    .view-card { background:#fff; border:1px solid #e0e0e0; border-radius:14px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .view-card .v-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+    .view-card .v-header strong { color:#0a8f5a; font-size:16px; }
+    .view-card .v-header span { color:#666; font-size:13px; }
+    .view-card .v-customer { font-weight:700; margin-bottom:6px; font-size:14px; }
+    .view-card .v-items-preview { color:#777; font-size:13px; margin-bottom:6px; }
+    .view-card .v-footer { display:flex; gap:16px; font-size:13px; color:#555; margin-bottom:8px; }
+    .view-card .v-toggle-btn { background:#0a8f5a; color:#fff; border:none; border-radius:8px; padding:6px 14px; cursor:pointer; font-size:12px; font-weight:700; }
+    .view-card .v-print-btn { background:#ffc107; color:#333; border:none; border-radius:8px; padding:6px 14px; cursor:pointer; font-size:12px; font-weight:700; margin-left:6px; }
+    .view-card .v-detail-table { width:100%; border-collapse:collapse; margin-top:10px; display:none; }
+    .view-card .v-detail-table.show { display:table; }
+    .view-card .v-detail-table th { background:#f2f2f2; padding:8px 10px; border:1px solid #ddd; font-size:13px; }
+    .view-card .v-detail-table td { padding:6px 10px; border:1px solid #ddd; font-size:13px; }
+    .view-loading { text-align:center; padding:40px; color:#0a8f5a; font-size:16px; }
+    .view-empty { text-align:center; padding:40px; color:#888; font-size:16px; }
+    .view-error { text-align:center; padding:40px; color:#dc3545; font-size:16px; }
+    .v-btns { display:flex; gap:6px; }
+    .lang-toggle-btn { background:rgba(255,255,255,.2); border:1.5px solid rgba(255,255,255,.4); border-radius:10px; padding:6px 14px; font-size:13px; font-weight:700; cursor:pointer; color:#fff; transition:all .2s; }
+    .lang-toggle-btn:hover { background:rgba(255,255,255,.3); }
+    .view-header-left { display:flex; align-items:center; gap:8px; }
+    .view-user-info { font-size:13px; opacity:.9; }
+    .view-logout-btn { background:rgba(255,255,255,.2); border:1.5px solid rgba(255,255,255,.4); border-radius:10px; padding:6px 14px; font-size:13px; font-weight:700; cursor:pointer; color:#fff; }
   </style>
 </head>
 <body>
 
-  <div class="view-header">
-    <img src="images/logo.png" class="logo" alt="Logo">
-    <h1 id="viewTitle">📄 عرض الفواتير</h1>
-    <span id="viewSub">عرض الفواتير - للقراءة فقط</span>
-    <button id="viewLangToggle" class="lang-toggle-btn" type="button">EN</button>
+  <!-- LOGIN REQUIRED OVERLAY -->
+  <div id="loginOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#705f34 0%,#325247 50%,#414935 100%);z-index:9999;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:24px;padding:36px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2);position:relative;">
+      <button id="loginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:12px;left:12px;color:#555;border-color:rgba(122,102,85,.2);background:rgba(122,102,85,.08);">EN</button>
+      <img src="images/logo.png" alt="Logo" style="width:100px;height:auto;margin:0 auto 12px;" onerror="this.style.display='none'">
+      <h2 id="loginTitle" style="color:#111;font-size:22px;margin-bottom:4px;">عرض الفواتير</h2>
+      <p id="loginSub" style="color:#888;font-size:14px;margin-bottom:20px;">سجّل دخولك لعرض الفواتير</p>
+      <select id="loginAccountType" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:10px;font-size:14px;margin-bottom:10px;background:#f9f8f6;">
+        <option value="">-- نوع الحساب --</option>
+        <option value="حساب معمل">حساب معمل 🔬</option>
+        <option value="حساب فرع">حساب فرع 🏪</option>
+      </select>
+      <select id="loginName" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:10px;font-size:14px;margin-bottom:10px;background:#f9f8f6;display:none;">
+        <option value="">-- اختر الاسم --</option>
+      </select>
+      <input type="password" id="loginPin" placeholder="كلمة المرور (4 أرقام)" maxlength="4" inputmode="numeric" autocomplete="off" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:10px;font-size:14px;margin-bottom:10px;display:none;">
+      <button id="loginSubmit" type="button" style="width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#325247,#414935);color:#fff;font-size:16px;font-weight:800;cursor:pointer;display:none;">دخول</button>
+      <div id="loginError" style="color:#dc3545;font-size:13px;margin-top:8px;min-height:18px;"></div>
+    </div>
   </div>
 
-  <div class="view-container">
-    <input type="text" id="viewSearch" class="view-search" placeholder="🔍 البحث بالعميل أو رقم الفاتورة...">
-    <div class="view-grid" id="viewList">
-      <div class="view-loading">جاري تحميل الفواتير...</div>
+  <!-- MAIN CONTENT (hidden until login) -->
+  <div id="mainContent" style="display:none;">
+    <div class="view-header">
+      <img src="images/logo.png" class="logo" alt="Logo">
+      <h1 id="viewTitle">📄 عرض الفواتير</h1>
+      <div class="view-header-left">
+        <span id="viewUserInfo" class="view-user-info"></span>
+        <button id="viewLogoutBtn" class="view-logout-btn" type="button">🚪 تسجيل الخروج</button>
+        <button id="viewLangToggle" class="lang-toggle-btn" type="button">EN</button>
+      </div>
+    </div>
+    <div class="view-container">
+      <input type="text" id="viewSearch" class="view-search" placeholder="🔍 البحث بالعميل أو رقم الفاتورة...">
+      <div class="view-grid" id="viewList">
+        <div class="view-loading">جاري تحميل الفواتير...</div>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     import { generateInvoicePdf } from "./js/invoice-pdf.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDmmwICZYXE_eTzUt8YuZ8VhOtFOO3DssQ",
-      authDomain: "sallahorders-3d3bb.firebaseapp.com",
-      projectId: "sallahorders-3d3bb",
-      storageBucket: "sallahorders-3d3bb.firebasestorage.app",
-      messagingSenderId: "1063050925586",
-      appId: "1:1063050925586:web:327700c149dde96f1eaacb"
+    const mainFirebaseConfig = {
+      apiKey: "AIzaSyAE5T4yvDNKmo8sik4eFDbhjvc4K0uUi7M",
+      authDomain: "sallahkuthar.firebaseapp.com",
+      projectId: "sallahkuthar",
+      storageBucket: "sallahkuthar.firebasestorage.app",
+      messagingSenderId: "5993973139",
+      appId: "1:5993973139:web:735a1648d623dddf9b1466"
     };
-
-    const app = initializeApp(firebaseConfig, "invoicesView");
+    const app = initializeApp(mainFirebaseConfig, "invoicesView");
     const db = getFirestore(app);
-    const INVOICES_COLLECTION = "invoices";
-
+    const SESSION_KEY = "sallah_customer_session";
+    const LANG_KEY = "sallah_lang";
+    let currentUser = null;
     let allInvoices = [];
 
-    const LANG_KEY = "sallah_lang";
+    /* TRANSLATIONS */
     function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
     function setLang(l){ localStorage.setItem(LANG_KEY, l); }
-    const T_VIEW = {
+    const TV = {
       ar: {
-        title:"📄 عرض الفواتير", sub:"عرض الفواتير - للقراءة فقط",
+        loginTitle:"عرض الفواتير", loginSub:"سجّل دخولك لعرض الفواتير",
+        accountType:"-- نوع الحساب --", accountTypeLab:"حساب معمل", accountTypeBranch:"حساب فرع",
+        selectName:"-- اختر الاسم --", pinPlaceholder:"كلمة المرور (4 أرقام)",
+        submit:"دخول", title:"📄 عرض الفواتير",
         search:"🔍 البحث بالعميل أو رقم الفاتورة...", loading:"جاري تحميل الفواتير...",
         empty:"لا توجد فواتير", show:"عرض التفاصيل", hide:"إخفاء", print:"🖨 طباعة",
         items:"المنتجات", qty:"الكمية", product:"المنتج", sku:"KOD", noItems:"لا توجد منتجات",
-        customer:"العميل", toggle:"EN"
+        customer:"العميل", logout:"🚪 تسجيل الخروج", logoutConfirm:"هل تريد تسجيل الخروج؟",
+        toggle:"EN", selectAccountType:"اختر نوع الحساب", selectNameErr:"اختر الاسم",
+        pinFourDigits:"كلمة المرور 4 أرقام", accountNotFound:"الحساب غير موجود", wrongPassword:"كلمة المرور خاطئة",
+        menuStore:"المتجر", menuCart:"السلة", menuAdmin:"لوحة الإدارة", menuInvoices:"عرض الفواتير", menuDashboard:"Dashboard",
       },
       en: {
-        title:"📄 Invoices View", sub:"Read-only invoice listing",
+        loginTitle:"Invoices View", loginSub:"Login to view invoices",
+        accountType:"-- Account Type --", accountTypeLab:"Lab Account", accountTypeBranch:"Branch Account",
+        selectName:"-- Select Name --", pinPlaceholder:"PIN (4 digits)",
+        submit:"Login", title:"📄 Invoices View",
         search:"🔍 Search by customer or invoice number...", loading:"Loading invoices...",
         empty:"No invoices found", show:"Show Details", hide:"Hide", print:"🖨 Print",
         items:"Items", qty:"Qty", product:"Product", sku:"SKU", noItems:"No items",
-        customer:"Customer", toggle:"عربي"
+        customer:"Customer", logout:"🚪 Logout", logoutConfirm:"Are you sure you want to logout?",
+        toggle:"عربي", selectAccountType:"Select account type", selectNameErr:"Select a name",
+        pinFourDigits:"PIN must be 4 digits", accountNotFound:"Account not found", wrongPassword:"Wrong PIN",
+        menuStore:"Store", menuCart:"Cart", menuAdmin:"Admin Panel", menuInvoices:"Invoices", menuDashboard:"Dashboard",
       }
     };
-    function tt(key){ return (T_VIEW[getLang()] || T_VIEW.ar)[key] || key; }
+    function tt(key){ return (TV[getLang()] || TV.ar)[key] || key; }
 
-    function applyViewLang(){
+    function applyLoginLang(){
       const lang = getLang();
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
-      document.getElementById("viewTitle").textContent = tt("title");
-      document.getElementById("viewSub").textContent = tt("sub");
-      document.getElementById("viewSearch").placeholder = tt("search");
-      document.getElementById("viewLangToggle").textContent = tt("toggle");
-      // Translate floating menu
+      document.getElementById("loginLangToggle").textContent = tt("toggle");
+      document.getElementById("loginTitle").textContent = tt("loginTitle");
+      document.getElementById("loginSub").textContent = tt("loginSub");
+      const sel = document.getElementById("loginAccountType");
+      if(sel && sel.options.length >= 3){
+        sel.options[0].textContent = tt("accountType");
+        sel.options[1].textContent = tt("accountTypeLab");
+        sel.options[2].textContent = tt("accountTypeBranch");
+      }
+      const nameSel = document.getElementById("loginName");
+      if(nameSel){ const def = nameSel.querySelector('option[value=""]'); if(def) def.textContent = tt("selectName"); }
+      document.getElementById("loginPin").placeholder = tt("pinPlaceholder");
+      document.getElementById("loginSubmit").textContent = tt("submit");
+      // Floating menu
       const menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard"}};
       const mtr=menuT[lang]||menuT.ar;
       document.querySelectorAll("#dashMenuDropdown a").forEach(a=>{
@@ -244,31 +162,158 @@
         a.innerHTML=iconHtml+" "+mtr[key];
       });
     }
-    applyViewLang();
-    document.getElementById("viewLangToggle")?.addEventListener("click", function(){
+
+    function applyViewLang(){
+      const lang = getLang();
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
+      document.getElementById("viewTitle").textContent = tt("title");
+      document.getElementById("viewSearch").placeholder = tt("search");
+      document.getElementById("viewLangToggle").textContent = tt("toggle");
+      document.getElementById("viewLogoutBtn").textContent = tt("logout");
+      if(currentUser) document.getElementById("viewUserInfo").textContent = `👤 ${currentUser.name}`;
+      applyMenuLangInline();
+    }
+
+    function applyMenuLangInline(){
+      const lang = getLang();
+      const menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard"}};
+      const mtr=menuT[lang]||menuT.ar;
+      document.querySelectorAll("#dashMenuDropdown a").forEach(a=>{
+        const key=a.getAttribute("data-i18n-menu");
+        if(!key||!mtr[key])return;
+        const icon=a.querySelector(".dash-icon");const iconHtml=icon?icon.outerHTML:"";
+        a.innerHTML=iconHtml+" "+mtr[key];
+      });
+    }
+
+    /* LOGIN */
+    document.getElementById("loginLangToggle")?.addEventListener("click", ()=>{
+      setLang(getLang() === "ar" ? "en" : "ar");
+      applyLoginLang();
+    });
+    applyLoginLang();
+
+    document.getElementById("viewLangToggle")?.addEventListener("click", ()=>{
       setLang(getLang() === "ar" ? "en" : "ar");
       applyViewLang();
       renderInvoices(allInvoices);
     });
 
-    function escapeHTML(str){
-      return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    document.getElementById("viewLogoutBtn")?.addEventListener("click", ()=>{
+      if(!confirm(tt("logoutConfirm"))) return;
+      sessionStorage.removeItem(SESSION_KEY);
+      currentUser = null;
+      document.getElementById("mainContent").style.display = "none";
+      document.getElementById("loginOverlay").style.display = "flex";
+      applyLoginLang();
+    });
+
+    // Login flow
+    const loginAccType = document.getElementById("loginAccountType");
+    const loginName = document.getElementById("loginName");
+    const loginPin = document.getElementById("loginPin");
+    const loginSubmit = document.getElementById("loginSubmit");
+    const loginError = document.getElementById("loginError");
+
+    loginAccType?.addEventListener("change", async function(){
+      const at = this.value;
+      if(!at){ loginName.style.display = "none"; loginPin.style.display = "none"; loginSubmit.style.display = "none"; return; }
+      loginError.textContent = "";
+      loginName.style.display = "block";
+      loginSubmit.style.display = "none";
+      loginPin.style.display = "none";
+      // Load customers for this account type
+      try{
+        const { getDocs: gd, collection: gc, query: gq, where: gw } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
+        const q = gq(gc(db, "customers"), gw("accountType", "==", at));
+        const snap = await gd(q);
+        const def = loginName.querySelector('option[value=""]');
+        loginName.innerHTML = "";
+        if(def) loginName.appendChild(def);
+        snap.forEach(d => {
+          const data = d.data();
+          const opt = document.createElement("option");
+          opt.value = data.name;
+          opt.textContent = data.name;
+          loginName.appendChild(opt);
+        });
+        loginName.style.display = "block";
+      }catch(e){
+        // Fallback: load all customers
+        try{
+          const { getDocs: gd, collection: gc } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
+          const snap = await gd(gc(db, "customers"));
+          const def = loginName.querySelector('option[value=""]');
+          loginName.innerHTML = "";
+          if(def) loginName.appendChild(def);
+          snap.forEach(d => {
+            const data = d.data();
+            if(data.accountType === at){
+              const opt = document.createElement("option");
+              opt.value = data.name;
+              opt.textContent = data.name;
+              loginName.appendChild(opt);
+            }
+          });
+        }catch(e2){}
+      }
+    });
+
+    loginName?.addEventListener("change", function(){
+      if(this.value){ loginPin.style.display = "block"; loginSubmit.style.display = "block"; loginError.textContent = ""; }
+      else { loginPin.style.display = "none"; loginSubmit.style.display = "none"; }
+    });
+
+    loginSubmit?.addEventListener("click", async function(){
+      const at = loginAccType.value;
+      const name = loginName.value;
+      const pin = loginPin.value;
+      if(!at){ loginError.textContent = tt("selectAccountType"); return; }
+      if(!name){ loginError.textContent = tt("selectNameErr"); return; }
+      if(!pin || pin.length !== 4){ loginError.textContent = tt("pinFourDigits"); return; }
+      try{
+        const { getDocs: gd, collection: gc, query: gq, where: gw } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
+        let match = null;
+        try{
+          const q = gq(gc(db, "customers"), gw("name", "==", name));
+          const snap = await gd(q);
+          snap.forEach(d => { const data = d.data(); if(String(data.pin) === pin) match = { id: d.id, ...data }; });
+        }catch(e){
+          const snap = await gd(gc(db, "customers"));
+          snap.forEach(d => { const data = d.data(); if(data.name === name && String(data.pin) === pin) match = { id: d.id, ...data }; });
+        }
+        if(!match){ loginError.textContent = tt("accountNotFound"); return; }
+        currentUser = { id: match.id, name: match.name, accountType: match.accountType || at };
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+        showMainContent();
+      }catch(e){ loginError.textContent = tt("accountNotFound"); }
+    });
+
+    // Check existing session
+    function checkSession(){
+      try{
+        const s = sessionStorage.getItem(SESSION_KEY);
+        if(s){ currentUser = JSON.parse(s); showMainContent(); return true; }
+      }catch(e){}
+      return false;
     }
 
-    function formatDate(v){
-      if(!v) return "";
-      if(typeof v === "string") return v.split("T")[0];
-      if(v.toDate) return v.toDate().toLocaleDateString("en-CA");
-      return "";
+    function showMainContent(){
+      document.getElementById("loginOverlay").style.display = "none";
+      document.getElementById("mainContent").style.display = "";
+      applyViewLang();
+      loadInvoices();
     }
+
+    /* INVOICES */
+    function escapeHTML(str){ return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function formatDate(v){ if(!v) return ""; if(typeof v === "string") return v.split("T")[0]; if(v.toDate) return v.toDate().toLocaleDateString("en-CA"); return ""; }
 
     function renderInvoices(list){
       const container = document.getElementById("viewList");
       if(!container) return;
-      if(list.length === 0){
-        container.innerHTML = `<div class="view-empty">${tt("empty")}</div>`;
-        return;
-      }
+      if(list.length === 0){ container.innerHTML = `<div class="view-empty">${tt("empty")}</div>`; return; }
       container.innerHTML = "";
       list.forEach(inv => {
         const dateStr = formatDate(inv.createdAt || inv.date);
@@ -281,90 +326,65 @@
         let itemsTableRows = "";
         if(inv.items && inv.items.length > 0){
           inv.items.forEach((item, idx) => {
-            itemsTableRows += `<tr>
-              <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${idx+1}</td>
-              <td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.name || "")}</td>
-              <td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td>
-              <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td>
-            </tr>`;
+            itemsTableRows += `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${idx+1}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.name || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td></tr>`;
           });
         }
         const displayName = inv.branchName || inv.invoiceNo || "";
         const card = document.createElement("div");
         card.className = "view-card";
         card.innerHTML = `
-          <div class="v-header">
-            <strong>${escapeHTML(displayName)}</strong>
-            <span>${dateStr}</span>
-          </div>
-          <div class="v-customer">${escapeHTML(inv.customerName || "Direct Customer")}</div>
+          <div class="v-header"><strong>${escapeHTML(displayName)}</strong><span>${dateStr}</span></div>
+          <div class="v-customer">${escapeHTML(inv.customerName || "")}</div>
           <div class="v-items-preview">${escapeHTML(itemsPreview)}</div>
-          <div class="v-footer">
-            <span>${tt("items")}: ${inv.totalItems || 0}</span>
-            <span>${tt("qty")}: ${inv.totalQty || 0}</span>
-          </div>
-          <div class="v-btns">
-            <button class="v-toggle-btn" type="button">${tt("show")}</button>
-            <button class="v-print-btn" type="button">${tt("print")}</button>
-          </div>
-          <table class="v-detail-table">
-            <thead><tr>
-              <th>#</th><th>${tt("product")}</th><th>${tt("sku")}</th><th>${tt("qty")}</th>
-            </tr></thead>
-            <tbody>${itemsTableRows || `<tr><td colspan="4" style="padding:8px;text-align:center;color:#888;">${tt("noItems")}</td></tr>`}</tbody>
-          </table>
-        `;
-
-        const toggleBtn = card.querySelector(".v-toggle-btn");
-        const detailTable = card.querySelector(".v-detail-table");
-        toggleBtn.addEventListener("click", () => {
-          detailTable.classList.toggle("show");
-          toggleBtn.textContent = detailTable.classList.contains("show") ? tt("hide") : tt("show");
+          <div class="v-footer"><span>${tt("items")}: ${inv.totalItems || 0}</span><span>${tt("qty")}: ${inv.totalQty || 0}</span></div>
+          <div class="v-btns"><button class="v-toggle-btn" type="button">${tt("show")}</button><button class="v-print-btn" type="button">${tt("print")}</button></div>
+          <table class="v-detail-table"><thead><tr><th>#</th><th>${tt("product")}</th><th>${tt("sku")}</th><th>${tt("qty")}</th></tr></thead>
+          <tbody>${itemsTableRows || `<tr><td colspan="4" style="padding:8px;text-align:center;color:#888;">${tt("noItems")}</td></tr>`}</tbody></table>`;
+        card.querySelector(".v-toggle-btn").addEventListener("click", function(){
+          const tbl = card.querySelector(".v-detail-table");
+          tbl.classList.toggle("show");
+          this.textContent = tbl.classList.contains("show") ? tt("hide") : tt("show");
         });
-
-        const printBtn = card.querySelector(".v-print-btn");
-        printBtn.addEventListener("click", () => downloadInvoicePdf(inv));
-
+        card.querySelector(".v-print-btn").addEventListener("click", () => downloadInvoicePdf(inv));
         container.appendChild(card);
       });
     }
 
     async function downloadInvoicePdf(invoiceData){
-      try{
-        await generateInvoicePdf(invoiceData);
-      }catch(error){
-        console.error("Error generating PDF:", error);
-        alert("Error generating PDF");
-      }
+      try{ await generateInvoicePdf(invoiceData); }catch(error){ console.error("Error generating PDF:", error); }
     }
 
     async function loadInvoices(){
       const container = document.getElementById("viewList");
+      container.innerHTML = `<div class="view-loading">${tt("loading")}</div>`;
       try{
-        const invoicesRef = collection(db, INVOICES_COLLECTION);
+        const invoicesRef = collection(db, "invoices");
         let snapshot;
-        try{
-          const q = query(invoicesRef, orderBy("createdAt", "desc"));
-          snapshot = await getDocs(q);
-        }catch(e){
-          console.warn("Ordered query failed:", e);
-          snapshot = await getDocs(invoicesRef);
-        }
+        try{ const q = query(invoicesRef, orderBy("createdAt", "desc")); snapshot = await getDocs(q); }catch(e){ snapshot = await getDocs(invoicesRef); }
         allInvoices = [];
-        snapshot.forEach(doc => {
-          allInvoices.push({ id: doc.id, ...doc.data() });
-        });
-        renderInvoices(allInvoices);
+        snapshot.forEach(d => allInvoices.push({ id: d.id, ...d.data() }));
+        // Filter by account type: lab sees only lab, branch sees only branch
+        const accType = currentUser?.accountType || "";
+        let filtered = allInvoices;
+        if(accType === "حساب معمل"){
+          filtered = allInvoices.filter(inv => inv.accountType === "حساب معمل");
+        } else if(accType === "حساب فرع"){
+          filtered = allInvoices.filter(inv => inv.accountType !== "حساب معمل");
+        }
+        renderInvoices(filtered);
       }catch(error){
-        console.error("Error loading invoices:", error);
-        container.innerHTML = `<div class="view-error">Error loading invoices: ${error.message}</div>`;
+        container.innerHTML = `<div class="view-error">${error.message}</div>`;
       }
     }
 
     document.getElementById("viewSearch")?.addEventListener("input", function(){
       const value = this.value.toLowerCase().trim();
-      if(!value){ renderInvoices(allInvoices); return; }
-      const filtered = allInvoices.filter(inv =>
+      const accType = currentUser?.accountType || "";
+      let base = allInvoices;
+      if(accType === "حساب معمل") base = allInvoices.filter(inv => inv.accountType === "حساب معمل");
+      else if(accType === "حساب فرع") base = allInvoices.filter(inv => inv.accountType !== "حساب معمل");
+      if(!value){ renderInvoices(base); return; }
+      const filtered = base.filter(inv =>
         (inv.customerName || "").toLowerCase().includes(value) ||
         (inv.invoiceNo || "").toLowerCase().includes(value) ||
         (inv.branchName || "").toLowerCase().includes(value)
@@ -372,16 +392,14 @@
       renderInvoices(filtered);
     });
 
-    loadInvoices();
+    checkSession();
   </script>
 
 <!-- INVOICE TEMPLATE (hidden, for PDF) -->
 <div id="invoiceTemplate" aria-hidden="true" style="position:fixed;left:-99999px;top:0;width:1120px;background:#fff;padding:14px;direction:rtl;">
   <div class="invoice-box" style="width:100%;background:#fff;color:#111;font-family:Arial,'Segoe UI',Tahoma,sans-serif;direction:rtl;">
     <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;">
-      <div class="inv-branch-label" style="position:absolute;left:0;top:0;font-size:11px;font-weight:700;color:#000000;text-align:left;direction:ltr;">
-        Receiving Branch: <span class="inv-branch-line" id="invRecvBranch" style="color:#000000;font-weight:400;"></span>
-      </div>
+      <div class="inv-branch-label" style="position:absolute;left:0;top:0;font-size:11px;font-weight:700;color:#000000;text-align:left;direction:ltr;">Receiving Branch: <span class="inv-branch-line" id="invRecvBranch" style="color:#000000;font-weight:400;"></span></div>
       <div class="invoice-brand" style="text-align:center;">
         <img src="images/logo.png" class="invoice-logo" alt="Logo" style="display:block;width:80px;height:auto;margin:0 auto 4px;">
         <div class="invoice-title-main" style="font-size:18px;font-weight:800;color:#111;text-align:center;">Materials Delivery Form</div>
@@ -398,34 +416,13 @@
       <tbody id="invoiceProducts"></tbody>
     </table>
     <div class="invoice-summary-row" style="display:grid;grid-template-columns:1fr 1fr;margin-top:8px;border:1px solid #222;">
-      <div class="invoice-summary-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;border-left:1px solid #222;">
-        <strong id="invoiceTotal" style="font-size:15px;">0</strong>
-        <span>Total Items</span>
-      </div>
-      <div class="invoice-summary-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;">
-        <strong id="invoiceQty" style="font-size:15px;">0</strong>
-        <span>Total Qty</span>
-      </div>
+      <div class="invoice-summary-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;border-left:1px solid #222;"><strong id="invoiceTotal" style="font-size:15px;">0</strong><span>Total Items</span></div>
+      <div class="invoice-summary-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;"><strong id="invoiceQty" style="font-size:15px;">0</strong><span>Total Qty</span></div>
     </div>
     <div class="invoice-delivery-info" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:18px;padding-top:10px;border-top:1px solid #222;direction:ltr;text-align:left;">
-      <div class="inv-delivery-col" style="font-size:11px;color:#333;">
-        <div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Sent by:</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div>
-      </div>
-      <div class="inv-delivery-col" style="font-size:11px;color:#333;">
-        <div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Transferred by:</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div>
-      </div>
-      <div class="inv-delivery-col" style="font-size:11px;color:#333;">
-        <div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Received by:</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div>
-        <div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div>
-      </div>
+      <div class="inv-delivery-col" style="font-size:11px;color:#333;"><div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Sent by:</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div></div>
+      <div class="inv-delivery-col" style="font-size:11px;color:#333;"><div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Transferred by:</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div></div>
+      <div class="inv-delivery-col" style="font-size:11px;color:#333;"><div class="inv-delivery-title" style="font-weight:800;font-size:12px;color:#111;margin-bottom:8px;">Received by:</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Name: ____________________________________________</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Signature: _______________________________________</div><div class="inv-delivery-row" style="margin-bottom:6px;font-weight:600;">Date: ____________________________________________</div></div>
     </div>
   </div>
 </div>
