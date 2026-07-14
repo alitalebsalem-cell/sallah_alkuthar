@@ -377,6 +377,12 @@ function loadCategoryCounts(){
   });
   document.querySelectorAll("[data-cat-count]").forEach(badge => {
     const cat = badge.getAttribute("data-cat-count");
+    if(cat === "all"){
+      const total = cart.length;
+      badge.textContent = total;
+      badge.style.display = total > 0 ? "" : "none";
+      return;
+    }
     const count = counts[cat] || 0;
     badge.textContent = count;
     badge.style.display = count > 0 ? "" : "none";
@@ -385,4 +391,5 @@ function loadCategoryCounts(){
 applyLang();
 loadSession();
 populateBranchDropdown();
+document.querySelector("#cartCategoryFilter .cat-card[data-cat='all']")?.classList.add("active");
 renderCart();

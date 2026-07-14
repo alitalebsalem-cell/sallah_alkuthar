@@ -142,9 +142,17 @@ document.querySelectorAll(".admin-tab").forEach(tab => {
 function renderProducts(products){
   if(!productsTable)return;
   productsTable.innerHTML="";
+  const checked = new Set((window.__selectedProducts)||[]);
   products.forEach(p=>{
-    productsTable.insertAdjacentHTML("beforeend",`<div class="admin-product"><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.name||"")}</h3><p>${escapeHTML(p.description||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p><p style="color:var(--accent);font-weight:700;">${escapeHTML(catLabel(p.category||""))}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
+    const cid = p.id;
+    productsTable.insertAdjacentHTML("beforeend",`<div class="admin-product"><label class="prod-check"><input type="checkbox" class="prod-cb" value="${escapeHTML(cid)}"${checked.has(cid)?" checked":""}></label><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.name||"")}</h3><p>${escapeHTML(p.description||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p><p style="color:var(--accent);font-weight:700;">${escapeHTML(catLabel(p.category||""))}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
   });
+  // Re-check checkboxes after re-render
+  productsTable.querySelectorAll(".prod-cb").forEach(cb => {
+    if(checked.has(cb.value)) cb.checked = true;
+    cb.addEventListener("change", updateBulkUI);
+  });
+  updateBulkUI();
 }
 
 getElement("imageFile")?.addEventListener("change",function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const pi=getElement("previewImage");if(pi)pi.src=e.target.result;};r.readAsDataURL(f);});
@@ -169,6 +177,52 @@ getElement("searchAdmin")?.addEventListener("input",function(){const v=normalize
 getElement("sortNewest")?.addEventListener("click",()=>renderProducts([...allProducts].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))));
 getElement("sortOldest")?.addEventListener("click",()=>renderProducts([...allProducts].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))));
 getElement("sortNameAsc")?.addEventListener("click",()=>renderProducts([...allProducts].sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ar"))));
+
+/* BULK CATEGORY CHANGE */
+function getSelectedIds(){
+  return Array.from(document.querySelectorAll(".prod-cb:checked")).map(cb => cb.value);
+}
+function updateBulkUI(){
+  const ids = getSelectedIds();
+  window.__selectedProducts = new Set(ids);
+  const countEl = document.getElementById("selectedCount");
+  if(countEl) countEl.textContent = ids.length;
+  const btn = document.getElementById("bulkChangeCatBtn");
+  const sel = document.getElementById("bulkCategorySelect");
+  if(btn) btn.disabled = ids.length === 0 || !sel?.value;
+  const allCb = document.getElementById("selectAllCheckbox");
+  if(allCb){
+    const total = document.querySelectorAll(".prod-cb").length;
+    allCb.checked = total > 0 && ids.length === total;
+    allCb.indeterminate = ids.length > 0 && ids.length < total;
+  }
+}
+document.getElementById("selectAllCheckbox")?.addEventListener("change", function(){
+  document.querySelectorAll(".prod-cb").forEach(cb => cb.checked = this.checked);
+  updateBulkUI();
+});
+document.getElementById("bulkCategorySelect")?.addEventListener("change", updateBulkUI);
+document.getElementById("bulkChangeCatBtn")?.addEventListener("click", async function(){
+  const ids = getSelectedIds();
+  if(ids.length === 0){ alert(t("noProductsSelected")); return; }
+  const cat = document.getElementById("bulkCategorySelect")?.value;
+  if(!cat){ alert(t("selectCategoryFirst")); return; }
+  if(!confirm(`${ids.length} منتج → ${catLabel(cat)}؟`)) return;
+  const btn = this;
+  btn.disabled = true;
+  btn.textContent = "جاري التحديث...";
+  let success = 0, fail = 0;
+  for(const id of ids){
+    try{
+      await updateDoc(doc(db, "products", id), { category: cat });
+      success++;
+    }catch(e){ fail++; }
+  }
+  btn.textContent = "تغيير القسم";
+  btn.disabled = false;
+  alert(`تم تحديث ${success} منتج` + (fail ? `, فشل ${fail}` : ""));
+  await loadProducts();
+});
 
 /* EXCEL */
 function loadXLSXLibrary(){return new Promise((res,rej)=>{if(window.XLSX){res(window.XLSX);return;}const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";s.onload=()=>{if(window.XLSX)res(window.XLSX);else rej(new Error("XLSX not available"));};s.onerror=()=>rej(new Error("Failed to load XLSX"));document.head.appendChild(s);});}
@@ -412,6 +466,17 @@ function applyAdminLang(){
   if(importBtn) importBtn.textContent = t("importExcelLabel");
   const exportBtn = document.getElementById("exportExcel");
   if(exportBtn) exportBtn.textContent = t("exportExcelLabel");
+
+  // Bulk actions
+  const selectAllLabel = document.getElementById("selectAllLabel");
+  if(selectAllLabel) selectAllLabel.textContent = t("bulkSelectAll");
+  const bulkCatSel = document.getElementById("bulkCategorySelect");
+  if(bulkCatSel){
+    const defOpt = bulkCatSel.querySelector("option[value='']");
+    if(defOpt) defOpt.textContent = t("bulkCategoryPlaceholder");
+  }
+  const bulkBtn = document.getElementById("bulkChangeCatBtn");
+  if(bulkBtn) bulkBtn.textContent = t("bulkChangeBtn");
 
   // Search and sort
   const searchAdmin = document.getElementById("searchAdmin");

@@ -1,7 +1,7 @@
 const LANG_KEY = "sallah_lang";
 const CAT_LABELS = {
-  ar: {"قسم المعمل":"قسم المعمل","قسم السوبرماركت":"قسم السوبرماركت","قسم محلات الجملة":"محلات الجملة","قسم المستودع":"قسم المستودع","احتياجات المعمل":"احتياجات المعمل","الكل":"الكل"},
-  en: {"قسم المعمل":"Lab","قسم السوبرماركت":"Supermarket","قسم محلات الجملة":"Wholesale","قسم المستودع":"Warehouse","احتياجات المعمل":"Lab Needs","الكل":"All"}
+  ar: {"قسم المعمل":"قسم المعمل","قسم السوبرماركت":"قسم السوبرماركت","قسم محلات الجملة":"محلات الجملة","قسم المستودع":"قسم المستودع","احتياجات المعمل":"احتياجات المعمل","الكل":"الكل","all":"جميع المنتجات"},
+  en: {"قسم المعمل":"Lab","قسم السوبرماركت":"Supermarket","قسم محلات الجملة":"Wholesale","قسم المستودع":"Warehouse","احتياجات المعمل":"Lab Needs","الكل":"All","all":"All Products"}
 };
 const CAT_IMAGES = {
   "قسم المعمل":      { ar: "images/almamal-ar.png",       en: "images/almamal-en.png" },
@@ -200,6 +200,11 @@ const T = {
     accountTypeBranch: "حساب فرع 🏪",
     noProductsInCategory: "لا توجد منتجات في هذا القسم",
     productsInCategory: "منتجات القسم",
+    noProductsSelected: "لم يتم تحديد أي منتج",
+    selectCategoryFirst: "اختر القسم الجديد أولاً",
+    bulkSelectAll: "تحديد الكل",
+    bulkCategoryPlaceholder: "-- القسم الجديد --",
+    bulkChangeBtn: "تغيير القسم",
   },
   en: {
     searchPlaceholder: "🔍 Search products...",
@@ -390,6 +395,11 @@ const T = {
     accountTypeBranch: "Branch Account 🏪",
     noProductsInCategory: "No products in this category",
     productsInCategory: "Category Products",
+    noProductsSelected: "No products selected",
+    selectCategoryFirst: "Select a category first",
+    bulkSelectAll: "Select All",
+    bulkCategoryPlaceholder: "-- New Category --",
+    bulkChangeBtn: "Change Category",
   }
 };
 
