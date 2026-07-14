@@ -191,6 +191,7 @@ const T = {
     editBtn: "تعديل",
     deleteBtn: "حذف",
     registrationDate: "تاريخ التسجيل:",
+    changeAccountType: "تغيير نوع الحساب",
     allProducts: "جميع المنتجات",
     uploadImage: "📷 إدراج من معرض الصور",
     importExcelLabel: "📥 استيراد من ملف إكسل",
@@ -380,6 +381,7 @@ const T = {
     editBtn: "Edit",
     deleteBtn: "Delete",
     registrationDate: "Registration date:",
+    changeAccountType: "Change account type",
     allProducts: "All Products",
     uploadImage: "📷 Upload from Gallery",
     importExcelLabel: "📥 Import from Excel",
@@ -488,4 +490,104 @@ export function applyFullLang(selectors){
   });
 
   applyMenuLang();
+}
+
+export function applyCartLang(){
+  applyMenuLang();
+  const lang = getLang();
+  const isEn = lang === "en";
+
+  // Header
+  const h1 = document.querySelector(".store-header h1");
+  if(h1) h1.textContent = t("cartTitle");
+  const backBtn = document.querySelector(".header-left .back-btn");
+  if(backBtn) backBtn.textContent = t("backToStore");
+
+  // Category labels
+  document.querySelectorAll(".cat-card .cat-label").forEach(el => {
+    const card = el.closest("[data-cat]");
+    if(card) el.textContent = catLabel(card.dataset.cat);
+  });
+
+  // Login required overlay
+  const overlay = document.getElementById("loginRequiredOverlay");
+  if(overlay){
+    const oh2 = overlay.querySelector("h2");
+    const op = overlay.querySelector("p");
+    const obtn = overlay.querySelector("button");
+    if(oh2) oh2.textContent = t("loginFirst");
+    if(op) op.textContent = t("cartRequiredSub");
+    if(obtn) obtn.textContent = t("loginBtnOverlay");
+  }
+
+  // Cart summary
+  const summaryH2 = document.querySelector(".cart-summary h2");
+  if(summaryH2) summaryH2.textContent = t("itemCount");
+  const createInv = document.getElementById("createInvoice");
+  if(createInv) createInv.textContent = t("createInvoice");
+  const whatsappBtn = document.getElementById("whatsappBtn");
+  if(whatsappBtn) whatsappBtn.textContent = t("whatsapp");
+  const clearCartBtn = document.getElementById("clearCartBtn");
+  if(clearCartBtn) clearCartBtn.textContent = t("clearCart");
+  const backStore = document.querySelector(".cart-summary .back-btn");
+  if(backStore) backStore.textContent = t("backToStore");
+  const branchSel = document.querySelector("#branchName option");
+  if(branchSel) branchSel.textContent = t("selectBranch");
+
+  // Cart search
+  const cartSearch = document.getElementById("cartSearch");
+  if(cartSearch) cartSearch.placeholder = t("cartSearchPlaceholder");
+
+  // Login modal
+  const lmH2 = document.querySelector("#loginModal h2");
+  const lmSub = document.querySelector("#loginModal .login-subtitle");
+  if(lmH2) lmH2.textContent = t("loginTitle");
+  if(lmSub) lmSub.textContent = t("loginSubtitle");
+  const sel = document.getElementById("loginAccountType");
+  if(sel && sel.options.length >= 3){
+    sel.options[0].textContent = t("accountType");
+    sel.options[1].textContent = t("accountTypeLab");
+    sel.options[2].textContent = t("accountTypeBranch");
+  }
+  const nameSel = document.getElementById("loginName");
+  if(nameSel){
+    const def = nameSel.querySelector('option[value=""]');
+    if(def) def.textContent = t("selectName");
+  }
+  const pin = document.getElementById("loginPin");
+  if(pin) pin.placeholder = t("pinPlaceholder");
+  const subBtn = document.getElementById("loginSubmit");
+  if(subBtn) subBtn.textContent = t("submit");
+
+  // Profile
+  applyFullLang({ profile: true });
+
+  // Invoices modal
+  const invH2 = document.querySelector("#invoicesModal h2");
+  if(invH2) invH2.textContent = t("myInvoicesTitle");
+  const invClose = document.getElementById("invoicesCloseBtn");
+  if(invClose) invClose.textContent = t("close");
+
+  // Clear cart modal
+  const ccH3 = document.querySelector("#clearCartConfirmModal h3");
+  const ccP = document.querySelector("#clearCartConfirmModal p");
+  const ccCancel = document.getElementById("cancelClearCart");
+  const ccConfirm = document.getElementById("confirmClearCart");
+  if(ccH3) ccH3.textContent = t("confirmDeleteCart");
+  if(ccP) ccP.textContent = t("confirmDeleteCartMsg");
+  if(ccCancel) ccCancel.textContent = t("cancel");
+  if(ccConfirm) ccConfirm.textContent = t("delete");
+
+  // Header profile dropdown
+  const ddItems = document.querySelectorAll("#profileDropdown .profile-dropdown-item");
+  if(ddItems[0]){ const s = ddItems[0].querySelector("strong"); if(s) s.textContent = t("name"); }
+  if(ddItems[1]){ const s = ddItems[1].querySelector("strong"); if(s) s.textContent = t("type"); }
+  if(ddItems[3]){ const b = ddItems[3].querySelector("button"); if(b) b.textContent = t("changePin"); }
+  if(ddItems[4]){ const b = ddItems[4].querySelector("button"); if(b) b.textContent = t("myInvoices"); }
+  if(ddItems[5]){ const b = ddItems[5].querySelector("button"); if(b) b.textContent = t("logout"); }
+  const profileTogglePin = document.getElementById("profileTogglePin");
+  if(profileTogglePin){
+    const el = document.getElementById("profilePin");
+    if(el) profileTogglePin.textContent = el.textContent === "****" ? t("show") : t("hide");
+  }
 }

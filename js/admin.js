@@ -4,7 +4,7 @@ import {
   collection, addDoc, getDocs, deleteDoc, updateDoc, doc,
   query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { getLang, setLang, t, catLabel, catImage, applyFullLang, applyMenuLang } from "./i18n.js";
+import { getLang, setLang, t, catLabel, applyFullLang, applyMenuLang } from "./i18n.js";
 
 let editingId = null;
 let allProducts = [];
@@ -228,11 +228,24 @@ function renderAllCustomers(customers){
     const ds=cust.createdAt?formatArabicDate(cust.createdAt):"";
     const acc=cust.accountType||"غير محدد";
     const card=document.createElement("div");card.className="customer-admin-card";
-    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong><span>${escapeHTML(acc)}</span></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="cust-toggle-btn" type="button">${t("showInvoices")}</button><button class="cust-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><div class="cust-invoices"></div>`;
+    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong><span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-edit-acc-btn" type="button" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="cust-toggle-btn" type="button">${t("showInvoices")}</button><button class="cust-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><div class="cust-invoices"></div>`;
     const toggleBtn=card.querySelector(".cust-toggle-btn");
     const delBtn=card.querySelector(".cust-del-btn");
+    const editAccBtn=card.querySelector(".cust-edit-acc-btn");
+    const accSpan=card.querySelector(".cust-acc-type");
     const invDiv=card.querySelector(".cust-invoices");
     delBtn.addEventListener("click",()=>openDeleteCustomerModal(cust.id,cust.name));
+    editAccBtn.addEventListener("click",async()=>{
+      const currentType=cust.accountType||"حساب معمل";
+      const newType=currentType==="حساب معمل"?"حساب فرع":"حساب معمل";
+      if(!confirm(`${t("changeAccountType")}: ${catLabel(currentType)} → ${catLabel(newType)}?`))return;
+      cust.accountType=newType;
+      accSpan.textContent=newType;
+      const local=getLocalCustomers();
+      const lc=local.find(c=>c.id===cust.id);if(lc)lc.accountType=newType;
+      saveLocalCustomers(local);
+      try{await updateDoc(doc(db,"customers",cust.id),{accountType:newType});}catch(e){}
+    });
     toggleBtn.addEventListener("click",async()=>{
       if(invDiv.classList.contains("show")){invDiv.classList.remove("show");invDiv.innerHTML="";toggleBtn.textContent=t("showInvoices");return;}
       toggleBtn.textContent=t("uploading");
@@ -339,17 +352,14 @@ function applyAdminLang(){
   const pickerTitle = document.querySelector("#categoryPicker h2:first-child");
   if(pickerTitle) pickerTitle.textContent = t("selectCategory");
 
-  // Category picker cards - use images
+  // Category picker cards - use emojis
+  const catIcons = {"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
   document.querySelectorAll(".cat-pick-card").forEach(c => {
     const cat = c.dataset.cat;
-    const img = catImage(cat);
+    const icon = catIcons[cat] || "📦";
     const lbl = catLabel(cat);
     const count = allProducts.filter(p => p.category === cat).length;
-    if(img){
-      c.innerHTML = `<img src="${img}" alt="${lbl}" class="cat-pick-img" onerror="this.style.display='none'"><span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${lbl}</span>`;
-    } else {
-      c.innerHTML = `<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${lbl}</span>`;
-    }
+    c.innerHTML = `${icon}<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${lbl}</span>`;
   });
 
   // All Products heading

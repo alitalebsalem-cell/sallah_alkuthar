@@ -4,7 +4,7 @@ import {
   collection, addDoc, getDocs, updateDoc, doc,
   query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { getLang, setLang, t, catLabel, applyFullLang } from "./i18n.js";
+import { getLang, setLang, t, catLabel, applyFullLang, applyCartLang } from "./i18n.js";
 
 const SESSION_KEY = "sallah_customer_session";
 const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
@@ -62,21 +62,11 @@ function saveLocalCustomers(a){ localStorage.setItem(CUSTOMERS_LOCAL_KEY,JSON.st
 
 /* LANG */
 function applyLang(){
-  applyFullLang({
-    langToggle: "langToggle",
-    search: "cartSearch",
-    loginBtn: "loginBtn",
-    loginRequiredOverlay: "loginRequiredOverlay",
-    loginModal: "loginModal",
-    profile: true,
-  });
-  // Swap category images
-  const lang = getLang();
-  document.querySelectorAll(".cat-card .cat-img").forEach(img => {
-    const ar = img.getAttribute("data-img-ar");
-    const en = img.getAttribute("data-img-en");
-    if(ar && en) img.src = lang === "en" ? en : ar;
-  });
+  document.documentElement.lang = getLang();
+  document.documentElement.dir = getLang() === "en" ? "ltr" : "rtl";
+  const btn = document.getElementById("langToggle");
+  if(btn) btn.textContent = getLang() === "en" ? "عربي" : "EN";
+  applyCartLang();
 }
 document.getElementById("langToggle")?.addEventListener("click",()=>{
   setLang(getLang()==="ar"?"en":"ar");
