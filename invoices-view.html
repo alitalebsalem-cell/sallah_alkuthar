@@ -323,10 +323,32 @@
           itemsPreview = shown.join(", ");
           if(inv.items.length > 3) itemsPreview += `...(+${inv.items.length - 3})`;
         }
+        const CAT_EN_NAMES_VIEW = {"قسم المعمل":"Almamal","قسم السوبرماركت":"AlsuperNarket","قسم محلات الجملة":"Aljumllah","قسم المستودع":"Almstudaa","احتياجات المعمل":"AhtyagatAlmamal"};
+        const CAT_ORDER_VIEW = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
         let itemsTableRows = "";
         if(inv.items && inv.items.length > 0){
-          inv.items.forEach((item, idx) => {
-            itemsTableRows += `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${idx+1}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.name || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td></tr>`;
+          let viewItems = [...inv.items];
+          // Lab account filtering
+          if(inv.accountType === "حساب معمل"){
+            viewItems = viewItems.filter(it => it.category === "احتياجات المعمل");
+          }
+          // Group by category
+          const viewGroups = {};
+          viewItems.forEach(it => {
+            const cat = it.category || "Other";
+            if(!viewGroups[cat]) viewGroups[cat] = [];
+            viewGroups[cat].push(it);
+          });
+          let viewIdx = 0;
+          CAT_ORDER_VIEW.forEach(cat => {
+            const group = viewGroups[cat];
+            if(!group || group.length === 0) return;
+            const catName = CAT_EN_NAMES_VIEW[cat] || cat;
+            itemsTableRows += `<tr><td colspan="4" style="background:#d9d9d9;border:1px solid #bbb;padding:6px 10px;font-size:13px;font-weight:900;text-align:center;">${catName}</td></tr>`;
+            group.forEach(item => {
+              viewIdx++;
+              itemsTableRows += `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${viewIdx}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.name || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td></tr>`;
+            });
           });
         }
         const displayName = inv.branchName || inv.invoiceNo || "";
