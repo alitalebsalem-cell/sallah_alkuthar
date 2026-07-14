@@ -124,6 +124,16 @@ a{text-decoration:none;color:inherit;}
   box-shadow:0 8px 24px rgba(69,54,48,.2);
 }
 .cat-card .cat-icon{font-size:28px;line-height:1;}
+.cat-card .cat-img{width:48px;height:48px;object-fit:contain;border-radius:8px;}
+.cat-card .cat-badge{
+  position:absolute;top:4px;right:4px;
+  background:var(--accent);color:#fff;
+  font-size:10px;font-weight:800;
+  min-width:20px;height:20px;line-height:20px;
+  border-radius:50%;text-align:center;
+  padding:0 4px;
+}
+.cat-card{position:relative;}
 .cat-card .cat-label{font-size:12px;font-weight:700;line-height:1.25;white-space:nowrap;}
 
 /* ============ PRODUCTS ============ */
@@ -815,9 +825,20 @@ body.admin-locked{overflow:hidden;}
   border-radius:var(--radius);background:var(--white);color:var(--dark);
   font-weight:700;font-size:14px;cursor:pointer;text-align:center;
   transition:var(--transition);box-shadow:var(--shadow);line-height:1.6;
+  position:relative;
 }
 .cat-pick-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--accent);}
 .cat-pick-card:active{transform:scale(.97);}
+.cat-pick-img{width:56px;height:56px;object-fit:contain;border-radius:10px;margin-bottom:4px;}
+.cat-pick-badge{
+  position:absolute;top:8px;right:8px;
+  background:var(--accent);color:#fff;
+  font-size:11px;font-weight:800;
+  min-width:22px;height:22px;line-height:22px;
+  border-radius:50%;text-align:center;
+  padding:0 4px;
+}
+.cat-pick-label{display:block;margin-top:4px;}
 
 /* ADMIN BOX */
 .admin-box{max-width:1400px;margin:auto;padding:20px;}
@@ -986,6 +1007,7 @@ body{background:linear-gradient(135deg,var(--bg) 0%,#ede7df 100%);}
   .categories{gap:8px;padding:10px 12px;}
   .cat-card{min-width:90px;padding:10px 14px;}
   .cat-card .cat-icon{font-size:24px;}
+  .cat-card .cat-img{width:36px;height:36px;}
   .cat-card .cat-label{font-size:11px;}
   .cart-icon{width:44px;height:44px;font-size:20px;border-radius:12px;}
   .dash-menu-btn{width:46px;height:46px;bottom:16px;left:16px;border-radius:12px;}
