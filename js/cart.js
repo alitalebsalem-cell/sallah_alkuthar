@@ -121,6 +121,10 @@ function hideCart(){
 const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
 function getAllowedCategories(){
   if(!currentCustomer)return[];
+  const perms=currentCustomer.permissions;
+  if(perms&&typeof perms==='object'&&Object.keys(perms).length>0){
+    return Object.keys(perms).filter(k=>perms[k]);
+  }
   return CATEGORY_PERMISSIONS[currentCustomer.accountType||""]||["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 }
 function applyPermissions(){

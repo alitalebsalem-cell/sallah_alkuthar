@@ -127,6 +127,10 @@ function hideStore(){
    ======================== */
 function getAllowedCategories(){
   if(!currentCustomer) return [];
+  const perms = currentCustomer.permissions;
+  if(perms && typeof perms === 'object' && Object.keys(perms).length > 0){
+    return Object.keys(perms).filter(k => perms[k]);
+  }
   const accType = currentCustomer.accountType || "";
   return CATEGORY_PERMISSIONS[accType] || ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 }

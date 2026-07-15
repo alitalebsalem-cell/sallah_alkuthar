@@ -16,6 +16,7 @@ const ARABIC_DAYS = ["الأحد","الاثنين","الثلاثاء","الأر�
 const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const CAT_EN_NAMES_ADMIN = {"قسم المعمل":"Almamal","قسم السوبرماركت":"AlsuperNarket","قسم محلات الجملة":"Aljumllah","قسم المستودع":"Almstudaa","احتياجات المعمل":"AhtyagatAlmamal"};
 const CAT_ORDER_ADMIN = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
 
 const productsTable = document.getElementById("productsTable");
 const productsCollection = collection(db,"products");
@@ -292,7 +293,7 @@ async function loadAllCustomers(){
   list.innerHTML=`<div class='loading-msg'>${t("loadingCustomers")}</div>`;
   allCustomers=getLocalCustomers();
   try{const snap=await getDocs(customersCollection);const fids=new Set();
-  snap.forEach(d=>{fids.add(d.id);const data=d.data();if(!allCustomers.find(c=>c.id===d.id))allCustomers.push({id:d.id,name:data.name,pin:data.pin,accountType:data.accountType||"",createdAt:data.createdAt});});
+   snap.forEach(d=>{fids.add(d.id);const data=d.data();const existing=allCustomers.find(c=>c.id===d.id);if(existing){existing.permissions=data.permissions||{};}else{allCustomers.push({id:d.id,name:data.name,pin:data.pin,accountType:data.accountType||"",permissions:data.permissions||{},createdAt:data.createdAt});}});
   const lids=new Set(allCustomers.map(c=>c.id));fids.forEach(fid=>{if(!lids.has(fid))allCustomers=allCustomers.filter(c=>c.id!==fid);});
   allCustomers.forEach(c=>{const s=snap.docs.find(dd=>dd.id===c.id);if(s&&!s.data().accountType){try{updateDoc(doc(db,"customers",c.id),{accountType:"حساب معمل"});c.accountType="حساب معمل";}catch(e){}}});
   saveLocalCustomers(allCustomers);}catch(e){}
@@ -314,15 +315,35 @@ function renderAllCustomers(customers){
     const invDiv=card.querySelector(".cust-invoices");
     delBtn.addEventListener("click",()=>openDeleteCustomerModal(cust.id,cust.name));
     editAccBtn.addEventListener("click",async()=>{
-      const currentType=cust.accountType||"حساب معمل";
-      const newType=currentType==="حساب معمل"?"حساب فرع":"حساب معمل";
-      if(!confirm(`${t("changeAccountType")}: ${catLabel(currentType)} → ${catLabel(newType)}?`))return;
-      cust.accountType=newType;
-      accSpan.textContent=newType;
-      const local=getLocalCustomers();
-      const lc=local.find(c=>c.id===cust.id);if(lc)lc.accountType=newType;
-      saveLocalCustomers(local);
-      try{await updateDoc(doc(db,"customers",cust.id),{accountType:newType});}catch(e){}
+      const existingPerms=card.querySelector(".cust-perm-section");
+      if(existingPerms){existingPerms.remove();return;}
+      const permSection=document.createElement("div");permSection.className="cust-perm-section";
+      permSection.style.cssText="margin-top:8px;padding:8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);";
+      const curPerms=cust.permissions||{};
+      const defPerms=CATEGORY_PERMISSIONS[cust.accountType]||CAT_ORDER_ADMIN;
+      const hasCustom=typeof curPerms==='object'&&Object.keys(curPerms).length>0;
+      let ph=`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--accent);">${t("permissionsLabel")}</div>`;
+      CAT_ORDER_ADMIN.forEach(cat=>{
+        const checked=hasCustom?!!curPerms[cat]:defPerms.includes(cat);
+        ph+=`<label class="perm-label" data-cat="${cat}"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span>${cat}</span></label>`;
+      });
+      ph+=`<div style="display:flex;gap:8px;margin-top:8px;"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
+      permSection.innerHTML=ph;
+      card.appendChild(permSection);
+      permSection.querySelector(".perm-save-btn").addEventListener("click",async()=>{
+        const perms={};CAT_ORDER_ADMIN.forEach(cat=>{const cb=permSection.querySelector(`.perm-checkbox[data-cat="${cat}"]`);if(cb)perms[cat]=cb.checked;});
+        cust.permissions=perms;
+        const lcArr=getLocalCustomers();const lc2=lcArr.find(c=>c.id===cust.id);if(lc2)lc2.permissions=perms;
+        saveLocalCustomers(lcArr);
+        try{await updateDoc(doc(db,"customers",cust.id),{permissions:perms});alert(t("permsSaved"));}catch(e){alert(t("errorOccurredShort"));}
+      });
+      permSection.querySelector(".perm-reset-btn").addEventListener("click",async()=>{
+        cust.permissions={};
+        const lcArr2=getLocalCustomers();const lc3=lcArr2.find(c=>c.id===cust.id);if(lc3)lc3.permissions={};
+        saveLocalCustomers(lcArr2);
+        try{await updateDoc(doc(db,"customers",cust.id),{permissions:{}});alert(t("permsReset"));}catch(e){alert(t("errorOccurredShort"));}
+        permSection.querySelectorAll(".perm-checkbox").forEach(cb=>{const cat=cb.dataset.cat;cb.checked=defPerms.includes(cat);});
+      });
     });
     toggleBtn.addEventListener("click",async()=>{
       if(invDiv.classList.contains("show")){invDiv.classList.remove("show");invDiv.innerHTML="";toggleBtn.textContent=t("showInvoices");return;}

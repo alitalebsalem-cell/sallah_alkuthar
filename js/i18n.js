@@ -205,6 +205,11 @@ const T = {
     bulkSelectAll: "تحديد الكل",
     bulkCategoryPlaceholder: "-- القسم الجديد --",
     bulkChangeBtn: "تغيير القسم",
+    permissionsLabel: "🔐 صلاحيات الأقسام",
+    savePerms: "💾 حفظ الصلاحيات",
+    resetPerms: "🔄 إعادة التعيين",
+    permsSaved: "تم حفظ الصلاحيات بنجاح",
+    permsReset: "تم إعادة التعيين إلى الإعدادات الافتراضية",
   },
   en: {
     searchPlaceholder: "🔍 Search products...",
@@ -400,6 +405,11 @@ const T = {
     bulkSelectAll: "Select All",
     bulkCategoryPlaceholder: "-- New Category --",
     bulkChangeBtn: "Change Category",
+    permissionsLabel: "🔐 Category Permissions",
+    savePerms: "💾 Save Permissions",
+    resetPerms: "🔄 Reset to Defaults",
+    permsSaved: "Permissions saved",
+    permsReset: "Reset to defaults",
   }
 };
 
