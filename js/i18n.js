@@ -509,6 +509,10 @@ export function applyFullLang(selectors){
     el.textContent = catLabel(el.getAttribute("data-i18n-cat"));
   });
 
+  document.querySelectorAll("[data-i18n]:not([data-i18n-cat])").forEach(el => {
+    el.textContent = t(el.getAttribute("data-i18n"));
+  });
+
   applyMenuLang();
 }
 
