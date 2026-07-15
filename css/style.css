@@ -598,7 +598,7 @@ a{text-decoration:none;color:inherit;}
   border-radius:2px;background:#fff;font-size:11px;font-weight:900;color:#111;
 }
 .invoice-product-main strong{font-size:12px;font-weight:800;color:#111;line-height:1.5;}
-.invoice-product-details{margin-top:3px;padding-right:35px;font-size:11px;color:#000;font-weight:600;}
+.invoice-product-details{margin-top:3px;padding-right:35px;font-size:13px;color:#000;font-weight:600;}
 .invoice-empty-cell{background:#fafafa;}
 .invoice-summary-row{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:8px;border:1px solid #222;}
 .invoice-summary-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;font-size:12px;font-weight:800;}
