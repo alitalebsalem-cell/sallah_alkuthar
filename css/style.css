@@ -169,12 +169,12 @@ a{text-decoration:none;color:inherit;}
 
 .product-info{padding:0 4px 6px;flex:1;}
 .product-info h3{
-  font-size:14px;font-weight:800;line-height:1.35;
+  font-size:15px;font-weight:800;line-height:1.35;
   color:var(--dark);margin-bottom:2px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
-.product-info .product-desc{
-  font-size:12px;color:var(--secondary);margin-bottom:3px;
+.product-info .product-name-ar{
+  font-size:11px;color:var(--secondary);margin-bottom:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .product-info .product-sku{
@@ -306,6 +306,7 @@ a{text-decoration:none;color:inherit;}
 }
 .cart-item .info{flex:1;min-width:0;}
 .cart-item h3{font-size:16px;font-weight:800;color:var(--dark);margin-bottom:4px;}
+.cart-item .product-name-ar{font-size:12px;color:var(--secondary);margin:2px 0;}
 .cart-item p{font-size:13px;color:var(--secondary);margin:2px 0;}
 
 .qty-controls{display:flex;align-items:center;gap:0;margin-top:8px;}
@@ -737,6 +738,7 @@ body.admin-locked{overflow:hidden;}
 }
 .admin-info{flex:1;}
 .admin-info h3{margin-bottom:6px;font-size:16px;color:var(--dark);}
+.admin-info .product-name-ar{margin:2px 0;color:var(--secondary);font-size:12px;}
 .admin-info p{margin:3px 0;color:var(--secondary);font-size:13px;}
 .admin-actions{display:flex;gap:8px;flex-shrink:0;}
 .edit-btn{
@@ -1063,4 +1065,22 @@ body{background:linear-gradient(135deg,var(--bg) 0%,#ede7df 100%);}
 .cust-perm-section label.perm-label input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--accent);}
 .cust-perm-section .perm-save-btn,.cust-perm-section .perm-reset-btn{padding:4px 12px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;}
 .cust-perm-section .perm-save-btn{background:var(--accent);color:var(--white);}
-.cust-perm-section .perm-reset-btn{background:#ddd;color:var(--text);}
+  .cust-perm-section .perm-reset-btn{background:#ddd;color:var(--text);}
+
+/* CATEGORIES ADMIN */
+.categories-admin-list{display:flex;flex-direction:column;gap:10px;}
+.cat-admin-card{display:flex;align-items:center;gap:12px;padding:14px;background:var(--white);border-radius:var(--radius);border:1.5px solid rgba(199,178,153,.15);cursor:pointer;transition:var(--transition);}
+.cat-admin-card:hover{border-color:var(--accent);box-shadow:var(--shadow);}
+.cat-admin-card .cat-admin-icon{font-size:28px;flex-shrink:0;}
+.cat-admin-card .cat-admin-name{font-size:15px;font-weight:800;color:var(--dark);}
+.cat-admin-card .cat-admin-desc{font-size:11px;color:var(--secondary);margin-top:2px;font-weight:400;}
+.cat-admin-card .cat-admin-count{font-size:12px;color:var(--secondary);font-weight:600;margin-left:8px;white-space:nowrap;}
+.cat-admin-card .cat-admin-actions{display:flex;gap:6px;flex-shrink:0;}
+.cat-admin-card .cat-admin-actions button{padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:var(--transition);}
+.cat-admin-card .cat-admin-actions .cat-rename-btn{background:var(--accent);color:#fff;}
+.cat-admin-card .cat-admin-actions .cat-rename-btn:hover{opacity:.85;}
+.cat-admin-card .cat-admin-actions .cat-del-btn{background:rgba(220,53,69,.1);color:#dc3545;}
+.cat-admin-card .cat-admin-actions .cat-del-btn:hover{background:#dc3545;color:#fff;}
+.cat-admin-card .cat-admin-actions .cat-edit-meta-btn{background:var(--bg);color:var(--dark);font-size:14px;}
+.cat-admin-card .cat-admin-actions .cat-edit-meta-btn:hover{background:var(--card);color:var(--dark);}
+.category-products-list{display:flex;flex-direction:column;gap:8px;}
