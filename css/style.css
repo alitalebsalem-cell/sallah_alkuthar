@@ -1051,10 +1051,13 @@ body{background:linear-gradient(135deg,var(--bg) 0%,#ede7df 100%);}
   header h1{font-size:clamp(12px,2.5vw,16px);}
   .logo{width:140px;height:auto;}
   #products{grid-template-columns:repeat(2,1fr);gap:10px;}
-  .product{padding:8px;min-height:auto;}
-  .product-img-wrap{aspect-ratio:1;}
+  .product{padding:8px;min-height:auto;display:grid;grid-template-rows:auto 1fr auto auto;}
+  .product .product-qty-row{margin:6px 0 4px;}
+  .product-cart-btn{margin-top:0;font-size:12px;padding:8px;border-radius:8px;}
+  .product-img-wrap{aspect-ratio:1;overflow:hidden;}
+  .product-img-wrap img{object-fit:cover;}
+  .product-info{padding:0 2px 4px;}
   .product-info h3{font-size:13px;}
-  .product-cart-btn{font-size:12px;padding:8px;border-radius:8px;}
   .product-qty-row button{width:34px;height:32px;font-size:16px;}
   .product-qty-row .qty-val{font-size:13px;}
 }
