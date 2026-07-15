@@ -49,13 +49,7 @@
     <!-- CATEGORY PICKER (shown first) -->
     <div id="categoryPicker">
       <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">📦 اختر القسم لإضافة منتج جديد</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
-        <button class="cat-pick-card" type="button" data-cat="قسم المعمل">🔬<br>قسم المعمل</button>
-        <button class="cat-pick-card" type="button" data-cat="قسم السوبرماركت">🛒<br>قسم السوبرماركت</button>
-        <button class="cat-pick-card" type="button" data-cat="قسم محلات الجملة">🏪<br>محلات الجملة</button>
-        <button class="cat-pick-card" type="button" data-cat="قسم المستودع">🏭<br>قسم المستودع</button>
-        <button class="cat-pick-card" type="button" data-cat="احتياجات المعمل">📋<br>احتياجات المعمل</button>
-      </div>
+      <div id="catPickCardsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px;"></div>
       <hr style="margin:20px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
       <h2 style="color:var(--dark);text-align:center;margin-bottom:12px;">جميع المنتجات</h2>
       <input id="searchAdmin" class="admin-search-box" placeholder="🔍 البحث عن منتج...">
@@ -367,5 +361,20 @@ document.addEventListener("click",function(e){
   else{btn.classList.remove("active");menu.classList.remove("show");}
 });
 </script>
+
+<!-- RENAME CATEGORY MODAL -->
+<div id="renameCatModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="clear-cart-dialog">
+    <h3 id="renameCatModalTitle">Rename Category</h3>
+    <p style="font-size:13px;color:var(--secondary);margin-bottom:12px;" id="renameCatOldNameDisplay"></p>
+    <input type="text" id="renameCatArInput" placeholder="Arabic name" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <input type="text" id="renameCatEnInput" placeholder="English name" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <div class="clear-cart-actions">
+      <button id="renameCatCancelBtn" class="cancel-clear-cart" type="button">Cancel</button>
+      <button id="renameCatConfirmBtn" class="confirm-clear-cart" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
