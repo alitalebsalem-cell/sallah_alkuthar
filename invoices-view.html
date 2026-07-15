@@ -325,7 +325,7 @@
         const dateStr = formatDate(inv.createdAt || inv.date);
         let itemsPreview = "";
         if(inv.items && inv.items.length > 0){
-          const shown = inv.items.slice(0,3).map(i => i.name);
+          const shown = inv.items.slice(0,3).map(i => i.description || i.name);
           itemsPreview = shown.join(", ");
           if(inv.items.length > 3) itemsPreview += `...(+${inv.items.length - 3})`;
         }
@@ -353,7 +353,7 @@
             itemsTableRows += `<tr><td colspan="4" style="background:#d9d9d9;border:1px solid #bbb;padding:6px 10px;font-size:13px;font-weight:900;text-align:center;">${catName}</td></tr>`;
             group.forEach(item => {
               viewIdx++;
-              itemsTableRows += `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${viewIdx}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.name || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td></tr>`;
+              itemsTableRows += `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${viewIdx}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.description || item.name || "")}${item.name?`<br><span style="font-size:11px;color:#888;">${escapeHTML(item.name)}</span>`:""}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td></tr>`;
             });
           });
         }
@@ -461,6 +461,7 @@
   <a href="index.html" data-i18n-menu="menuStore"><span class="dash-icon">🛒</span> المتجر</a>
   <a href="cart.html" data-i18n-menu="menuCart"><span class="dash-icon">📋</span> السلة</a>
   <a href="admin.html" data-i18n-menu="menuAdmin"><span class="dash-icon">⚙️</span> لوحة الإدارة</a>
+  <a href="admins.html" data-i18n-menu="menuAdmins"><span class="dash-icon">🔐</span> إدارة المدراء</a>
   <a href="invoices-view.html" data-i18n-menu="menuInvoices"><span class="dash-icon">📄</span> عرض الفواتير</a>
   <a href="dashboard.html" data-i18n-menu="menuDashboard"><span class="dash-icon">🏠</span> Dashboard</a>
 </div>

@@ -109,11 +109,12 @@
       <a href="index.html" class="btn btn-store" id="dashStoreBtn"><span class="icon">🛒</span> <span id="dashStoreText"></span></a>
       <a href="admin.html" class="btn btn-admin" id="dashAdminBtn"><span class="icon">⚙️</span> <span id="dashAdminText"></span></a>
       <a href="invoices-view.html" class="btn btn-invoices" id="dashInvoicesBtn"><span class="icon">📄</span> <span id="dashInvoicesText"></span></a>
+      <a href="admins.html" class="btn" style="background:#8B7355;box-shadow:0 4px 14px rgba(139,115,85,.3);" id="dashAdminsBtn"><span class="icon">🔐</span> <span id="dashAdminsText">Admin Management</span></a>
     </div>
   </div>
   <script>
     const LANG_KEY = "sallah_lang";
-    function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
+    function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
     function setLang(l){ localStorage.setItem(LANG_KEY, l); }
     const T_DASH = {
       ar: { title:"لوحة التحكم", sub:"اختر القسم", store:"🛒 المتجر", admin:"⚙️ لوحة الإدارة", invoices:"📄 عرض الفواتير", toggle:"EN" },

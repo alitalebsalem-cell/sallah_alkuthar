@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Management</title>
+  <link rel="stylesheet" href="css/style.css?v=20260714-2">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<section id="loginScreen" class="admin-login-screen" style="display:flex;">
+  <form id="loginForm" class="admin-login-card" autocomplete="off">
+    <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'">
+    <h1>Admin Management</h1>
+    <p>Enter username and password</p>
+    <input type="text" id="loginUser" placeholder="Username" autocomplete="username" spellcheck="false">
+    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+    <button type="submit">Login</button>
+    <div id="loginError" class="admin-login-error"></div>
+  </form>
+</section>
+
+<!-- MAIN PANEL -->
+<div class="admin-box" id="mainPanel" style="display:none;">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+    <a href="dashboard.html"><img src="images/logo.png" class="logo" alt="Logo" style="width:100px;height:auto;"></a>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:18px;font-weight:800;color:var(--dark);" id="profileDisplay"></div>
+      <div style="font-size:13px;color:var(--secondary);">Admin Management</div>
+    </div>
+    <button id="profileEditBtn" type="button" style="padding:6px 14px;border:1.5px solid var(--accent);border-radius:8px;background:var(--white);color:var(--accent);font-weight:700;cursor:pointer;font-size:13px;">Edit Profile</button>
+    <button id="logoutBtn" type="button" style="padding:6px 14px;border:1.5px solid #dc3545;border-radius:8px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:13px;">Logout</button>
+  </div>
+
+  <div id="profileEditSection" style="display:none;margin-bottom:20px;padding:16px;background:var(--white);border-radius:var(--radius);border:1.5px solid var(--accent);">
+    <h3 style="margin:0 0 12px;color:var(--dark);">Edit Profile</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <input type="text" id="editProfileUser" placeholder="New username" style="flex:1;min-width:120px;">
+      <input type="password" id="editProfilePass" placeholder="New password" style="flex:1;min-width:120px;">
+    </div>
+    <button id="saveProfileBtn" type="button" style="padding:8px 20px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;">Save</button>
+  </div>
+
+  <hr style="border:none;border-top:1px solid rgba(122,102,85,.15);margin:16px 0;">
+
+  <h2 style="color:var(--dark);margin-bottom:16px;">Manage Admins</h2>
+  <div id="adminsList"></div>
+
+  <!-- ADD ADMIN FORM -->
+  <div style="margin-top:16px;padding:16px;background:var(--white);border-radius:var(--radius);border:1.5px solid rgba(199,178,153,.25);">
+    <h3 style="margin:0 0 12px;color:var(--dark);">Add New Admin</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <input type="text" id="newAdminUser" placeholder="Username" style="flex:1;min-width:120px;">
+      <input type="password" id="newAdminPass" placeholder="Password" style="flex:1;min-width:120px;">
+      <button id="addAdminBtn" type="button" style="padding:8px 20px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;">➕ Add</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { db } from "./js/firebase.js";
+import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const adminsCollection = collection(db, "admins");
+
+// Seed default admin
+(async function seed(){ try { const s = await getDocs(adminsCollection); if(s.empty) await addDoc(adminsCollection, { username:"admin", password:"admin", permissions:{} }); } catch(e){} })();
+
+let currentAdmin = null;
+let currentAdminId = null;
+
+const loginScreen = document.getElementById("loginScreen");
+const mainPanel = document.getElementById("mainPanel");
+const loginForm = document.getElementById("loginForm");
+const loginUser = document.getElementById("loginUser");
+const loginPass = document.getElementById("loginPass");
+const loginError = document.getElementById("loginError");
+const profileDisplay = document.getElementById("profileDisplay");
+const adminsList = document.getElementById("adminsList");
+
+loginForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const u = loginUser.value.trim();
+  const p = loginPass.value.trim();
+  if(!u || !p){ loginError.textContent = "Enter username and password"; return; }
+  loginError.textContent = "Checking...";
+  try {
+    const q = query(adminsCollection, where("username", "==", u));
+    const snap = await getDocs(q);
+    if(snap.empty){ loginError.textContent = "Account not found"; return; }
+    const docData = snap.docs[0];
+    const data = docData.data();
+    if(data.password !== p){ loginError.textContent = "Wrong password"; return; }
+    currentAdmin = data;
+    currentAdminId = docData.id;
+    loginScreen.style.display = "none";
+    mainPanel.style.display = "";
+    renderAdmins();
+    updateProfile();
+  } catch(e) { loginError.textContent = "Error: " + e.message; }
+});
+
+function updateProfile(){
+  profileDisplay.textContent = "👤 " + (currentAdmin?.username || "");
+}
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  currentAdmin = null;
+  currentAdminId = null;
+  mainPanel.style.display = "none";
+  loginScreen.style.display = "flex";
+  loginUser.value = "";
+  loginPass.value = "";
+  loginError.textContent = "";
+});
+
+// Profile edit
+const profileEditSection = document.getElementById("profileEditSection");
+document.getElementById("profileEditBtn").addEventListener("click", () => {
+  profileEditSection.style.display = profileEditSection.style.display === "none" ? "" : "none";
+  document.getElementById("editProfileUser").value = currentAdmin?.username || "";
+  document.getElementById("editProfilePass").value = "";
+});
+document.getElementById("saveProfileBtn").addEventListener("click", async () => {
+  const nu = document.getElementById("editProfileUser").value.trim();
+  const np = document.getElementById("editProfilePass").value.trim();
+  if(!nu && !np){ alert("Enter at least one field"); return; }
+  const updates = {};
+  if(nu && nu !== currentAdmin.username) updates.username = nu;
+  if(np) updates.password = np;
+  if(Object.keys(updates).length === 0){ alert("No changes"); return; }
+  try {
+    await updateDoc(doc(db, "admins", currentAdminId), updates);
+    Object.assign(currentAdmin, updates);
+    updateProfile();
+    profileEditSection.style.display = "none";
+    alert("Profile updated");
+    renderAdmins();
+  } catch(e) { alert("Error: " + e.message); }
+});
+
+// Add admin
+document.getElementById("addAdminBtn").addEventListener("click", async () => {
+  const u = document.getElementById("newAdminUser").value.trim();
+  const p = document.getElementById("newAdminPass").value.trim();
+  if(!u || !p){ alert("Enter username and password"); return; }
+  try {
+    const q = query(adminsCollection, where("username", "==", u));
+    const snap = await getDocs(q);
+    if(!snap.empty){ alert("Username already exists"); return; }
+    await addDoc(adminsCollection, { username: u, password: p, permissions: {} });
+    document.getElementById("newAdminUser").value = "";
+    document.getElementById("newAdminPass").value = "";
+    renderAdmins();
+  } catch(e) { alert("Error: " + e.message); }
+});
+
+// Render admins
+const CATS = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+const CAT_ICONS = {"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
+
+async function renderAdmins(){
+  if(!adminsList) return;
+  adminsList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--secondary);">Loading...</div>';
+  try {
+    const snap = await getDocs(adminsCollection);
+    adminsList.innerHTML = "";
+    if(snap.empty){ adminsList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--secondary);">No admins</div>'; return; }
+    snap.forEach(d => {
+      const data = d.data();
+      const isCurrent = d.id === currentAdminId;
+      const card = document.createElement("div");
+      card.className = "customer-admin-card";
+      card.style.border = isCurrent ? "2px solid var(--accent)" : "";
+      
+      const perms = data.permissions || {};
+      const canAdd = perms.canAddProducts;
+      
+      card.innerHTML = `<div class="cust-header"><strong>🔑 ${escapeHTML(data.username)}</strong>${isCurrent ? '<span style="font-size:11px;color:var(--accent);font-weight:700;margin-right:8px;">(you)</span>' : ''}</div><div style="font-size:12px;color:var(--secondary);margin:4px 0;">Can add products: ${canAdd ? '✅' : '❌'}</div><div class="cust-invoices" style="display:none;margin-top:8px;"><div class="perm-grid"></div></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><button class="perm-toggle-btn" type="button" style="padding:4px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);font-weight:700;cursor:pointer;font-size:12px;">Permissions</button>${!isCurrent ? `<button class="del-admin-btn" type="button" style="padding:4px 10px;border:1px solid #dc3545;border-radius:6px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">Delete</button>` : ''}</div>`;
+      
+      // Permission toggle
+      card.querySelector(".perm-toggle-btn").addEventListener("click", () => {
+        const permDiv = card.querySelector(".cust-invoices");
+        if(permDiv.style.display !== "none"){ permDiv.style.display = "none"; return; }
+        
+        let html = '<div style="font-size:13px;font-weight:700;margin-bottom:6px;">Category visibility:</div>';
+        CATS.forEach(cat => {
+          const checked = perms.categories ? !!perms.categories[cat] : true;
+          html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;cursor:pointer;"><input type="checkbox" class="perm-cat-cb" data-cat="${cat}" ${checked?"checked":""}><span>${CAT_ICONS[cat]||"📦"} ${cat}</span></label>`;
+        });
+        html += `<div style="margin-top:8px;"><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="checkbox" id="permAddProd-${d.id}" ${canAdd?"checked":""}> Can add products</label></div>`;
+        html += `<button class="save-perm-btn" type="button" style="margin-top:8px;padding:5px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:12px;">Save Permissions</button>`;
+        
+        permDiv.innerHTML = html;
+        permDiv.style.display = "";
+        
+        permDiv.querySelector(".save-perm-btn").addEventListener("click", async () => {
+          const newPerms = { categories: {}, canAddProducts: false };
+          permDiv.querySelectorAll(".perm-cat-cb").forEach(cb => { newPerms.categories[cb.dataset.cat] = cb.checked; });
+          newPerms.canAddProducts = document.getElementById("permAddProd-" + d.id)?.checked || false;
+          try {
+            await updateDoc(doc(db, "admins", d.id), { permissions: newPerms });
+            data.permissions = newPerms;
+            alert("Permissions saved for " + data.username);
+            permDiv.style.display = "none";
+          } catch(e) { alert("Error: " + e.message); }
+        });
+      });
+      
+      // Delete admin
+      const delBtn = card.querySelector(".del-admin-btn");
+      if(delBtn) delBtn.addEventListener("click", async () => {
+        if(!confirm("Delete admin " + data.username + "?")) return;
+        try { await deleteDoc(doc(db, "admins", d.id)); renderAdmins(); }
+        catch(e) { alert("Error: " + e.message); }
+      });
+      
+      adminsList.appendChild(card);
+    });
+  } catch(e) { adminsList.innerHTML = '<div style="text-align:center;padding:20px;color:#dc3545;">Error loading admins</div>'; }
+}
+
+function escapeHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+</script>
+</body>
+</html>

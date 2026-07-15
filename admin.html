@@ -33,7 +33,7 @@
   </div>
 
   <div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">
-    <button id="adminLangToggle" class="lang-toggle-btn" type="button">EN</button>
+    <button id="adminLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
   </div>
 
   <div class="admin-tabs">
@@ -41,7 +41,7 @@
     <button class="admin-tab" data-tab="invoices">📄 الفواتير</button>
     <button class="admin-tab" data-tab="customers">👥 العملاء</button>
     <button class="admin-tab" data-tab="branches">🏪 الفروع</button>
-    <button class="admin-tab" data-tab="admins">🔐 المدراء</button>
+    <button class="admin-tab" data-tab="categories">📂 الأقسام</button>
   </div>
 
   <!-- PRODUCTS TAB -->
@@ -94,7 +94,13 @@
         <input id="name" placeholder="الاسم بالعربي">
         <input id="description" placeholder="الاسم بالإنجليزي">
         <input id="code" placeholder="كود المنتج">
-        <select id="category" style="display:none;"></select>
+        <select id="category">
+          <option value="قسم المعمل">🔬 قسم المعمل</option>
+          <option value="قسم السوبرماركت">🛒 قسم السوبرماركت</option>
+          <option value="قسم محلات الجملة">🏪 محلات الجملة</option>
+          <option value="قسم المستودع">🏭 قسم المستودع</option>
+          <option value="احتياجات المعمل">📋 احتياجات المعمل</option>
+        </select>
         <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none">
         <input id="image" placeholder="رابط الصورة">
         <label for="imageFile" class="upload-btn">📷 إدراج من معرض الصور</label>
@@ -148,15 +154,19 @@
     <div id="branchesList"></div>
   </div>
 
-  <!-- ADMINS TAB -->
-  <div class="admin-section" id="section-admins">
-    <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">🔐 إدارة المدراء</h2>
-    <div class="add-admin-form">
-      <input type="text" id="newAdminUser" placeholder="اسم المستخدم">
-      <input type="password" id="newAdminPass" placeholder="كلمة السر">
-      <button id="addAdminBtn" type="button">➕ إضافة مدير</button>
+  <!-- CATEGORIES TAB -->
+  <div class="admin-section" id="section-categories">
+    <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">📂 الأقسام</h2>
+    <div id="categoriesList" class="categories-admin-list"></div>
+    <div id="catProdSection" style="display:none;margin-top:20px;">
+      <hr style="margin:16px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        <button id="backToCategoriesList" type="button" style="padding:6px 12px;border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);background:var(--white);color:var(--dark);font-weight:700;cursor:pointer;">← العودة</button>
+        <h3 style="margin:0;color:var(--dark);flex:1;" id="catProdTitle"></h3>
+        <button id="addProductFromCat" type="button" style="padding:6px 14px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:13px;">➕ إضافة منتج</button>
+      </div>
+      <div id="catProdList" class="category-products-list"></div>
     </div>
-    <div id="adminsList"></div>
   </div>
 </div>
 
@@ -345,6 +355,7 @@
   <a href="index.html" data-i18n-menu="menuStore"><span class="dash-icon">🛒</span> المتجر</a>
   <a href="cart.html" data-i18n-menu="menuCart"><span class="dash-icon">📋</span> السلة</a>
   <a href="admin.html" data-i18n-menu="menuAdmin"><span class="dash-icon">⚙️</span> لوحة الإدارة</a>
+  <a href="admins.html" data-i18n-menu="menuAdmins"><span class="dash-icon">🔐</span> إدارة المدراء</a>
   <a href="invoices-view.html" data-i18n-menu="menuInvoices"><span class="dash-icon">📄</span> عرض الفواتير</a>
   <a href="dashboard.html" data-i18n-menu="menuDashboard"><span class="dash-icon">🏠</span> Dashboard</a>
 </div>
