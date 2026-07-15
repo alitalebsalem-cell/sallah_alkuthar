@@ -366,9 +366,13 @@ document.addEventListener("click",function(e){
 <div id="renameCatModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="clear-cart-dialog">
     <h3 id="renameCatModalTitle">Rename Category</h3>
-    <p style="font-size:13px;color:var(--secondary);margin-bottom:12px;" id="renameCatOldNameDisplay"></p>
-    <input type="text" id="renameCatArInput" placeholder="Arabic name" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
-    <input type="text" id="renameCatEnInput" placeholder="English name" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <input type="text" id="renameCatArInput" placeholder="اكتب الاسم الجديد بالعربي" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <input type="text" id="renameCatEnInput" placeholder="Write new English name" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <hr style="margin:12px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
+    <textarea id="renameCatDescInput" placeholder="وصف القسم (اختياري) / Description (optional)" rows="3" style="width:100%;padding:10px;border:1.5px solid rgba(122,102,85,.2);border-radius:8px;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;margin-bottom:8px;font-family:inherit;"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--secondary);cursor:pointer;margin-bottom:8px;">
+      <input type="checkbox" id="renameCatShowDesc" checked> إظهار الوصف في القائمة / Show description
+    </label>
     <div class="clear-cart-actions">
       <button id="renameCatCancelBtn" class="cancel-clear-cart" type="button">Cancel</button>
       <button id="renameCatConfirmBtn" class="confirm-clear-cart" type="button">Save</button>
