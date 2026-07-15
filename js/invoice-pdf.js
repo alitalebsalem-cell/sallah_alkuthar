@@ -98,7 +98,7 @@ function renderProductRows(items, accountType) {
         html += '<td class="invoice-product-cell" style="text-align:right;"><div class="invoice-product-main" style="display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:5px;line-height:1.6;">';
         html += '<span class="invoice-product-qty" style="display:inline-flex;align-items:center;justify-content:center;width:24px;min-width:24px;height:24px;border:1.5px solid #555;border-radius:2px;background:#fff;font-size:11px;font-weight:900;color:#111;">' + (it.qty || 0) + '</span>';
         html += '<strong style="font-size:12px;font-weight:800;color:#111;line-height:1.5;"><bdi>' + escapeHTML(it.description || "") + '</bdi></strong></div>';
-        if (arName) html += '<div class="invoice-product-details" style="padding-right:35px;font-size:10px;color:#555;margin-top:1px;direction:rtl;">' + arName + '</div>';
+        if (arName) html += '<div class="invoice-product-details" style="direction:rtl;">' + arName + '</div>';
         html += '</td>';
       });
       for (let e = row.length; e < COLUMNS; e++) {

@@ -333,7 +333,7 @@ function renderAllCustomers(customers){
     delBtn.addEventListener("click",()=>openDeleteCustomerModal(cust.id,cust.name));
     editAccBtn.addEventListener("click",async()=>{
       const existingPerms=card.querySelector(".cust-perm-section");
-      if(existingPerms){existingPerms.remove();return;}
+      if(existingPerms)existingPerms.remove();
       const permSection=document.createElement("div");permSection.className="cust-perm-section";
       permSection.style.cssText="margin-top:8px;padding:8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);";
       const curPerms=cust.permissions||{};
