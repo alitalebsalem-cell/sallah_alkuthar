@@ -201,8 +201,8 @@ function renderProducts(products){
           <img src="${escapeHTML(getProductImage(product))}" alt="${escapeHTML(product.name||"")}" loading="lazy" decoding="async" onerror="this.src='images/noimg.jpg'">
         </div>
         <div class="product-info">
-          <h3>${escapeHTML(product.name||"")}</h3>
-          <p class="product-desc">${escapeHTML(product.description||"")}</p>
+          <h3>${escapeHTML(product.description||"")}</h3>
+          <p class="product-name-ar">${escapeHTML(product.name||"")}</p>
           <p class="product-sku">SKU: ${escapeHTML(product.code||"")}</p>
         </div>
         <div class="product-qty-row">
@@ -530,7 +530,7 @@ async function loadCustomerInvoices(){
           <strong class="invoice-history-no">${escapeHTML(inv.branchName||inv.invoiceNo||"")}</strong>
           <span class="invoice-history-date">${inv.date||""}</span>
         </div>
-        <div class="invoice-history-items">${escapeHTML((inv.items||[]).slice(0,3).map(i=>i.name).join("، "))}</div>
+        <div class="invoice-history-items">${escapeHTML((inv.items||[]).slice(0,3).map(i=>(i.description||i.name)).join("، "))}</div>
         <div class="invoice-history-footer" style="display:flex;justify-content:space-between;align-items:center;">
           <span>${t("products")}: ${inv.totalItems||0} | ${t("qty")}: ${inv.totalQty||0}</span>
           <button class="inv-pdf-btn" type="button" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(220,53,69,.1);color:#dc3545;font-size:12px;font-weight:700;cursor:pointer;">📥 PDF</button>
@@ -551,7 +551,7 @@ function openInvoiceDetail(inv){
   let html = `<div style="text-align:center;margin-bottom:14px;"><img src="images/logo.png" style="width:80px;height:auto;margin:0 auto 6px;" onerror="this.style.display='none'"><h2 style="color:var(--dark);font-size:20px;">${t("invoiceDetails")}</h2></div>`;
   html += `<div class="invoice-detail-meta"><div><span>${t("invoiceNum")}</span><strong>${escapeHTML((inv.invoiceNo||"").replace("INV-",""))}</strong></div><div><span>${t("customer")}</span><strong>${escapeHTML(inv.customerName||"")}</strong></div><div><span>${t("date")}</span><strong>${escapeHTML(inv.date||"")}</strong></div></div>`;
   html += `<table class="invoice-detail-table"><thead><tr><th>#</th><th>${lang==="en"?"Item":"المنتج"}</th><th>KOD</th><th>${lang==="en"?"Qty":"الكمية"}</th></tr></thead><tbody>`;
-  (inv.items||[]).forEach((item,i) => { html += `<tr><td>${i+1}</td><td>${escapeHTML(item.name||"")}</td><td>${escapeHTML(item.code||"")}</td><td>${getItemQty(item)}</td></tr>`; });
+  (inv.items||[]).forEach((item,i) => { const desc=item.description||"";const ar=item.name||""; html += `<tr><td>${i+1}</td><td>${escapeHTML(desc)}${ar?`<br><span style="font-size:11px;color:#888;">${escapeHTML(ar)}</span>`:""}</td><td>${escapeHTML(item.code||"")}</td><td>${getItemQty(item)}</td></tr>`; });
   html += '</tbody></table>';
   html += `<div class="invoice-detail-summary"><span>${t("products")}: ${inv.totalItems||0}</span><span>${t("qty")}: ${inv.totalQty||0}</span></div>`;
   html += `<div style="text-align:center;margin-top:14px;"><button onclick="document.getElementById('invoiceDetailModal').classList.remove('active');document.getElementById('invoiceDetailModal').hidden=true;" style="padding:10px 24px;border:none;border-radius:10px;background:rgba(122,102,85,.1);color:var(--dark);font-weight:700;cursor:pointer;">${t("close")}</button></div>`;

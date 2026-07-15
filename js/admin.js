@@ -65,11 +65,11 @@ async function seedDefaultAdmin(){try{const s=await getDocs(adminsCollection);if
 
 /* TABS */
 const loadedTabs={};
-async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();break;case"admins":await loadAdmins();break;case"branches":renderBranches();break;}}
+async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();break;case"branches":renderBranches();break;case"categories":renderCategories();break;}}
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
-async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();}
+async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();renderCategories();}
 
 function updateCategoryBadges(){
   document.querySelectorAll(".cat-pick-card").forEach(c => {
@@ -119,7 +119,7 @@ function renderCategoryProducts(cat){
   } else {
     list.innerHTML = "";
     catProducts.forEach(p => {
-      list.insertAdjacentHTML("beforeend",`<div class="admin-product"><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.name||"")}</h3><p>${escapeHTML(p.description||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
+      list.insertAdjacentHTML("beforeend",`<div class="admin-product"><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.description||p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.description||"")}</h3><p class="product-name-ar">${escapeHTML(p.name||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
     });
   }
   section.style.display = "";
@@ -146,7 +146,7 @@ function renderProducts(products){
   const checked = new Set((window.__selectedProducts)||[]);
   products.forEach(p=>{
     const cid = p.id;
-    productsTable.insertAdjacentHTML("beforeend",`<div class="admin-product"><label class="prod-check"><input type="checkbox" class="prod-cb" value="${escapeHTML(cid)}"${checked.has(cid)?" checked":""}></label><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.name||"")}</h3><p>${escapeHTML(p.description||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p><p style="color:var(--accent);font-weight:700;">${escapeHTML(catLabel(p.category||""))}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
+    productsTable.insertAdjacentHTML("beforeend",`<div class="admin-product"><label class="prod-check"><input type="checkbox" class="prod-cb" value="${escapeHTML(cid)}"${checked.has(cid)?" checked":""}></label><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.description||p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.description||"")}</h3><p class="product-name-ar">${escapeHTML(p.name||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p><p style="color:var(--accent);font-weight:700;">${escapeHTML(catLabel(p.category||""))}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);
   });
   // Re-check checkboxes after re-render
   productsTable.querySelectorAll(".prod-cb").forEach(cb => {
@@ -223,6 +223,11 @@ document.getElementById("bulkChangeCatBtn")?.addEventListener("click", async fun
   btn.disabled = false;
   alert(`تم تحديث ${success} منتج` + (fail ? `, فشل ${fail}` : ""));
   await loadProducts();
+  window.__selectedProducts = new Set();
+  document.querySelectorAll(".prod-cb").forEach(cb => cb.checked = false);
+  const allCb = document.getElementById("selectAllCheckbox");
+  if(allCb){ allCb.checked = false; allCb.indeterminate = false; }
+  updateBulkUI();
 });
 
 /* EXCEL */
@@ -247,7 +252,7 @@ function renderAllInvoices(invoices){
   list.innerHTML="";
   invoices.forEach(inv=>{
     const ds=formatArabicDate(inv.createdAt||inv.date);
-    let preview="";if(inv.items?.length){preview=inv.items.slice(0,3).map(i=>i.name).join("، ");if(inv.items.length>3)preview+=`...+${inv.items.length-3}`;}
+    let preview="";if(inv.items?.length){preview=inv.items.slice(0,3).map(i=>i.description||i.name).join("، ");if(inv.items.length>3)preview+=`...+${inv.items.length-3}`;}
     let rows="";
     if(inv.items?.length){
       let admItems = [...inv.items];
@@ -267,7 +272,7 @@ function renderAllInvoices(invoices){
         rows+=`<tr><td colspan="4" style="background:#d9d9d9;border:1px solid #bbb;padding:6px 10px;font-size:13px;font-weight:900;text-align:center;">${CAT_EN_NAMES_ADMIN[cat]||cat}</td></tr>`;
         group.forEach(it => {
           admIdx++;
-          rows+=`<tr><td>${admIdx}</td><td>${escapeHTML(it.name||"")}</td><td>${escapeHTML(it.code||"")}</td><td>${it.qty||0}</td></tr>`;
+          rows+=`<tr><td>${admIdx}</td><td>${escapeHTML(it.description||it.name||"")}</td><td>${escapeHTML(it.code||"")}</td><td>${it.qty||0}</td></tr>`;
         });
       });
     }
@@ -384,23 +389,6 @@ window.openDeleteInvoiceModal=function(id,name){deleteInvoiceTargetId=id;const o
 window.closeDeleteInvoiceModal=function(){const o=document.getElementById("deleteInvoiceModal");if(!o)return;o.classList.remove("active");o.setAttribute("aria-hidden","true");setTimeout(()=>{o.hidden=true;},200);deleteInvoiceTargetId=null;};
 window.confirmDeleteInvoice=async function(){if(!deleteInvoiceTargetId)return;const id=deleteInvoiceTargetId;deleteInvoiceTargetId=null;try{await Promise.race([deleteDoc(doc(db,"invoices",id)),new Promise((_,r)=>setTimeout(()=>r(new Error("Timeout")),10000))]);closeDeleteInvoiceModal();await loadAllInvoices();}catch(e){alert(e.message==="Timeout"?t("timeout"):t("errorOccurredShort"));}};
 
-/* ADMINS */
-async function loadAdmins(){
-  const list=document.getElementById("adminsList");if(!list)return;
-  try{const snap=await getDocs(adminsCollection);list.innerHTML="";
-  if(snap.empty){list.innerHTML=`<div class='empty-msg'>${t("noAdmins")}</div>`;return;}
-  snap.forEach(d=>{const data=d.data();const div=document.createElement("div");div.className="admin-user-card";div.innerHTML=`<strong>🔑 ${escapeHTML(data.username)}</strong><button class="del-admin-btn" data-id="${d.id}" type="button">حذف</button>`;list.appendChild(div);});
-  list.querySelectorAll(".del-admin-btn").forEach(btn=>{btn.addEventListener("click",async()=>{if(!confirm(t("deleteAdmin")))return;try{await deleteDoc(doc(db,"admins",btn.dataset.id));await loadAdmins();}catch(e){alert(t("errorOccurredShort"));}});});
-  }catch(e){list.innerHTML=`<div class='empty-msg'>${t("errorOccurred")}</div>`;}
-}
-getElement("addAdminBtn")?.addEventListener("click",async()=>{
-  const u=getInputValue("newAdminUser");const p=getInputValue("newAdminPass");
-  if(!u||!p){alert(t("fillUserPass"));return;}
-  if(u.length<3||p.length<3){alert(t("adminMinThree"));return;}
-  try{const q=query(adminsCollection,where("username","==",u));const snap=await getDocs(q);if(!snap.empty){alert(t("adminExists"));return;}
-  await addDoc(adminsCollection,{username:u,password:p});getElement("newAdminUser").value="";getElement("newAdminPass").value="";alert(t("adminAdded"));await loadAdmins();}catch(e){alert(t("errorOccurredShort"));}
-});
-
 /* BRANCHES */
 const BRANCHES_KEY="sallah_branches";
 const DEFAULT_BRANCHES=["فرع الحمدانية - Hamdanya","فرع الطائف - Altayf","فرع السامر - Al-Samer","فرع المعمل - Almamal"];
@@ -420,6 +408,70 @@ function renderBranches(){
 }
 getElement("addBranchBtn")?.addEventListener("click",function(){const n=getInputValue("newBranchName");if(!n){alert(t("enterBranchName"));return;}const b=getBranches();if(b.includes(n)){alert(t("branchExists"));return;}b.push(n);saveBranches(b);getElement("newBranchName").value="";renderBranches();});
 
+/* CATEGORIES MANAGEMENT */
+const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
+const CAT_META_KEY="simsim_cat_meta";
+function getCatMeta(){try{return JSON.parse(localStorage.getItem(CAT_META_KEY))||{};}catch(e){return{};}}
+function saveCatMeta(m){localStorage.setItem(CAT_META_KEY,JSON.stringify(m));}
+function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:false};}
+function catDisplayName(cat){const meta=getCatMetaObj(cat);return getLang()==="en"?meta.nameEn:cat;}
+function renderCategories(){
+  const list=document.getElementById("categoriesList");const sec=document.getElementById("catProdSection");
+  if(!list)return;
+  if(sec)sec.style.display="none";list.style.display="";
+  const cats=[...new Set(allProducts.map(p=>p.category).filter(Boolean))];
+  list.innerHTML="";
+  if(cats.length===0){list.innerHTML=`<div class='empty-msg'>${t("noProductsInCat")}</div>`;return;}
+  cats.forEach(cat=>{
+    const count=allProducts.filter(p=>p.category===cat).length;const icon=CAT_ICONS[cat]||"📦";
+    const meta=getCatMetaObj(cat);
+    const dispName=catDisplayName(cat);
+    const card=document.createElement("div");card.className="cat-admin-card";
+    card.innerHTML=`<span class="cat-admin-icon">${icon}</span><div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${meta.desc&&meta.showDesc?`<div class="cat-admin-desc">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button><button class="cat-edit-meta-btn" type="button">⚙️</button><button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
+    card.querySelector(".cat-admin-name").addEventListener("click",()=>showCategoryProducts(cat));
+    card.querySelector(".cat-rename-btn").addEventListener("click",e=>{e.stopPropagation();renameCategory(cat);});
+    card.querySelector(".cat-edit-meta-btn").addEventListener("click",e=>{e.stopPropagation();editCategoryMeta(cat);});
+    card.querySelector(".cat-del-btn").addEventListener("click",e=>{e.stopPropagation();deleteCategory(cat);});
+    list.appendChild(card);
+  });
+}
+function showCategoryProducts(cat){
+  const list=document.getElementById("categoriesList");const sec=document.getElementById("catProdSection");
+  const prodList=document.getElementById("catProdList");const title=document.getElementById("catProdTitle");
+  const addBtn=document.getElementById("addProductFromCat");list.style.display="none";
+  if(sec)sec.style.display="";if(title)title.textContent=`${catDisplayName(cat)} (${allProducts.filter(p=>p.category===cat).length})`;
+  const products=allProducts.filter(p=>p.category===cat);
+  if(!prodList)return;
+  prodList.innerHTML=products.length===0?`<div class='empty-msg'>${t("noProductsInCat")}</div>`:"";
+  products.forEach(p=>{prodList.insertAdjacentHTML("beforeend",`<div class="admin-product"><img src="${escapeHTML(getProductImage(p))}" alt="${escapeHTML(p.description||p.name||"")}" onerror="this.src='images/noimg.jpg'"><div class="admin-info"><h3>${escapeHTML(p.description||"")}</h3><p class="product-name-ar">${escapeHTML(p.name||"")}</p><p>SKU: ${escapeHTML(p.code||"")}</p></div><div class="admin-actions"><button class="edit-btn" type="button" onclick="editProduct('${escapeHTML(p.id)}')">${t("editBtn")}</button><button class="delete-btn" type="button" onclick="deleteProduct('${escapeHTML(p.id)}')">${t("deleteBtn")}</button></div></div>`);});
+  if(addBtn)addBtn.onclick=()=>{clearForm();editingId=null;showProductForm(cat);document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));const pt=document.querySelector('[data-tab="products"]');const ps=document.getElementById("section-products");if(pt)pt.classList.add("active");if(ps)ps.classList.add("active");};
+  const backBtn=document.getElementById("backToCategoriesList");
+  if(backBtn)backBtn.onclick=()=>{if(sec)sec.style.display="none";list.style.display="";renderCategories();};
+}
+function editCategoryMeta(cat){
+  const meta=getCatMetaObj(cat);
+  const nameEn=prompt("English name:",meta.nameEn);if(nameEn===null)return;
+  const desc=prompt("Description (optional, leave empty to hide):",meta.desc);if(desc===null)return;
+  const showDesc=desc&&desc.trim()?confirm("Show description in list?"):false;
+  const allMeta=getCatMeta();allMeta[cat]={nameEn:nameEn.trim()||cat,desc:desc.trim()||"",showDesc};
+  saveCatMeta(allMeta);renderCategories();
+}
+async function renameCategory(oldName){
+  const newName=prompt(t("renamePrompt"),oldName);if(!newName||newName.trim()===""||newName.trim()===oldName)return;
+  const trimmed=newName.trim();if(!confirm(`"${oldName}" → "${trimmed}"?`))return;
+  const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
+  for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:trimmed});s++;}catch(e){f++;}}
+  const allMeta=getCatMeta();if(allMeta[oldName]){allMeta[trimmed]=allMeta[oldName];delete allMeta[oldName];saveCatMeta(allMeta);}
+  alert(`${t("renameSuccess")} (${s}/${ids.length})`);await loadProducts();renderCategories();
+}
+async function deleteCategory(cat){
+  if(!confirm(`${t("deleteCategoryConfirm")}\n${t("products")} ${t("qty")}: ${allProducts.filter(p=>p.category===cat).length}`))return;
+  const ids=allProducts.filter(p=>p.category===cat).map(p=>p.id);let s=0,f=0;
+  for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:""});s++;}catch(e){f++;}}
+  const allMeta=getCatMeta();delete allMeta[cat];saveCatMeta(allMeta);
+  alert(`${t("deleteCategorySuccess")} (${s}/${ids.length})`);await loadProducts();renderCategories();
+}
+
 /* PDF */
 async function downloadInvoicePdf(inv){try{await generateInvoicePdf(inv);const fn=`${(inv.branchName||(inv.invoiceNo||"").replace("INV-","")||"invoice")}.pdf`;const m=document.getElementById("pdfSuccessMsg");if(m){m.textContent=`${t("pdfDownloaded")} ${fn}`;setTimeout(()=>{m.textContent="";},3000);}}catch(e){alert(t("pdfError"));}}
 
@@ -430,7 +482,7 @@ function applyAdminLang(){
   document.documentElement.lang = lang;
   document.documentElement.dir = isEn ? "ltr" : "rtl";
   const btn = document.getElementById("adminLangToggle");
-  if(btn) btn.textContent = isEn ? "عربي" : "EN";
+  if(btn) btn.textContent = isEn ? "🌐 عربي" : "🌐 EN";
 
   // Admin login screen
   const loginH1 = document.querySelector("#adminLoginScreen h1");
@@ -442,7 +494,7 @@ function applyAdminLang(){
 
   // Tabs
   const tabs = document.querySelectorAll(".admin-tab");
-  const tabKeys = ["productsTab","invoicesTab","customersTab","branchesTab","adminsTab"];
+  const tabKeys = ["productsTab","invoicesTab","customersTab","branchesTab","categoriesTab"];
   tabs.forEach((tab,i) => {
     if(tabKeys[i]) tab.textContent = t(tabKeys[i]);
   });
@@ -478,6 +530,15 @@ function applyAdminLang(){
   const saveBtn = document.getElementById("save");
   if(saveBtn) saveBtn.textContent = t("saveProduct");
 
+  // Category select in product form
+  const catSelect = document.getElementById("category");
+  if(catSelect){
+    CAT_ORDER_ADMIN.forEach(cat => {
+      const opt = catSelect.querySelector(`option[value="${cat}"]`);
+      if(opt) opt.textContent = catLabel(cat);
+    });
+  }
+
   // Upload image label
   const uploadLabel = document.querySelector("label[for='imageFile']");
   if(uploadLabel) uploadLabel.textContent = t("uploadImage");
@@ -498,6 +559,12 @@ function applyAdminLang(){
   }
   const bulkBtn = document.getElementById("bulkChangeCatBtn");
   if(bulkBtn) bulkBtn.textContent = t("bulkChangeBtn");
+
+  // Categories section
+  const catBackBtn = document.getElementById("backToCategoriesList");
+  if(catBackBtn) catBackBtn.textContent = t("catProductsBack");
+  const catAddBtn = document.getElementById("addProductFromCat");
+  if(catAddBtn) catAddBtn.textContent = t("addProductToCat");
 
   // Search and sort
   const searchAdmin = document.getElementById("searchAdmin");
@@ -545,21 +612,14 @@ function applyAdminLang(){
   const brBtn = document.getElementById("addBranchBtn");
   if(brBtn) brBtn.textContent = t("addBranchBtn");
 
-  // Admins section
-  const admTitle = document.querySelector("#section-admins h2");
-  if(admTitle) admTitle.textContent = t("manageAdmins");
-  const admUser = document.getElementById("newAdminUser");
-  if(admUser) admUser.placeholder = t("adminUsernameLabel");
-  const admPass = document.getElementById("newAdminPass");
-  if(admPass) admPass.placeholder = t("adminPasswordLabel");
-  const admBtn = document.getElementById("addAdminBtn");
-  if(admBtn) admBtn.textContent = t("addAdminBtn");
 
   // Floating menu
   applyMenuLang();
 
-  // Re-render category products if a category is selected
+  // Re-render category products / categories list on language switch
   if(selectedAdminCategory) renderCategoryProducts(selectedAdminCategory);
+  const catSec = document.getElementById("section-categories");
+  if(catSec && catSec.classList.contains("active")) renderCategories();
 }
 getElement("adminLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");

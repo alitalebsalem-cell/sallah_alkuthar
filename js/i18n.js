@@ -82,6 +82,7 @@ const T = {
     menuAdmin: "لوحة الإدارة",
     menuInvoices: "عرض الفواتير",
     menuDashboard: "Dashboard",
+    menuAdmins: "إدارة المدراء",
     adminLoginTitle: "لوحة الإدارة",
     adminLoginSubtitle: "الرجاء إدخال اسم المستخدم وكلمة المرور",
     adminUsername: "اسم المستخدم",
@@ -210,6 +211,17 @@ const T = {
     resetPerms: "🔄 إعادة التعيين",
     permsSaved: "تم حفظ الصلاحيات بنجاح",
     permsReset: "تم إعادة التعيين إلى الإعدادات الافتراضية",
+    categoriesTab: "📂 الأقسام",
+    renameCategory: "تعديل",
+    deleteCategory: "حذف",
+    renamePrompt: "أدخل الاسم الجديد للقسم:",
+    renameSuccess: "تم تعديل اسم القسم بنجاح",
+    deleteCategoryConfirm: "سيتم حذف جميع المنتجات في هذا القسم. هل أنت متأكد؟",
+    deleteCategoryConfirmType: "اكتب Yes للتأكيد",
+    deleteCategorySuccess: "تم حذف القسم وجميع منتجاته",
+    catProductsBack: "← العودة",
+    addProductToCat: "➕ إضافة منتج للقسم",
+    noProductsInCat: "لا توجد منتجات في هذا القسم",
   },
   en: {
     searchPlaceholder: "🔍 Search products...",
@@ -282,6 +294,7 @@ const T = {
     menuAdmin: "Admin Panel",
     menuInvoices: "Invoices",
     menuDashboard: "Dashboard",
+    menuAdmins: "Admin Management",
     adminLoginTitle: "Admin Panel",
     adminLoginSubtitle: "Enter username and password",
     adminUsername: "Username",
@@ -410,10 +423,21 @@ const T = {
     resetPerms: "🔄 Reset to Defaults",
     permsSaved: "Permissions saved",
     permsReset: "Reset to defaults",
+    categoriesTab: "📂 Categories",
+    renameCategory: "Rename",
+    deleteCategory: "Delete",
+    renamePrompt: "Enter new category name:",
+    renameSuccess: "Category renamed successfully",
+    deleteCategoryConfirm: "All products in this category will be deleted. Are you sure?",
+    deleteCategoryConfirmType: "Type Yes to confirm",
+    deleteCategorySuccess: "Category and all its products deleted",
+    catProductsBack: "← Back",
+    addProductToCat: "➕ Add Product to Category",
+    noProductsInCat: "No products in this category",
   }
 };
 
-export function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
+export function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
 export function setLang(lang){ localStorage.setItem(LANG_KEY, lang); }
 export function t(key){ return (T[getLang()] || T.ar)[key] || key; }
 export function catLabel(catKey){ return (CAT_LABELS[getLang()] || CAT_LABELS.ar)[catKey] || catKey; }
