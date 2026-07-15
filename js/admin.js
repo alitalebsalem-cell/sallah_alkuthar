@@ -17,6 +17,8 @@ const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","ما
 const CAT_EN_NAMES_ADMIN = {"قسم المعمل":"Almamal","قسم السوبرماركت":"AlsuperNarket","قسم محلات الجملة":"Aljumllah","قسم المستودع":"Almstudaa","احتياجات المعمل":"AhtyagatAlmamal"};
 const CAT_ORDER_ADMIN = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
+const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
+try{const _m=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};if(_m._catOrder){CAT_ORDER_ADMIN.length=0;CAT_ORDER_ADMIN.push(..._m._catOrder);}if(_m._catIcons){Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(_m._catIcons).forEach(k=>CAT_ICONS[k]=_m._catIcons[k]);}if(_m._catEnNames){Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);Object.keys(_m._catEnNames).forEach(k=>CAT_EN_NAMES_ADMIN[k]=_m._catEnNames[k]);}if(_m._defaultPerms){Object.keys(CATEGORY_PERMISSIONS).forEach(k=>delete CATEGORY_PERMISSIONS[k]);Object.keys(_m._defaultPerms).forEach(k=>CATEGORY_PERMISSIONS[k]=_m._defaultPerms[k]);}}catch(e){}
 
 const productsTable = document.getElementById("productsTable");
 const productsCollection = collection(db,"products");
@@ -422,7 +424,6 @@ function renderBranches(){
 getElement("addBranchBtn")?.addEventListener("click",function(){const n=getInputValue("newBranchName");if(!n){alert(t("enterBranchName"));return;}const b=getBranches();if(b.includes(n)){alert(t("branchExists"));return;}b.push(n);saveBranches(b);getElement("newBranchName").value="";renderBranches();});
 
 /* CATEGORIES MANAGEMENT */
-const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
 const CAT_META_KEY="simsim_cat_meta";
 let _renameCatOldName="";
 function getCatMeta(){try{return JSON.parse(localStorage.getItem(CAT_META_KEY))||{};}catch(e){return{};}}
@@ -512,6 +513,7 @@ window.confirmRenameCat=async function(){
   allMeta[arName].nameEn=enName||arName;allMeta[arName].icon=icon;
   allMeta[arName].desc=desc;allMeta[arName].showDesc=showDesc;
   allMeta._defaultPerms=CATEGORY_PERMISSIONS;
+  allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catIcons={...CAT_ICONS};allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};
   saveCatMeta(allMeta);
   closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;
   await loadProducts();applyAdminLang();await loadAllCustomers();
