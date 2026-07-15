@@ -24,6 +24,10 @@ const CAT_EN_NAMES = {
   "احتياجات المعمل": "AhtyagatAlmamal"
 };
 const CAT_ORDER = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+const CAT_META_KEY="simsim_cat_meta";
+const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
+function getCatMeta(){try{return JSON.parse(localStorage.getItem(CAT_META_KEY))||{};}catch(e){return{};}}
+function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:false};}
 
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 let currentCustomer = null;
@@ -123,9 +127,16 @@ function getAllowedCategories(){
   if(!currentCustomer)return[];
   const perms=currentCustomer.permissions;
   if(perms&&typeof perms==='object'&&Object.keys(perms).length>0){
-    return Object.keys(perms).filter(k=>perms[k]);
+    const active=Object.keys(perms).filter(k=>perms[k]);
+    const cartCats=new Set(cart.filter(i=>i.category).map(i=>i.category));
+    const matched=active.filter(c=>cartCats.has(c));
+    if(matched.length>0)return matched;
   }
-  return CATEGORY_PERMISSIONS[currentCustomer.accountType||""]||["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+  const defaults=CATEGORY_PERMISSIONS[currentCustomer.accountType||""]||[];
+  if(defaults.length===0)return[];
+  const cartCats=new Set(cart.filter(i=>i.category).map(i=>i.category));
+  const matched=defaults.filter(d=>cartCats.has(d));
+  return matched.length>0?matched:[...cartCats];
 }
 function applyPermissions(){
   const allowed=getAllowedCategories();
@@ -240,7 +251,34 @@ invoiceDetailModal?.addEventListener("click",e=>{if(e.target===invoiceDetailModa
 
 /* CART RENDER */
 function getFilteredCart(){if(cartCategory==="all")return cart;return cart.filter(i=>(i.category||"")===cartCategory);}
+function buildCartCatCards(){
+  const filter=document.getElementById("cartCategoryFilter");if(!filter)return;
+  const cats=[...new Set(cart.filter(i=>i.category).map(i=>i.category))];
+  filter.innerHTML=`<button type="button" class="cat-card" data-cat="all"><span class="cat-badge" data-cat-count="all" style="display:none;">0</span><span class="cat-icon">📦</span><span class="cat-label" data-i18n-cat="all">${t("all")}</span></button>`;
+  filter.querySelector(".cat-card[data-cat='all']").addEventListener("click",function(){
+    filter.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("active"));
+    this.classList.add("active");cartCategory="all";renderCart();
+  });
+  cats.forEach(cat=>{
+    const icon=getCatMetaObj(cat).icon||CAT_ICONS[cat]||"📦";
+    const btn=document.createElement("button");btn.type="button";btn.className="cat-card";btn.dataset.cat=cat;
+    btn.innerHTML=`<span class="cat-badge" data-cat-count="${cat}" style="display:none;">0</span><span class="cat-icon">${icon}</span><span class="cat-label" data-i18n-cat="${cat}">${catLabel(cat)}</span>`;
+    btn.addEventListener("click",()=>{
+      filter.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("active"));
+      btn.classList.add("active");cartCategory=btn.dataset.cat;renderCart();
+    });
+    filter.appendChild(btn);
+  });
+  filter.querySelector(".cat-card[data-cat='all']")?.classList.add("active");
+  applyPermissions();
+  // Restore active filter
+  filter.querySelectorAll(".cat-card").forEach(c=>{
+    c.classList.toggle("active", c.dataset.cat === cartCategory);
+  });
+}
+
 function renderCart(){
+  buildCartCatCards();
   if(!cartItems)return;
   cartItems.innerHTML="";
   const sv=cartSearch?cartSearch.value.trim().toLowerCase():"";
@@ -263,13 +301,7 @@ function decreaseQty(id){const i=findItem(id);if(!i)return;i.qty=getItemQty(i)-1
 function updateQty(id,v){const i=findItem(id);if(!i)return;const q=parseInt(v,10);i.qty=isNaN(q)||q<1?1:q;renderCart();}
 function deleteItem(id){cart=cart.filter(p=>String(p.id)!==String(id));renderCart();}
 
-/* CART CATEGORY FILTER */
-document.querySelectorAll("#cartCategoryFilter .cat-card").forEach(card=>{
-  card.addEventListener("click",()=>{
-    document.querySelectorAll("#cartCategoryFilter .cat-card").forEach(c=>c.classList.remove("active"));
-    card.classList.add("active");cartCategory=card.dataset.cat;renderCart();
-  });
-});
+/* CART CATEGORY FILTER - handlers attached dynamically in buildCartCatCards() */
 
 /* CLEAR CART */
 function isClearCartConfirmed(){return confirmClearInput&&confirmClearInput.value.trim().toLowerCase()==="yes";}
@@ -296,10 +328,21 @@ function createInvoiceRowsFromCart(){
     groups[cat].push(it);
   });
   const rows = [];
+  const processed = new Set();
   CAT_ORDER.forEach(cat => {
     const group = groups[cat];
     if(!group || group.length === 0) return;
-    rows.push({ type: "header", catName: CAT_EN_NAMES[cat] || cat });
+    rows.push({ type: "header", catName: getCatMetaObj(cat).nameEn || CAT_EN_NAMES[cat] || cat });
+    for(let i = 0; i < group.length; i += COLUMNS_PER_INVOICE_ROW){
+      rows.push({ type: "items", items: group.slice(i, i + COLUMNS_PER_INVOICE_ROW) });
+    }
+    processed.add(cat);
+  });
+  // Remaining categories not in CAT_ORDER
+  Object.keys(groups).forEach(cat => {
+    if(processed.has(cat)) return;
+    const group = groups[cat];
+    rows.push({ type: "header", catName: getCatMetaObj(cat).nameEn || cat });
     for(let i = 0; i < group.length; i += COLUMNS_PER_INVOICE_ROW){
       rows.push({ type: "items", items: group.slice(i, i + COLUMNS_PER_INVOICE_ROW) });
     }
@@ -396,5 +439,4 @@ function loadCategoryCounts(){
 applyLang();
 loadSession();
 populateBranchDropdown();
-document.querySelector("#cartCategoryFilter .cat-card[data-cat='all']")?.classList.add("active");
 renderCart();

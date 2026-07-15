@@ -69,7 +69,7 @@ async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
-async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();renderCategories();}
+async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();rebuildCatPickCards();renderCategories();}
 
 function updateCategoryBadges(){
   document.querySelectorAll(".cat-pick-card").forEach(c => {
@@ -125,8 +125,9 @@ function renderCategoryProducts(cat){
   section.style.display = "";
 }
 
-document.querySelectorAll(".cat-pick-card").forEach(card => {
-  card.addEventListener("click", () => showProductForm(card.dataset.cat));
+document.getElementById("catPickCardsContainer")?.addEventListener("click", e => {
+  const btn = e.target.closest(".cat-pick-card");
+  if(btn) showProductForm(btn.dataset.cat);
 });
 getElement("backToCategories")?.addEventListener("click", () => {
   showCategoryPicker();
@@ -275,6 +276,17 @@ function renderAllInvoices(invoices){
           rows+=`<tr><td>${admIdx}</td><td>${escapeHTML(it.description||it.name||"")}</td><td>${escapeHTML(it.code||"")}</td><td>${it.qty||0}</td></tr>`;
         });
       });
+      // Remaining categories not in CAT_ORDER_ADMIN
+      Object.keys(admGroups).forEach(cat => {
+        if(CAT_ORDER_ADMIN.includes(cat)) return;
+        const group = admGroups[cat];
+        if(!group || group.length === 0) return;
+        rows+=`<tr><td colspan="4" style="background:#d9d9d9;border:1px solid #bbb;padding:6px 10px;font-size:13px;font-weight:900;text-align:center;">${cat}</td></tr>`;
+        group.forEach(it => {
+          admIdx++;
+          rows+=`<tr><td>${admIdx}</td><td>${escapeHTML(it.description||it.name||"")}</td><td>${escapeHTML(it.code||"")}</td><td>${it.qty||0}</td></tr>`;
+        });
+      });
     }
     const dn=inv.branchName||inv.invoiceNo||"";const acc=inv.accountType||"";
     const card=document.createElement("div");card.className="invoice-admin-card";
@@ -411,10 +423,92 @@ getElement("addBranchBtn")?.addEventListener("click",function(){const n=getInput
 /* CATEGORIES MANAGEMENT */
 const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
 const CAT_META_KEY="simsim_cat_meta";
+let _renameCatOldName="";
 function getCatMeta(){try{return JSON.parse(localStorage.getItem(CAT_META_KEY))||{};}catch(e){return{};}}
 function saveCatMeta(m){localStorage.setItem(CAT_META_KEY,JSON.stringify(m));}
 function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:false};}
 function catDisplayName(cat){const meta=getCatMetaObj(cat);return getLang()==="en"?meta.nameEn:cat;}
+
+function rebuildCatPickCards(){
+  const cont=document.getElementById("catPickCardsContainer");if(!cont)return;
+  const cats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
+  cont.innerHTML="";
+  cats.forEach(cat=>{
+    const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
+    const count=allProducts.filter(p=>p.category===cat).length;
+    const btn=document.createElement("button");btn.type="button";btn.className="cat-pick-card";btn.dataset.cat=cat;
+    btn.innerHTML=`${icon}<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`;
+    btn.addEventListener("click",()=>showProductForm(cat));
+    cont.appendChild(btn);
+  });
+  // Also rebuild the category select in product form
+  const catSelect=document.getElementById("category");
+  if(catSelect){
+    const curVal=catSelect.value;
+    catSelect.innerHTML="";
+    cats.forEach(cat=>{
+      const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
+      const opt=document.createElement("option");opt.value=cat;
+      opt.textContent=`${icon} ${catDisplayName(cat)}`;
+      catSelect.appendChild(opt);
+    });
+    if(cats.includes(curVal))catSelect.value=curVal;
+  }
+  // Rebuild bulk category select
+  const bulkSelect=document.getElementById("bulkCategorySelect");
+  if(bulkSelect){
+    const curVal2=bulkSelect.value;
+    bulkSelect.innerHTML=`<option value="">-- ${t("selectCategory")} --</option>`;
+    cats.forEach(cat=>{
+      const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
+      const opt=document.createElement("option");opt.value=cat;
+      opt.textContent=`${icon} ${catDisplayName(cat)}`;
+      bulkSelect.appendChild(opt);
+    });
+    if(cats.includes(curVal2))bulkSelect.value=curVal2;
+  }
+}
+
+window.openRenameCatModal=function(oldName){
+  _renameCatOldName=oldName;
+  document.getElementById("renameCatOldNameDisplay").textContent=oldName;
+  const meta=getCatMetaObj(oldName);
+  document.getElementById("renameCatArInput").value=oldName;
+  document.getElementById("renameCatEnInput").value=meta.nameEn||oldName;
+  const m=document.getElementById("renameCatModal");m.classList.add("active");m.setAttribute("aria-hidden","false");
+  setTimeout(()=>document.getElementById("renameCatArInput").focus(),100);
+};
+window.closeRenameCatModal=function(){
+  const m=document.getElementById("renameCatModal");m.classList.remove("active");m.setAttribute("aria-hidden","true");
+};
+
+window.confirmRenameCat=async function(){
+  if(document.getElementById("renameCatConfirmBtn").disabled)return;
+  document.getElementById("renameCatConfirmBtn").disabled=true;
+  const arName=document.getElementById("renameCatArInput").value.trim();
+  const enName=document.getElementById("renameCatEnInput").value.trim();
+  if(!arName){alert("Arabic name required");document.getElementById("renameCatConfirmBtn").disabled=false;return;}
+  const oldName=_renameCatOldName;if(arName===oldName&&(!enName||enName===(getCatMetaObj(oldName).nameEn||oldName))){closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;return;}
+  const icon=getCatMetaObj(oldName).icon||CAT_ICONS[oldName]||"📦";
+  const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
+  for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:arName});s++;}catch(e){f++;}}
+  if(oldName!==arName){
+    try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const perms=d.data().permissions;if(perms&&typeof perms==='object'&&perms[oldName]!==undefined){const np={...perms};np[arName]=np[oldName];delete np[oldName];await updateDoc(doc(db,"customers",d.id),{permissions:np});}}}catch(e){console.error(e);}
+    const localC=getLocalCustomers();if(localC){let ch=false;localC.forEach(c=>{if(c.permissions&&c.permissions[oldName]!==undefined){c.permissions[arName]=c.permissions[oldName];delete c.permissions[oldName];ch=true;}});if(ch)saveLocalCustomers(localC);}
+    if(CAT_ICONS[oldName]){CAT_ICONS[arName]=CAT_ICONS[oldName];delete CAT_ICONS[oldName];}
+    const idx=CAT_ORDER_ADMIN.indexOf(oldName);if(idx!==-1)CAT_ORDER_ADMIN[idx]=arName;
+    if(CAT_EN_NAMES_ADMIN[oldName]){CAT_EN_NAMES_ADMIN[arName]=CAT_EN_NAMES_ADMIN[oldName];delete CAT_EN_NAMES_ADMIN[oldName];}
+    for(const at in CATEGORY_PERMISSIONS){const arr=CATEGORY_PERMISSIONS[at];const oi=arr.indexOf(oldName);if(oi!==-1)arr[oi]=arName;}
+  }
+  const allMeta=getCatMeta();
+  if(allMeta[oldName]){allMeta[arName]=allMeta[oldName];delete allMeta[oldName];}
+  if(!allMeta[arName])allMeta[arName]={};
+  allMeta[arName].nameEn=enName||arName;allMeta[arName].icon=icon;
+  saveCatMeta(allMeta);
+  closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;
+  await loadProducts();applyAdminLang();
+};
+
 function renderCategories(){
   const list=document.getElementById("categoriesList");const sec=document.getElementById("catProdSection");
   if(!list)return;
@@ -423,14 +517,13 @@ function renderCategories(){
   list.innerHTML="";
   if(cats.length===0){list.innerHTML=`<div class='empty-msg'>${t("noProductsInCat")}</div>`;return;}
   cats.forEach(cat=>{
-    const count=allProducts.filter(p=>p.category===cat).length;const icon=CAT_ICONS[cat]||"📦";
-    const meta=getCatMetaObj(cat);
+    const count=allProducts.filter(p=>p.category===cat).length;const meta=getCatMetaObj(cat);
+    const icon=meta.icon||CAT_ICONS[cat]||"📦";
     const dispName=catDisplayName(cat);
     const card=document.createElement("div");card.className="cat-admin-card";
-    card.innerHTML=`<span class="cat-admin-icon">${icon}</span><div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${meta.desc&&meta.showDesc?`<div class="cat-admin-desc">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button><button class="cat-edit-meta-btn" type="button">⚙️</button><button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
+    card.innerHTML=`<span class="cat-admin-icon">${icon}</span><div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${meta.desc&&meta.showDesc?`<div class="cat-admin-desc">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button><button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
     card.querySelector(".cat-admin-name").addEventListener("click",()=>showCategoryProducts(cat));
-    card.querySelector(".cat-rename-btn").addEventListener("click",e=>{e.stopPropagation();renameCategory(cat);});
-    card.querySelector(".cat-edit-meta-btn").addEventListener("click",e=>{e.stopPropagation();editCategoryMeta(cat);});
+    card.querySelector(".cat-rename-btn").addEventListener("click",e=>{e.stopPropagation();openRenameCatModal(cat);});
     card.querySelector(".cat-del-btn").addEventListener("click",e=>{e.stopPropagation();deleteCategory(cat);});
     list.appendChild(card);
   });
@@ -447,22 +540,6 @@ function showCategoryProducts(cat){
   if(addBtn)addBtn.onclick=()=>{clearForm();editingId=null;showProductForm(cat);document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));const pt=document.querySelector('[data-tab="products"]');const ps=document.getElementById("section-products");if(pt)pt.classList.add("active");if(ps)ps.classList.add("active");};
   const backBtn=document.getElementById("backToCategoriesList");
   if(backBtn)backBtn.onclick=()=>{if(sec)sec.style.display="none";list.style.display="";renderCategories();};
-}
-function editCategoryMeta(cat){
-  const meta=getCatMetaObj(cat);
-  const nameEn=prompt("English name:",meta.nameEn);if(nameEn===null)return;
-  const desc=prompt("Description (optional, leave empty to hide):",meta.desc);if(desc===null)return;
-  const showDesc=desc&&desc.trim()?confirm("Show description in list?"):false;
-  const allMeta=getCatMeta();allMeta[cat]={nameEn:nameEn.trim()||cat,desc:desc.trim()||"",showDesc};
-  saveCatMeta(allMeta);renderCategories();
-}
-async function renameCategory(oldName){
-  const newName=prompt(t("renamePrompt"),oldName);if(!newName||newName.trim()===""||newName.trim()===oldName)return;
-  const trimmed=newName.trim();if(!confirm(`"${oldName}" → "${trimmed}"?`))return;
-  const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
-  for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:trimmed});s++;}catch(e){f++;}}
-  const allMeta=getCatMeta();if(allMeta[oldName]){allMeta[trimmed]=allMeta[oldName];delete allMeta[oldName];saveCatMeta(allMeta);}
-  alert(`${t("renameSuccess")} (${s}/${ids.length})`);await loadProducts();renderCategories();
 }
 async function deleteCategory(cat){
   if(!confirm(`${t("deleteCategoryConfirm")}\n${t("products")} ${t("qty")}: ${allProducts.filter(p=>p.category===cat).length}`))return;
@@ -503,15 +580,8 @@ function applyAdminLang(){
   const pickerTitle = document.querySelector("#categoryPicker h2:first-child");
   if(pickerTitle) pickerTitle.textContent = t("selectCategory");
 
-  // Category picker cards - use emojis
-  const catIcons = {"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
-  document.querySelectorAll(".cat-pick-card").forEach(c => {
-    const cat = c.dataset.cat;
-    const icon = catIcons[cat] || "📦";
-    const lbl = catLabel(cat);
-    const count = allProducts.filter(p => p.category === cat).length;
-    c.innerHTML = `${icon}<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${lbl}</span>`;
-  });
+  // Category picker cards - rebuild dynamically
+  rebuildCatPickCards();
 
   // All Products heading
   const allProdH2 = document.querySelector("#categoryPicker > hr + h2");
@@ -624,6 +694,22 @@ function applyAdminLang(){
 getElement("adminLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");
   applyAdminLang();
+});
+
+// Rename category modal
+document.getElementById("renameCatCancelBtn")?.addEventListener("click", closeRenameCatModal);
+document.getElementById("renameCatConfirmBtn")?.addEventListener("click", confirmRenameCat);
+document.getElementById("renameCatModal")?.addEventListener("click", e => {
+  if(e.target === e.currentTarget) closeRenameCatModal();
+});
+document.getElementById("renameCatModal")?.addEventListener("keydown", e => {
+  if(e.key === "Escape") closeRenameCatModal();
+  if(e.key === "Enter" && !document.getElementById("renameCatConfirmBtn").disabled) confirmRenameCat();
+});
+['renameCatArInput','renameCatEnInput'].forEach(id => {
+  document.getElementById(id)?.addEventListener("keydown", e => {
+    if(e.key === "Enter"){ e.stopPropagation(); document.getElementById("renameCatConfirmBtn")?.click(); }
+  });
 });
 
 async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed)return;sessionStorage.setItem(AUTH_KEY,"true");applyAdminLang();initTabs();await loadTabContent("products");}

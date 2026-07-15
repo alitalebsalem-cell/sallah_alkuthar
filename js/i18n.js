@@ -440,7 +440,12 @@ const T = {
 export function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
 export function setLang(lang){ localStorage.setItem(LANG_KEY, lang); }
 export function t(key){ return (T[getLang()] || T.ar)[key] || key; }
-export function catLabel(catKey){ return (CAT_LABELS[getLang()] || CAT_LABELS.ar)[catKey] || catKey; }
+export function catLabel(catKey){ 
+  const labels=(CAT_LABELS[getLang()]||CAT_LABELS.ar);
+  if(labels[catKey])return labels[catKey];
+  try{const m=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};if(m[catKey])return getLang()==="en"?(m[catKey].nameEn||catKey):catKey;}catch(e){}
+  return catKey;
+}
 export function catImage(catKey){ const imgs = CAT_IMAGES[catKey]; if(!imgs) return null; return imgs[getLang()] || imgs.ar; }
 
 export function applyMenuLang(){

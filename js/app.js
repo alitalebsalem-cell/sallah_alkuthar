@@ -11,6 +11,11 @@ const CATEGORY_PERMISSIONS = {
   "حساب فرع": ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]
 };
 
+const CAT_META_KEY="simsim_cat_meta";
+function getCatMeta(){try{return JSON.parse(localStorage.getItem(CAT_META_KEY))||{};}catch(e){return{};}}
+function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:false};}
+const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
+
 let allProducts = [];
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 let currentCustomer = null;
@@ -129,10 +134,17 @@ function getAllowedCategories(){
   if(!currentCustomer) return [];
   const perms = currentCustomer.permissions;
   if(perms && typeof perms === 'object' && Object.keys(perms).length > 0){
-    return Object.keys(perms).filter(k => perms[k]);
+    const active = Object.keys(perms).filter(k => perms[k]);
+    const productCats = new Set(allProducts.filter(p=>p.category).map(p=>p.category));
+    const matched = active.filter(c => productCats.has(c));
+    if(matched.length > 0) return matched;
   }
   const accType = currentCustomer.accountType || "";
-  return CATEGORY_PERMISSIONS[accType] || ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+  const defaults = CATEGORY_PERMISSIONS[accType] || [];
+  if(defaults.length === 0) return [];
+  const productCats = new Set(allProducts.filter(p=>p.category).map(p=>p.category));
+  const matched = defaults.filter(d => productCats.has(d));
+  return matched.length > 0 ? matched : [...productCats];
 }
 function applyPermissions(){
   const allowed = getAllowedCategories();
@@ -155,6 +167,33 @@ function setActiveCategory(){
   });
 }
 
+function buildCategoryCards(){
+  const bar=document.getElementById("categoriesBar");if(!bar)return;
+  const cats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
+  bar.innerHTML="";
+  cats.forEach(cat=>{
+    const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
+    const count=allProducts.filter(p=>p.category===cat).length;
+    const card=document.createElement("div");card.className="cat-card";card.dataset.cat=cat;
+    card.innerHTML=`<span class="cat-badge" data-cat-count="${cat}" style="display:${count>0?"":"none"}">${count}</span><span class="cat-icon">${icon}</span><span class="cat-label" data-i18n-cat="${cat}">${cat}</span>`;
+    card.addEventListener("click",()=>{
+      currentCategory=card.dataset.cat;
+      setActiveCategory();
+      const value=searchInput?searchInput.value.trim().toLowerCase():"";
+      let filtered=getFilteredProducts();
+      if(value)filtered=filtered.filter(p=>{const t=`${p.name||""} ${p.description||""} ${p.code||""}`.toLowerCase();return t.includes(value);});
+      renderProducts(filtered);
+    });
+    bar.appendChild(card);
+  });
+  applyPermissions();
+  if(!currentCategory||!getAllowedCategories().includes(currentCategory)){
+    const allowed=getAllowedCategories();
+    currentCategory=allowed.length?allowed[0]:null;
+  }
+  setActiveCategory();
+}
+
 /* ========================
    PRODUCTS
    ======================== */
@@ -164,12 +203,13 @@ async function loadProducts(){
   const querySnapshot = await getDocs(collection(db,"products"));
   allProducts = [];
   querySnapshot.forEach(doc => allProducts.push({id:doc.id,...doc.data()}));
+  buildCategoryCards();
   if(currentCustomer) renderProducts(getFilteredProducts());
   updateCategoryBadges();
 }
 
 function updateCategoryBadges(){
-  const cats = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+  const cats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
   cats.forEach(cat => {
     const count = allProducts.filter(p => p.category === cat).length;
     document.querySelectorAll(`[data-cat-count="${cat}"]`).forEach(badge => {
@@ -282,21 +322,7 @@ function updateCartCount(){
 /* ========================
    CATEGORY FILTER
    ======================== */
-document.querySelectorAll(".cat-card").forEach(card => {
-  card.addEventListener("click", () => {
-    currentCategory = card.dataset.cat;
-    setActiveCategory();
-    const value = searchInput ? searchInput.value.trim().toLowerCase() : "";
-    let filtered = getFilteredProducts();
-    if(value){
-      filtered = filtered.filter(p => {
-        const t = `${p.name||""} ${p.description||""} ${p.code||""}`.toLowerCase();
-        return t.includes(value);
-      });
-    }
-    renderProducts(filtered);
-  });
-});
+/* Handlers attached dynamically in buildCategoryCards() */
 
 /* ========================
    SEARCH
