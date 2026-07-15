@@ -175,7 +175,7 @@ function buildCategoryCards(){
     const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
     const count=allProducts.filter(p=>p.category===cat).length;
     const card=document.createElement("div");card.className="cat-card";card.dataset.cat=cat;
-    card.innerHTML=`<span class="cat-badge" data-cat-count="${cat}" style="display:${count>0?"":"none"}">${count}</span><span class="cat-icon">${icon}</span><span class="cat-label" data-i18n-cat="${cat}">${cat}</span>`;
+    card.innerHTML=`<span class="cat-badge" data-cat-count="${cat}" style="display:${count>0?"":"none"}">${count}</span><span class="cat-icon">${icon}</span><span class="cat-label" data-i18n-cat="${cat}">${catLabel(cat)}</span>`;
     card.addEventListener("click",()=>{
       currentCategory=card.dataset.cat;
       setActiveCategory();
@@ -204,6 +204,7 @@ async function loadProducts(){
   allProducts = [];
   querySnapshot.forEach(doc => allProducts.push({id:doc.id,...doc.data()}));
   buildCategoryCards();
+  applyFullLang({ langToggle: "langToggle", search: "search", loginBtn: "loginBtn", loginRequiredOverlay: "loginRequiredOverlay", loginModal: "loginModal", profile: true });
   if(currentCustomer) renderProducts(getFilteredProducts());
   updateCategoryBadges();
 }
