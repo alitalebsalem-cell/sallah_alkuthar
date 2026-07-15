@@ -140,11 +140,15 @@ function getAllowedCategories(){
     if(matched.length > 0) return matched;
   }
   const accType = currentCustomer.accountType || "";
-  const defaults = CATEGORY_PERMISSIONS[accType] || [];
-  if(defaults.length === 0) return [];
-  const productCats = new Set(allProducts.filter(p=>p.category).map(p=>p.category));
-  const matched = defaults.filter(d => productCats.has(d));
-  return matched.length > 0 ? matched : [...productCats];
+  const storedMeta = (()=>{try{return JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};}catch(e){return{};}})();
+  const dynamicPerms = storedMeta._defaultPerms || CATEGORY_PERMISSIONS;
+  const defaults = dynamicPerms[accType] || [];
+  if(defaults.length > 0){
+    const productCats = new Set(allProducts.filter(p=>p.category).map(p=>p.category));
+    const matched = defaults.filter(d => productCats.has(d));
+    if(matched.length > 0) return matched;
+  }
+  return [...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
 }
 function applyPermissions(){
   const allowed = getAllowedCategories();

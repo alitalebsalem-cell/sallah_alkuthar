@@ -510,9 +510,10 @@ window.confirmRenameCat=async function(){
   if(!allMeta[arName])allMeta[arName]={};
   allMeta[arName].nameEn=enName||arName;allMeta[arName].icon=icon;
   allMeta[arName].desc=desc;allMeta[arName].showDesc=showDesc;
+  allMeta._defaultPerms=CATEGORY_PERMISSIONS;
   saveCatMeta(allMeta);
   closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;
-  await loadProducts();applyAdminLang();loadAllCustomers();
+  await loadProducts();applyAdminLang();await loadAllCustomers();
 };
 function renderCategories(){
   const list=document.getElementById("categoriesList");const sec=document.getElementById("catProdSection");
