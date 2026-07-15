@@ -342,7 +342,7 @@ function renderAllCustomers(customers){
       let ph=`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--accent);">${t("permissionsLabel")}</div>`;
       CAT_ORDER_ADMIN.forEach(cat=>{
         const checked=hasCustom?!!curPerms[cat]:defPerms.includes(cat);
-        ph+=`<label class="perm-label" data-cat="${cat}"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span>${cat}</span></label>`;
+        ph+=`<label class="perm-label"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span data-i18n-cat="${cat}">${catLabel(cat)}</span></label>`;
       });
       ph+=`<div style="display:flex;gap:8px;margin-top:8px;"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
       permSection.innerHTML=ph;
@@ -413,8 +413,9 @@ function renderBranches(){
   list.innerHTML="";
   branches.forEach((b,idx)=>{
     const card=document.createElement("div");card.className="customer-admin-card";
-    card.innerHTML=`<div class="cust-header"><strong>${escapeHTML(b)}</strong></div><div style="display:flex;gap:8px;margin-top:8px;"><button class="branch-del-btn" type="button" style="background:rgba(220,53,69,.1);color:#dc3545;border:none;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;" data-index="${idx}">🗑 ${t("deleteBtn")}</button></div>`;
+    card.innerHTML=`<div class="cust-header"><strong>${escapeHTML(b)}</strong></div><div style="display:flex;gap:8px;margin-top:8px;"><button class="branch-edit-btn" type="button" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;" data-index="${idx}">✏️ ${t("editBtn")}</button><button class="branch-del-btn" type="button" style="background:rgba(220,53,69,.1);color:#dc3545;border:none;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;" data-index="${idx}">🗑 ${t("deleteBtn")}</button></div>`;
     card.querySelector(".branch-del-btn").addEventListener("click",function(){const br=getBranches();const i=parseInt(this.dataset.index);if(i>=0&&i<br.length){if(confirm(`Delete "${br[i]}"?`)){br.splice(i,1);saveBranches(br);renderBranches();}}});
+    card.querySelector(".branch-edit-btn").addEventListener("click",function(){const br=getBranches();const i=parseInt(this.dataset.index);if(i<0||i>=br.length)return;const cur=br[i];const parts=cur.split(" - ");const ar=parts[0]||cur;const en=parts[1]||"";const newName=prompt(`${t("editBtn")}: ${cur}\n\n${t("branchName")} (عربي - English):`,cur);if(!newName||newName.trim()===cur)return;const trimmed=newName.trim();br[i]=trimmed;saveBranches(br);renderBranches();});
     list.appendChild(card);
   });
 }
@@ -511,9 +512,8 @@ window.confirmRenameCat=async function(){
   allMeta[arName].desc=desc;allMeta[arName].showDesc=showDesc;
   saveCatMeta(allMeta);
   closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;
-  await loadProducts();applyAdminLang();
+  await loadProducts();applyAdminLang();loadAllCustomers();
 };
-
 function renderCategories(){
   const list=document.getElementById("categoriesList");const sec=document.getElementById("catProdSection");
   if(!list)return;
@@ -644,6 +644,11 @@ function applyAdminLang(){
   if(catBackBtn) catBackBtn.textContent = t("catProductsBack");
   const catAddBtn = document.getElementById("addProductFromCat");
   if(catAddBtn) catAddBtn.textContent = t("addProductToCat");
+
+  // Category names in dynamic sections (e.g. customer permissions)
+  document.querySelectorAll("[data-i18n-cat]").forEach(el => {
+    el.textContent = catLabel(el.getAttribute("data-i18n-cat"));
+  });
 
   // Search and sort
   const searchAdmin = document.getElementById("searchAdmin");
