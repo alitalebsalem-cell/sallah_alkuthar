@@ -207,7 +207,7 @@ function renderProducts(products){
         </div>
         <div class="product-qty-row">
           <button type="button" data-action="dec" data-id="${escapeHTML(pid)}">−</button>
-          <span class="qty-val" id="qty-${escapeHTML(pid)}">${qty}</span>
+          <input class="qty-val" id="qty-${escapeHTML(pid)}" value="${qty}" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
           <button type="button" data-action="inc" data-id="${escapeHTML(pid)}">+</button>
         </div>
         <button class="product-cart-btn" data-id="${escapeHTML(pid)}" type="button">
@@ -220,6 +220,16 @@ function renderProducts(products){
 }
 
 if(productsDiv){
+  productsDiv.addEventListener("input", event => {
+    const input = event.target.closest(".qty-val");
+    if(!input) return;
+    const id = input.id.replace("qty-","");
+    let val = parseInt(input.value, 10);
+    if(isNaN(val) || val < 1) val = 1;
+    input.value = val;
+    productQuantities[id] = val;
+  });
+
   productsDiv.addEventListener("click", event => {
     const incBtn = event.target.closest('[data-action="inc"]');
     const decBtn = event.target.closest('[data-action="dec"]');
@@ -228,14 +238,14 @@ if(productsDiv){
       const id = incBtn.dataset.id;
       productQuantities[id] = (productQuantities[id]||1)+1;
       const el = document.getElementById("qty-"+id);
-      if(el) el.textContent = productQuantities[id];
+      if(el) el.value = productQuantities[id];
       return;
     }
     if(decBtn){
       const id = decBtn.dataset.id;
       productQuantities[id] = Math.max(1,(productQuantities[id]||1)-1);
       const el = document.getElementById("qty-"+id);
-      if(el) el.textContent = productQuantities[id];
+      if(el) el.value = productQuantities[id];
       return;
     }
     if(cartBtn){
