@@ -353,7 +353,7 @@
             itemsTableRows += `<tr><td colspan="4" style="background:#d9d9d9;border:1px solid #bbb;padding:6px 10px;font-size:13px;font-weight:900;text-align:center;">${catName}</td></tr>`;
             group.forEach(item => {
               viewIdx++;
-              itemsTableRows += `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${viewIdx}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.description || item.name || "")}${item.name?`<br><span style="font-size:11px;color:#888;">${escapeHTML(item.name)}</span>`:""}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td></tr>`;
+              itemsTableRows += `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${viewIdx}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.description || item.name || "")}${item.name?`<br><span style="font-size:13px;color:#333;font-weight:600;">${escapeHTML(item.name)}</span>`:""}</td><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHTML(item.code || "")}</td><td style="padding:6px 10px;border:1px solid #ddd;text-align:center;">${item.qty || 0}</td></tr>`;
             });
           });
         }
