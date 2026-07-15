@@ -426,7 +426,7 @@ const CAT_META_KEY="simsim_cat_meta";
 let _renameCatOldName="";
 function getCatMeta(){try{return JSON.parse(localStorage.getItem(CAT_META_KEY))||{};}catch(e){return{};}}
 function saveCatMeta(m){localStorage.setItem(CAT_META_KEY,JSON.stringify(m));}
-function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:false};}
+function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:true};}
 function catDisplayName(cat){const meta=getCatMetaObj(cat);return getLang()==="en"?meta.nameEn:cat;}
 
 function rebuildCatPickCards(){
@@ -471,10 +471,11 @@ function rebuildCatPickCards(){
 
 window.openRenameCatModal=function(oldName){
   _renameCatOldName=oldName;
-  document.getElementById("renameCatOldNameDisplay").textContent=oldName;
+  document.getElementById("renameCatArInput").value="";
+  document.getElementById("renameCatEnInput").value="";
   const meta=getCatMetaObj(oldName);
-  document.getElementById("renameCatArInput").value=oldName;
-  document.getElementById("renameCatEnInput").value=meta.nameEn||oldName;
+  document.getElementById("renameCatDescInput").value=meta.desc||"";
+  document.getElementById("renameCatShowDesc").checked=meta.showDesc!==false;
   const m=document.getElementById("renameCatModal");m.classList.add("active");m.setAttribute("aria-hidden","false");
   setTimeout(()=>document.getElementById("renameCatArInput").focus(),100);
 };
@@ -488,7 +489,10 @@ window.confirmRenameCat=async function(){
   const arName=document.getElementById("renameCatArInput").value.trim();
   const enName=document.getElementById("renameCatEnInput").value.trim();
   if(!arName){alert("Arabic name required");document.getElementById("renameCatConfirmBtn").disabled=false;return;}
-  const oldName=_renameCatOldName;if(arName===oldName&&(!enName||enName===(getCatMetaObj(oldName).nameEn||oldName))){closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;return;}
+  const oldName=_renameCatOldName;
+  const desc=document.getElementById("renameCatDescInput").value.trim();
+  const showDesc=document.getElementById("renameCatShowDesc").checked;
+  if(arName===oldName&&enName===(getCatMetaObj(oldName).nameEn||oldName)&&desc===(getCatMetaObj(oldName).desc||"")&&showDesc===(getCatMetaObj(oldName).showDesc!==false)){closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;return;}
   const icon=getCatMetaObj(oldName).icon||CAT_ICONS[oldName]||"📦";
   const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
   for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:arName});s++;}catch(e){f++;}}
@@ -504,6 +508,7 @@ window.confirmRenameCat=async function(){
   if(allMeta[oldName]){allMeta[arName]=allMeta[oldName];delete allMeta[oldName];}
   if(!allMeta[arName])allMeta[arName]={};
   allMeta[arName].nameEn=enName||arName;allMeta[arName].icon=icon;
+  allMeta[arName].desc=desc;allMeta[arName].showDesc=showDesc;
   saveCatMeta(allMeta);
   closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;
   await loadProducts();applyAdminLang();
@@ -520,11 +525,15 @@ function renderCategories(){
     const count=allProducts.filter(p=>p.category===cat).length;const meta=getCatMetaObj(cat);
     const icon=meta.icon||CAT_ICONS[cat]||"📦";
     const dispName=catDisplayName(cat);
+    const hasDesc=!!meta.desc;
+    const showDesc=meta.showDesc!==false;
     const card=document.createElement("div");card.className="cat-admin-card";
-    card.innerHTML=`<span class="cat-admin-icon">${icon}</span><div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${meta.desc&&meta.showDesc?`<div class="cat-admin-desc">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button><button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
+    card.innerHTML=`<span class="cat-admin-icon">${icon}</span><div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${hasDesc?`<div class="cat-admin-desc" style="display:${showDesc?'':'none'}">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button>${hasDesc?`<button class="cat-desc-toggle-btn" type="button" style="font-size:11px;">${showDesc?'🕶️':'👁️'}</button>`:""}<button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
     card.querySelector(".cat-admin-name").addEventListener("click",()=>showCategoryProducts(cat));
     card.querySelector(".cat-rename-btn").addEventListener("click",e=>{e.stopPropagation();openRenameCatModal(cat);});
     card.querySelector(".cat-del-btn").addEventListener("click",e=>{e.stopPropagation();deleteCategory(cat);});
+    const toggleBtn=card.querySelector(".cat-desc-toggle-btn");
+    if(toggleBtn)toggleBtn.addEventListener("click",e=>{e.stopPropagation();const allMeta=getCatMeta();if(!allMeta[cat])allMeta[cat]={};allMeta[cat].showDesc=!showDesc;saveCatMeta(allMeta);renderCategories();});
     list.appendChild(card);
   });
 }
@@ -706,7 +715,7 @@ document.getElementById("renameCatModal")?.addEventListener("keydown", e => {
   if(e.key === "Escape") closeRenameCatModal();
   if(e.key === "Enter" && !document.getElementById("renameCatConfirmBtn").disabled) confirmRenameCat();
 });
-['renameCatArInput','renameCatEnInput'].forEach(id => {
+['renameCatArInput','renameCatEnInput','renameCatDescInput'].forEach(id => {
   document.getElementById(id)?.addEventListener("keydown", e => {
     if(e.key === "Enter"){ e.stopPropagation(); document.getElementById("renameCatConfirmBtn")?.click(); }
   });
