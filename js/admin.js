@@ -498,8 +498,9 @@ window.confirmRenameCat=async function(){
   const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
   for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:arName});s++;}catch(e){f++;}}
   if(oldName!==arName){
-    try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const perms=d.data().permissions;if(perms&&typeof perms==='object'&&perms[oldName]!==undefined){const np={...perms};np[arName]=np[oldName];delete np[oldName];await updateDoc(doc(db,"customers",d.id),{permissions:np});}}}catch(e){console.error(e);}
-    const localC=getLocalCustomers();if(localC){let ch=false;localC.forEach(c=>{if(c.permissions&&c.permissions[oldName]!==undefined){c.permissions[arName]=c.permissions[oldName];delete c.permissions[oldName];ch=true;}});if(ch)saveLocalCustomers(localC);}
+    const allCats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
+    try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const np={};allCats.forEach(cat=>np[cat]=true);await updateDoc(doc(db,"customers",d.id),{permissions:np});}}catch(e){console.error(e);}
+    const localC=getLocalCustomers();if(localC){localC.forEach(c=>{c.permissions={};allCats.forEach(cat=>c.permissions[cat]=true);});saveLocalCustomers(localC);}
     if(CAT_ICONS[oldName]){CAT_ICONS[arName]=CAT_ICONS[oldName];delete CAT_ICONS[oldName];}
     const idx=CAT_ORDER_ADMIN.indexOf(oldName);if(idx!==-1)CAT_ORDER_ADMIN[idx]=arName;
     if(CAT_EN_NAMES_ADMIN[oldName]){CAT_EN_NAMES_ADMIN[arName]=CAT_EN_NAMES_ADMIN[oldName];delete CAT_EN_NAMES_ADMIN[oldName];}
