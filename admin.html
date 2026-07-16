@@ -37,10 +37,10 @@
   </div>
 
   <div class="admin-tabs">
-    <button class="admin-tab active" data-tab="products">🛒 المنتجات</button>
+    <button class="admin-tab active" data-tab="products">المنتجات</button>
     <button class="admin-tab" data-tab="invoices">📄 الفواتير</button>
     <button class="admin-tab" data-tab="customers">👥 العملاء</button>
-    <button class="admin-tab" data-tab="branches">🏪 الفروع</button>
+    <button class="admin-tab" data-tab="branches">الفروع</button>
     <button class="admin-tab" data-tab="categories">📂 الأقسام</button>
   </div>
 
@@ -48,7 +48,7 @@
   <div class="admin-section active" id="section-products">
     <!-- CATEGORY PICKER (shown first) -->
     <div id="categoryPicker">
-      <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">📦 اختر القسم لإضافة منتج جديد</h2>
+      <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">اختر القسم لإضافة منتج جديد</h2>
       <div id="catPickCardsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px;"></div>
       <hr style="margin:20px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
       <h2 style="color:var(--dark);text-align:center;margin-bottom:12px;">جميع المنتجات</h2>
@@ -67,11 +67,11 @@
         <span id="selectedCount" class="bulk-count">0</span>
         <select id="bulkCategorySelect" class="bulk-category-select">
           <option value="">-- القسم الجديد --</option>
-          <option value="قسم المعمل">🔬 قسم المعمل</option>
-          <option value="قسم السوبرماركت">🛒 قسم السوبرماركت</option>
-          <option value="قسم محلات الجملة">🏪 محلات الجملة</option>
-          <option value="قسم المستودع">🏭 قسم المستودع</option>
-          <option value="احتياجات المعمل">📋 احتياجات المعمل</option>
+          <option value="قسم المعمل">قسم المعمل</option>
+          <option value="قسم السوبرماركت">قسم السوبرماركت</option>
+          <option value="قسم محلات الجملة">محلات الجملة</option>
+          <option value="قسم المستودع">قسم المستودع</option>
+          <option value="احتياجات المعمل">احتياجات المعمل</option>
         </select>
         <button id="bulkChangeCatBtn" type="button" class="bulk-change-btn" disabled>تغيير القسم</button>
       </div>
@@ -89,11 +89,11 @@
         <input id="description" placeholder="الاسم بالإنجليزي">
         <input id="code" placeholder="كود المنتج">
         <select id="category">
-          <option value="قسم المعمل">🔬 قسم المعمل</option>
-          <option value="قسم السوبرماركت">🛒 قسم السوبرماركت</option>
-          <option value="قسم محلات الجملة">🏪 محلات الجملة</option>
-          <option value="قسم المستودع">🏭 قسم المستودع</option>
-          <option value="احتياجات المعمل">📋 احتياجات المعمل</option>
+          <option value="قسم المعمل">قسم المعمل</option>
+          <option value="قسم السوبرماركت">قسم السوبرماركت</option>
+          <option value="قسم محلات الجملة">محلات الجملة</option>
+          <option value="قسم المستودع">قسم المستودع</option>
+          <option value="احتياجات المعمل">احتياجات المعمل</option>
         </select>
         <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none">
         <input id="image" placeholder="رابط الصورة">
@@ -129,8 +129,8 @@
       <input type="text" id="newCustName" placeholder="اسم العميل">
       <input type="text" id="newCustPin" placeholder="كلمة المرور (4 أرقام)" maxlength="4" inputmode="numeric">
       <select id="newCustAccountType" style="padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);">
-        <option value="حساب معمل">حساب معمل 🔬</option>
-        <option value="حساب فرع">حساب فرع 🏪</option>
+        <option value="حساب معمل">حساب معمل</option>
+        <option value="حساب فرع">حساب فرع</option>
       </select>
       <button id="addCustBtn" type="button">➕ إضافة عميل</button>
     </div>
@@ -151,6 +151,7 @@
   <!-- CATEGORIES TAB -->
   <div class="admin-section" id="section-categories">
     <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">📂 الأقسام</h2>
+    <div style="text-align:center;margin-bottom:12px;"><button id="addNewCategoryBtn" type="button" style="padding:8px 18px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:13px;">➕ إضافة قسم جديد</button></div>
     <div id="categoriesList" class="categories-admin-list"></div>
     <div id="catProdSection" style="display:none;margin-top:20px;">
       <hr style="margin:16px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
@@ -362,20 +363,20 @@ document.addEventListener("click",function(e){
 });
 </script>
 
-<!-- RENAME CATEGORY MODAL -->
+<!-- RENAME / ADD CATEGORY MODAL -->
 <div id="renameCatModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="clear-cart-dialog">
-    <h3 id="renameCatModalTitle">Rename Category</h3>
-    <input type="text" id="renameCatArInput" placeholder="اكتب الاسم الجديد بالعربي" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
-    <input type="text" id="renameCatEnInput" placeholder="Write new English name" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <h3 id="renameCatModalTitle" data-i18n="renameCatTitle">Rename Category</h3>
+    <input type="text" id="renameCatArInput" data-i18n-placeholder="categoryNameAr" placeholder="Category name (Arabic)" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <input type="text" id="renameCatEnInput" data-i18n-placeholder="categoryNameEn" placeholder="Category name (English)" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
     <hr style="margin:12px 0;border:none;border-top:1px solid rgba(122,102,85,.15);">
-    <textarea id="renameCatDescInput" placeholder="وصف القسم (اختياري) / Description (optional)" rows="3" style="width:100%;padding:10px;border:1.5px solid rgba(122,102,85,.2);border-radius:8px;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;margin-bottom:8px;font-family:inherit;"></textarea>
+    <textarea id="renameCatDescInput" data-i18n-placeholder="categoryDesc" placeholder="Description (optional)" rows="3" style="width:100%;padding:10px;border:1.5px solid rgba(122,102,85,.2);border-radius:8px;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;margin-bottom:8px;font-family:inherit;"></textarea>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--secondary);cursor:pointer;margin-bottom:8px;">
-      <input type="checkbox" id="renameCatShowDesc" checked> إظهار الوصف في القائمة / Show description
+      <input type="checkbox" id="renameCatShowDesc" checked> <span data-i18n="showDescription">Show description in menu</span>
     </label>
     <div class="clear-cart-actions">
-      <button id="renameCatCancelBtn" class="cancel-clear-cart" type="button">Cancel</button>
-      <button id="renameCatConfirmBtn" class="confirm-clear-cart" type="button">Save</button>
+      <button id="renameCatCancelBtn" class="cancel-clear-cart" type="button" data-i18n="cancelDelete">Cancel</button>
+      <button id="renameCatConfirmBtn" class="confirm-clear-cart" type="button" data-i18n="save">Save</button>
     </div>
   </div>
 </div>

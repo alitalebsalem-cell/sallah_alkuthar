@@ -64,13 +64,14 @@ import { db } from "./js/firebase.js";
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel } from "./js/i18n.js";
 
-const adminsCollection = collection(db, "adminmanager");
+const adminmanagerColl = collection(db, "adminmanager");
+const adminsColl = collection(db, "admins");
 
-// Seed default admin
-(async function seed(){ try { const s = await getDocs(adminsCollection); if(s.empty) await addDoc(adminsCollection, { username:"admin", password:"admin", permissions:{} }); } catch(e){} })();
+// Seed default super admin
+(async function seed(){ try { const s = await getDocs(adminmanagerColl); if(s.empty) await addDoc(adminmanagerColl, { username:"admin", password:"admin" }); } catch(e){} })();
 
-let currentAdmin = null;
-let currentAdminId = null;
+let currentSuperAdmin = null;
+let currentSuperAdminId = null;
 
 const loginScreen = document.getElementById("loginScreen");
 const mainPanel = document.getElementById("mainPanel");
@@ -107,14 +108,14 @@ loginForm.addEventListener("submit", async e => {
   if(!u || !p){ loginError.textContent = t("enterUserPass"); return; }
   loginError.textContent = t("checking");
   try {
-    const q = query(adminsCollection, where("username", "==", u));
+    const q = query(adminmanagerColl, where("username", "==", u));
     const snap = await getDocs(q);
     if(snap.empty){ loginError.textContent = t("accountNotFound"); return; }
     const docData = snap.docs[0];
     const data = docData.data();
     if(data.password !== p){ loginError.textContent = t("wrongPassword"); return; }
-    currentAdmin = data;
-    currentAdminId = docData.id;
+    currentSuperAdmin = data;
+    currentSuperAdminId = docData.id;
     loginScreen.style.display = "none";
     mainPanel.style.display = "";
     applyAdminMgrLang();
@@ -124,12 +125,12 @@ loginForm.addEventListener("submit", async e => {
 });
 
 function updateProfile(){
-  profileDisplay.textContent = "👤 " + (currentAdmin?.username || "");
+  profileDisplay.textContent = "👤 " + (currentSuperAdmin?.username || "");
 }
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
-  currentAdmin = null;
-  currentAdminId = null;
+  currentSuperAdmin = null;
+  currentSuperAdminId = null;
   mainPanel.style.display = "none";
   loginScreen.style.display = "flex";
   loginUser.value = "";
@@ -137,11 +138,11 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
   loginError.textContent = "";
 });
 
-// Profile edit
+// Profile edit (super admin's own profile)
 const profileEditSection = document.getElementById("profileEditSection");
 document.getElementById("profileEditBtn").addEventListener("click", () => {
   profileEditSection.style.display = profileEditSection.style.display === "none" ? "" : "none";
-  document.getElementById("editProfileUser").value = currentAdmin?.username || "";
+  document.getElementById("editProfileUser").value = currentSuperAdmin?.username || "";
   document.getElementById("editProfilePass").value = "";
 });
 document.getElementById("saveProfileBtn").addEventListener("click", async () => {
@@ -149,29 +150,28 @@ document.getElementById("saveProfileBtn").addEventListener("click", async () => 
   const np = document.getElementById("editProfilePass").value.trim();
   if(!nu && !np){ alert(t("enterAtLeastOne")); return; }
   const updates = {};
-  if(nu && nu !== currentAdmin.username) updates.username = nu;
+  if(nu && nu !== currentSuperAdmin.username) updates.username = nu;
   if(np) updates.password = np;
   if(Object.keys(updates).length === 0){ alert(t("noChanges")); return; }
   try {
-    await updateDoc(doc(db, "adminmanager", currentAdminId), updates);
-    Object.assign(currentAdmin, updates);
+    await updateDoc(doc(db, "adminmanager", currentSuperAdminId), updates);
+    Object.assign(currentSuperAdmin, updates);
     updateProfile();
     profileEditSection.style.display = "none";
     alert(t("profileUpdated"));
-    renderAdmins();
   } catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
 });
 
-// Add admin
+// Add admin (to admins collection)
 document.getElementById("addAdminBtn").addEventListener("click", async () => {
   const u = document.getElementById("newAdminUser").value.trim();
   const p = document.getElementById("newAdminPass").value.trim();
   if(!u || !p){ alert(t("enterUserPass")); return; }
   try {
-    const q = query(adminsCollection, where("username", "==", u));
+    const q = query(adminsColl, where("username", "==", u));
     const snap = await getDocs(q);
     if(!snap.empty){ alert(t("usernameExists")); return; }
-    await addDoc(adminsCollection, { username: u, password: p, permissions: {} });
+    await addDoc(adminsColl, { username: u, password: p, permissions: {} });
     document.getElementById("newAdminUser").value = "";
     document.getElementById("newAdminPass").value = "";
     renderAdmins();
@@ -188,26 +188,25 @@ async function loadAdminMgrCats(){
   _catsCache=["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 }
 
-// Render admins
+// Render admins (from admins collection)
 async function renderAdmins(){
   if(!adminsList) return;
   await loadAdminMgrCats();
   adminsList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--secondary);">' + t("loading") + '...</div>';
   try {
-    const snap = await getDocs(adminsCollection);
+    const snap = await getDocs(adminsColl);
     adminsList.innerHTML = "";
     if(snap.empty){ adminsList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--secondary);">' + t("noAdmins") + '</div>'; return; }
     snap.forEach(d => {
       const data = d.data();
-      const isCurrent = d.id === currentAdminId;
+      const adminId = d.id;
       const card = document.createElement("div");
       card.className = "customer-admin-card";
-      card.style.border = isCurrent ? "2px solid var(--accent)" : "";
       
       const perms = data.permissions || {};
       const canAdd = perms.canAddProducts;
       
-      card.innerHTML = '<div class="cust-header"><strong>🔑 ' + escapeHTML(data.username) + '</strong>' + (isCurrent ? '<span style="font-size:11px;color:var(--accent);font-weight:700;margin-right:8px;">(' + t("you") + ')</span>' : '') + '</div><div style="font-size:12px;color:var(--secondary);margin:4px 0;">' + t("canAddProducts") + ': ' + (canAdd ? '✅' : '❌') + '</div><div class="cust-invoices" style="display:none;margin-top:8px;"><div class="perm-grid"></div></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><button class="perm-toggle-btn" type="button" style="padding:4px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);font-weight:700;cursor:pointer;font-size:12px;">' + t("permissions") + '</button>' + (!isCurrent ? '<button class="del-admin-btn" type="button" style="padding:4px 10px;border:1px solid #dc3545;border-radius:6px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">' + t("deleteBtn") + '</button>' : '') + '</div>';
+      card.innerHTML = '<div class="cust-header"><strong>🔑 ' + escapeHTML(data.username) + '</strong></div><div style="font-size:12px;color:var(--secondary);margin:4px 0;">' + t("canAddProducts") + ': ' + (canAdd ? '✅' : '❌') + '</div><div class="cust-invoices" style="display:none;margin-top:8px;"><div class="perm-grid"></div></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><button class="perm-toggle-btn" type="button" style="padding:4px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);font-weight:700;cursor:pointer;font-size:12px;">' + t("permissions") + '</button><button class="del-admin-btn" type="button" style="padding:4px 10px;border:1px solid #dc3545;border-radius:6px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">' + t("deleteBtn") + '</button></div>';
       
       // Permission toggle
       card.querySelector(".perm-toggle-btn").addEventListener("click", () => {
@@ -217,10 +216,9 @@ async function renderAdmins(){
         let html = '<div style="font-size:13px;font-weight:700;margin-bottom:6px;">' + t("categoryVisibility") + ':</div>';
         _catsCache.forEach(cat => {
           const checked = perms.categories ? !!perms.categories[cat] : true;
-          const icon = (()=>{try{const m=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};return m[cat]?.icon||"📦";}catch(e){return"📦";}})();
-          html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;cursor:pointer;"><input type="checkbox" class="perm-cat-cb" data-cat="${cat}" ${checked?"checked":""}><span>${icon} ${catLabel(cat)}</span></label>`;
+          html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;cursor:pointer;"><input type="checkbox" class="perm-cat-cb" data-cat="${cat}" ${checked?"checked":""}><span>${catLabel(cat)}</span></label>`;
         });
-        html += `<div style="margin-top:8px;"><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="checkbox" id="permAddProd-${d.id}" ${canAdd?"checked":""}> ${t("canAddProducts")}</label></div>`;
+        html += `<div style="margin-top:8px;"><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="checkbox" id="permAddProd-${adminId}" ${canAdd?"checked":""}> ${t("canAddProducts")}</label></div>`;
         html += `<button class="save-perm-btn" type="button" style="margin-top:8px;padding:5px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:12px;">` + t("savePerms") + `</button>`;
         
         permDiv.innerHTML = html;
@@ -229,21 +227,21 @@ async function renderAdmins(){
         permDiv.querySelector(".save-perm-btn").addEventListener("click", async () => {
           const newPerms = { categories: {}, canAddProducts: false };
           permDiv.querySelectorAll(".perm-cat-cb").forEach(cb => { newPerms.categories[cb.dataset.cat] = cb.checked; });
-          newPerms.canAddProducts = document.getElementById("permAddProd-" + d.id)?.checked || false;
+          newPerms.canAddProducts = document.getElementById("permAddProd-" + adminId)?.checked || false;
           try {
-            await updateDoc(doc(db, "adminmanager", d.id), { permissions: newPerms });
+            await updateDoc(doc(db, "admins", adminId), { permissions: newPerms });
             data.permissions = newPerms;
             alert(t("permsSaved") + " " + data.username);
             permDiv.style.display = "none";
+            renderAdmins();
           } catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
         });
       });
       
       // Delete admin
-      const delBtn = card.querySelector(".del-admin-btn");
-      if(delBtn) delBtn.addEventListener("click", async () => {
+      card.querySelector(".del-admin-btn").addEventListener("click", async () => {
         if(!confirm(t("deleteConfirm") + " " + data.username + "?")) return;
-        try { await deleteDoc(doc(db, "adminmanager", d.id)); renderAdmins(); }
+        try { await deleteDoc(doc(db, "admins", adminId)); renderAdmins(); }
         catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
       });
       
