@@ -998,5 +998,9 @@ document.getElementById("branchRenameModal")?.addEventListener("keydown", e => {
   });
 });
 
-async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed){if(!getLocalAdmin())saveLocalAdmin("admin","admin");return;}sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");await loadCategoriesFromFirestore();applyAdminLang();initTabs();await loadTabContent("products");}
+async function init(){
+  if(sessionStorage.getItem(VERIFIED_KEY)!=="true")await seedDefaultAdmin();
+  const authed=await checkAdminAuth();if(!authed){if(!getLocalAdmin())saveLocalAdmin("admin","admin");return;}
+  sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");applyAdminLang();initTabs();try{await loadCategoriesFromFirestore();await loadTabContent("products");}catch(e){}
+}
 init();
