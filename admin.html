@@ -41,6 +41,7 @@
     <button class="admin-tab active" data-tab="products">المنتجات</button>
     <button class="admin-tab" data-tab="invoices">📄 الفواتير</button>
     <button class="admin-tab" data-tab="customers">👥 العملاء</button>
+    <button class="admin-tab" data-tab="branches">🏪 الفروع</button>
     <button class="admin-tab" data-tab="categories">📂 الأقسام</button>
   </div>
 
@@ -137,6 +138,16 @@
     </div>
     <input type="text" id="customerSearch" class="admin-search-box" placeholder="🔍 البحث عن عميل...">
     <div id="allCustomersList"></div>
+  </div>
+
+  <!-- BRANCHES TAB -->
+  <div class="admin-section" id="section-branches">
+    <h2 style="color:var(--dark);text-align:center;margin-bottom:16px;">🏪 إدارة الفروع</h2>
+    <div class="add-branch-form">
+      <input type="text" id="newBranchName" placeholder="اسم الفرع">
+      <button id="addBranchBtn" type="button">➕ إضافة فرع</button>
+    </div>
+    <div id="branchesList"></div>
   </div>
 
   <!-- CATEGORIES TAB -->
