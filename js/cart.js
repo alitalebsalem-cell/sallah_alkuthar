@@ -9,8 +9,6 @@ import { getLang, setLang, t, catLabel, applyFullLang, applyCartLang } from "./i
 const SESSION_KEY = "sallah_customer_session";
 const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
 const INV_COUNTER_KEY = "sallah_invoice_counter";
-const BRANCHES_KEY = "sallah_branches";
-const DEFAULT_BRANCHES = ["فرع الحمدانية - Hamdanya","فرع الطائف - Altayf","فرع السامر - Al-Samer","فرع المعمل - Almamal"];
 const COLUMNS_PER_INVOICE_ROW = 3;
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
@@ -48,7 +46,6 @@ let cartCategory = "all";
 const cartItems = document.getElementById("cartItems");
 const cartTotal = document.getElementById("cartTotal");
 const cartSearch = document.getElementById("cartSearch");
-const branchNameInput = document.getElementById("branchName");
 const invoiceTemplate = document.getElementById("invoiceTemplate");
 const createInvoiceButton = document.getElementById("createInvoice");
 const clearCartButton = document.getElementById("clearCartBtn");
@@ -78,7 +75,6 @@ function getProductImage(item){ if(item.image&&typeof item.image==="string"&&ite
 function saveCart(){ localStorage.setItem("cart",JSON.stringify(cart)); }
 function getCartTotalQty(){ return cart.reduce((s,i)=>s+getItemQty(i),0); }
 function formatArabicDate(date){ const d=date instanceof Timestamp?date.toDate():(date?.toDate?date.toDate():new Date(date)); return `${ARABIC_DAYS[d.getDay()]} ${ARABIC_MONTHS[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`; }
-function getBranches(){ try{const d=localStorage.getItem(BRANCHES_KEY);if(d){const p=JSON.parse(d);if(Array.isArray(p)&&p.length)return p;}}catch(e){} return [...DEFAULT_BRANCHES]; }
 function getLocalCustomers(){ try{return JSON.parse(localStorage.getItem(CUSTOMERS_LOCAL_KEY))||[];}catch(e){return [];} }
 function saveLocalCustomers(a){ localStorage.setItem(CUSTOMERS_LOCAL_KEY,JSON.stringify(a)); }
 
@@ -328,7 +324,6 @@ function clearCart(){cart=[];saveCart();renderCart();closeClearCartModal();}
 /* INVOICE */
 function makeInvoiceNumber(){let c=1;try{const v=localStorage.getItem(INV_COUNTER_KEY);if(v)c=parseInt(v,10)||1;}catch(e){}const n=String(c).padStart(4,"0");localStorage.setItem(INV_COUNTER_KEY,String(c+1));return`INV-${n}`;}
 function formatInvoiceDate(){return new Date().toLocaleString("en-GB",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});}
-function populateBranchDropdown(){if(!branchNameInput)return;const cv=branchNameInput.value;branchNameInput.innerHTML='<option value="">-- اختر الفرع --</option>';getBranches().forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;branchNameInput.appendChild(o);});if(cv)branchNameInput.value=cv;}
 function createInvoiceCells(item){const desc=item.description||"";const arName=item.name||"";return `<td class="invoice-check-cell"><span class="invoice-check-box"></span></td><td class="invoice-product-cell"><div class="invoice-product-main"><span class="invoice-product-number invoice-product-qty">${getItemQty(item)}</span><strong><bdi>${escapeHTML(desc)}</bdi></strong></div>${arName?`<div class="invoice-product-details" dir="rtl">${escapeHTML(arName)}</div>`:""}</td>`;}
 function createEmptyCells(){return '<td class="invoice-check-cell invoice-empty-cell"></td><td class="invoice-product-cell invoice-empty-cell"></td>';}
 function createInvoiceRowsFromCart(){
@@ -385,7 +380,7 @@ function splitPages(rows){const pages=[];const mh=getMaxHeight();let s=0;while(s
 function waitForImages(c){return Promise.all(Array.from(c.querySelectorAll("img")).map(i=>new Promise(r=>{if(i.complete){r();return;}i.onload=()=>r();i.onerror=()=>r();setTimeout(r,2000);})));}
 
 async function saveInvoiceToFirestore(invoiceNo,customerName){
-  try{const items=cart.map(it=>({id:it.id,name:it.name||"",description:it.description||"",code:it.code||"",category:it.category||"",qty:getItemQty(it)}));const bn=branchNameInput?branchNameInput.value.trim():"";
+  try{const items=cart.map(it=>({id:it.id,name:it.name||"",description:it.description||"",code:it.code||"",category:it.category||"",qty:getItemQty(it)}));const bn=currentCustomer?.branch||"";
   await addDoc(collection(db,"invoices"),{invoiceNo,branchName:bn,customerId:currentCustomer?currentCustomer.id:"guest",customerName,accountType:currentCustomer?(currentCustomer.accountType||""):"",items,totalItems:cart.length,totalQty:getCartTotalQty(),createdAt:serverTimestamp(),date:new Date().toISOString()});
   }catch(e){console.error("Error saving invoice:",e);}
 }
@@ -393,8 +388,7 @@ async function saveInvoiceToFirestore(invoiceNo,customerName){
 async function createInvoice(){
   if(cart.length===0){alert("السلة فارغة");return;}
   if(!currentCustomer){alert("سجل الدخول أولاً");openLoginModal();return;}
-  const bn=branchNameInput?branchNameInput.value.trim():"";
-  if(!bn){alert("اختر الفرع أولاً");branchNameInput?.focus();return;}
+  const bn=currentCustomer?.branch||"";
   const no=makeInvoiceNumber();
   document.getElementById("invoiceNo").textContent=no;
   document.getElementById("invoiceDate").textContent=formatInvoiceDate();
@@ -433,16 +427,14 @@ const invoiceModal=document.getElementById("invoiceModal");
 const invoiceModalClose=document.getElementById("invoiceModalClose");
 const createInvoiceMobile=document.getElementById("createInvoiceMobile");
 const whatsappMobile=document.getElementById("whatsappMobile");
-const branchNameMobile=document.getElementById("branchNameMobile");
 const clearCartTopBtn=document.getElementById("clearCartTopBtn");
 
-function populateBranchMobile(){if(!branchNameMobile)return;const cv=branchNameMobile.value;branchNameMobile.innerHTML='<option value="">-- اختر الفرع --</option>';getBranches().forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;branchNameMobile.appendChild(o);});if(cv)branchNameMobile.value=cv;}
-function openInvoiceModal(){if(!invoiceModal)return;populateBranchMobile();const t=document.getElementById("invoiceModalTotal");if(t)t.textContent=getCartTotalQty();invoiceModal.hidden=false;invoiceModal.setAttribute("aria-hidden","false");requestAnimationFrame(()=>invoiceModal.classList.add("active"));}
+function openInvoiceModal(){if(!invoiceModal)return;const t=document.getElementById("invoiceModalTotal");if(t)t.textContent=getCartTotalQty();invoiceModal.hidden=false;invoiceModal.setAttribute("aria-hidden","false");requestAnimationFrame(()=>invoiceModal.classList.add("active"));}
 function closeInvoiceModal(){if(!invoiceModal)return;invoiceModal.classList.remove("active");invoiceModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoiceModal.hidden=true;},200);}
 invoiceFab?.addEventListener("click",openInvoiceModal);
 invoiceModalClose?.addEventListener("click",closeInvoiceModal);
 invoiceModal?.addEventListener("click",e=>{if(e.target===invoiceModal)closeInvoiceModal();});
-createInvoiceMobile?.addEventListener("click",()=>{const m=document.getElementById("branchNameMobile");if(m){const mb=document.getElementById("branchName");if(mb)mb.value=m.value;}closeInvoiceModal();createInvoice();});
+createInvoiceMobile?.addEventListener("click",()=>{closeInvoiceModal();createInvoice();});
 whatsappMobile?.addEventListener("click",()=>window.open("https://wa.me/966541429240","_blank"));
 clearCartTopBtn?.addEventListener("click",openClearCartModal);
 if(confirmClearInput&&confirmClearCartButton){confirmClearInput.addEventListener("input",()=>{confirmClearCartButton.disabled=!isClearCartConfirmed();});confirmClearInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&isClearCartConfirmed())clearCart();});}

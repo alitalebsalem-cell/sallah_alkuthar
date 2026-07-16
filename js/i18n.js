@@ -635,8 +635,6 @@ export function applyCartLang(){
   if(clearCartBtn) clearCartBtn.textContent = t("clearCart");
   const backStore = document.querySelector(".cart-summary .back-btn");
   if(backStore) backStore.textContent = t("backToStore");
-  const branchSel = document.querySelector("#branchName option");
-  if(branchSel) branchSel.textContent = t("selectBranch");
 
   // Mobile cart elements
   document.querySelectorAll("#cartTopBar [data-i18n]").forEach(el=>{const k=el.getAttribute("data-i18n");if(k&&t(k)!==k)el.textContent=t(k);});
@@ -648,8 +646,6 @@ export function applyCartLang(){
   if(createInvMob)createInvMob.querySelector("span").textContent=t("createInvoice");
   const whatsMob=document.getElementById("whatsappMobile");
   if(whatsMob)whatsMob.querySelector("span").textContent=t("whatsapp");
-  const brMobOpt=document.querySelector("#branchNameMobile option");
-  if(brMobOpt)brMobOpt.textContent=t("selectBranch");
 
   // Cart search
   const cartSearch = document.getElementById("cartSearch");
