@@ -183,9 +183,6 @@
 <script>
 (function(){
   const AUTH_KEY = "sallah_admin_unlocked";
-  const VERIFIED_KEY = "sallah_admin_verified";
-  const ADMIN_SESSION_KEY = "sallah_admin_session";
-  const LOCAL_ADMIN_KEY = "sallah_local_admin";
   const body = document.body;
   const loginScreen = document.getElementById("adminLoginScreen");
   const loginForm = document.getElementById("adminLoginForm");
@@ -194,21 +191,11 @@
   const loginError = document.getElementById("adminLoginError");
   const adminPanel = document.getElementById("adminPanel");
 
-  function getLocalAdmin(){
-    try{const d=localStorage.getItem(LOCAL_ADMIN_KEY);if(d)return JSON.parse(d);}catch(e){}
-    return null;
-  }
-  function seedLocalAdmin(){
-    if(getLocalAdmin())return;
-    localStorage.setItem(LOCAL_ADMIN_KEY,JSON.stringify({username:"admin",password:"admin"}));
-  }
-  seedLocalAdmin();
-
   const LANG_KEY = "sallah_lang";
   function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
   const T_LOGIN = {
-    ar: { title:"لوحة الإدارة", subtitle:"الرجاء إدخال اسم المستخدم وكلمة المرور", user:"اسم المستخدم", pass:"كلمة السر", btn:"دخول", err1:"أدخل اسم المستخدم وكلمة المرور", checking:"جاري التحقق...", err2:"اسم المستخدم أو كلمة المرور خطأ", toggle:"EN" },
-    en: { title:"Admin Panel", subtitle:"Enter username and password", user:"Username", pass:"Password", btn:"Login", err1:"Enter username and password", checking:"Checking...", err2:"Invalid username or password", toggle:"عربي" }
+    ar: { title:"لوحة الإدارة", subtitle:"الرجاء إدخال اسم المستخدم وكلمة المرور", user:"اسم المستخدم", pass:"كلمة السر", btn:"دخول", err1:"أدخل اسم المستخدم وكلمة المرور", checking:"جاري التحقق...", toggle:"EN" },
+    en: { title:"Admin Panel", subtitle:"Enter username and password", user:"Username", pass:"Password", btn:"Login", err1:"Enter username and password", checking:"Checking...", toggle:"عربي" }
   };
   function applyLoginLang(){
     const lang = getLang();
@@ -255,19 +242,15 @@
     const password = passwordInput.value.trim();
     if(!username || !password){ loginError.textContent = tr.err1; return; }
     loginError.textContent = tr.checking;
-    // Verify against local storage (no Firestore dependency)
-    const local = getLocalAdmin();
-    if(local && local.username === username && local.password === password){
-      sessionStorage.setItem(VERIFIED_KEY, "true");
-      sessionStorage.setItem(ADMIN_SESSION_KEY, username);
-      showAdminPanelUI();
-      loadAdminScript();
+    sessionStorage.setItem("admin_login_attempt", JSON.stringify({username, password}));
+    if(typeof window.processLogin === "function"){
+      window.processLogin();
     }else{
-      loginError.textContent = tr.err2;
+      loadAdminScript();
     }
   });
 
-  if(sessionStorage.getItem(VERIFIED_KEY) === "true"){
+  if(sessionStorage.getItem("sallah_admin_verified") === "true"){
     showAdminPanelUI();
     loadAdminScript();
   }else{
