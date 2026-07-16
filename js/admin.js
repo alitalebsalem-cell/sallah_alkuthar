@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import { generateInvoicePdf } from "./invoice-pdf.js";
 import {
-  collection, addDoc, getDocs, deleteDoc, updateDoc, doc,
+  collection, addDoc, getDoc, getDocs, deleteDoc, updateDoc, doc,
   query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel, applyFullLang, applyMenuLang } from "./i18n.js";
@@ -84,6 +84,7 @@ function getLocalAdmin(){try{const d=localStorage.getItem(LOCAL_ADMIN_KEY);if(d)
 function saveLocalAdmin(username,password){try{localStorage.setItem(LOCAL_ADMIN_KEY,JSON.stringify({username,password}));}catch(e){}}
 let currentAdminData=null;
 let currentAdminDocId=null;
+let currentAdminPerms={};
 
 function revertToLoginScreen(msg){
   sessionStorage.removeItem(AUTH_KEY);
@@ -171,6 +172,11 @@ function showProductForm(cat){
   if(productFormSection) productFormSection.style.display = "";
   if(selectedCategoryName) selectedCategoryName.textContent = catLabel(cat);
   if(categorySelect){ categorySelect.value = cat; }
+  // Control save button based on permissions
+  const pProds=currentAdminPerms.canAddProducts;
+  const canAdd=!pProds||Object.keys(pProds).length===0||pProds[cat]===true;
+  const saveBtn=getElement("save");
+  if(saveBtn)saveBtn.style.display=canAdd?"":"none";
   // Show category products below the form
   renderCategoryProducts(cat);
 }
@@ -233,8 +239,9 @@ function clearForm(){["name","description","code","image"].forEach(id=>{const e=
 function compressImageFile(file){return new Promise((res,rej)=>{const img=new Image();const r=new FileReader();r.onload=e=>{img.onload=()=>{const c=document.createElement("canvas");let w=img.width,h=img.height;if(w>800){h=h*(800/w);w=800;}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);const d=c.toDataURL("image/jpeg",0.6);if(Math.ceil((d.length*3)/4)>1000000){rej(new Error("Image > 1MB"));return;}res(d);};img.onerror=()=>rej(new Error("Failed to load"));img.src=e.target.result;};r.onerror=()=>rej(new Error("Failed to read"));r.readAsDataURL(file);});}
 
 getElement("save")?.addEventListener("click",async()=>{
-  try{let img=getInputValue("image");const f=getElement("imageFile")?.files[0];if(f)img=await compressImageFile(f);if(!img)img="images/noimg.jpg";
-  const p={name:getInputValue("name"),description:getInputValue("description"),code:getInputValue("code"),category:getInputValue("category"),image:img,createdAt:Date.now()};
+  try{const pCat=getInputValue("category");const pProds=currentAdminPerms.canAddProducts;if(pProds&&Object.keys(pProds).length>0&&pProds[pCat]!==true){alert(t("errorSaving"));return;}
+  let img=getInputValue("image");const f=getElement("imageFile")?.files[0];if(f)img=await compressImageFile(f);if(!img)img="images/noimg.jpg";
+  const p={name:getInputValue("name"),description:getInputValue("description"),code:getInputValue("code"),category:pCat,image:img,createdAt:Date.now()};
   if(!p.name||!p.code){alert(t("fillRequired"));return;}
   if(editingId){await updateDoc(doc(db,"products",editingId),p);editingId=null;alert(t("productUpdated"));}
   else{await addDoc(productsCollection,p);alert(t("productAdded"));}
@@ -584,8 +591,10 @@ function catDisplayName(cat){const meta=getCatMetaObj(cat);return getLang()==="e
 function rebuildCatPickCards(){
   const cont=document.getElementById("catPickCardsContainer");if(!cont)return;
   const cats=[...new Set([...CAT_ORDER_ADMIN,...allProducts.filter(p=>p.category).map(p=>p.category)])];
+  const pCats=currentAdminPerms.categories;
+  const allowed=cats.filter(cat=>!pCats||Object.keys(pCats).length===0||pCats[cat]!==false);
   cont.innerHTML="";
-  cats.forEach(cat=>{
+  allowed.forEach(cat=>{
     const count=allProducts.filter(p=>p.category===cat).length;
     const btn=document.createElement("button");btn.type="button";btn.className="cat-pick-card";btn.dataset.cat=cat;
     btn.innerHTML=`<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`;
@@ -597,24 +606,24 @@ function rebuildCatPickCards(){
   if(catSelect){
     const curVal=catSelect.value;
     catSelect.innerHTML="";
-    cats.forEach(cat=>{
+    allowed.forEach(cat=>{
       const opt=document.createElement("option");opt.value=cat;
       opt.textContent=catDisplayName(cat);
       catSelect.appendChild(opt);
     });
-    if(cats.includes(curVal))catSelect.value=curVal;
+    if(allowed.includes(curVal))catSelect.value=curVal;
   }
   // Rebuild bulk category select
   const bulkSelect=document.getElementById("bulkCategorySelect");
   if(bulkSelect){
     const curVal2=bulkSelect.value;
     bulkSelect.innerHTML=`<option value="">-- ${t("selectCategory")} --</option>`;
-    cats.forEach(cat=>{
+    allowed.forEach(cat=>{
       const opt=document.createElement("option");opt.value=cat;
       opt.textContent=catDisplayName(cat);
       bulkSelect.appendChild(opt);
     });
-    if(cats.includes(curVal2))bulkSelect.value=curVal2;
+    if(allowed.includes(curVal2))bulkSelect.value=curVal2;
   }
 }
 
@@ -802,6 +811,7 @@ function applyAdminLang(){
   const tabKeys = ["productsTab","invoicesTab","customersTab","branchesTab","categoriesTab"];
   tabs.forEach((tab,i) => {
     if(tabKeys[i]) tab.textContent = t(tabKeys[i]);
+    if(i===2)tab.style.display=currentAdminPerms.canManageCustomers===false?"none":"";
   });
 
   // Category picker title
@@ -1023,9 +1033,17 @@ document.getElementById("branchRenameModal")?.addEventListener("keydown", e => {
   });
 });
 
+async function loadAdminPermissions(){
+  if(currentAdminDocId&&currentAdminDocId!=="local"){
+    try{
+      const snap=await getDoc(doc(db,"admins",currentAdminDocId));
+      if(snap.exists()){currentAdminPerms=snap.data().permissions||{};}
+    }catch(e){}
+  }
+}
 async function init(){
   if(sessionStorage.getItem(VERIFIED_KEY)!=="true")await seedDefaultAdmin();
   const authed=await checkAdminAuth();if(!authed){if(!getLocalAdmin())saveLocalAdmin("admin","admin");return;}
-  sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");applyAdminLang();initTabs();try{await loadCategoriesFromFirestore();await loadTabContent("products");}catch(e){}
+  sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");await loadAdminPermissions();applyAdminLang();initTabs();try{await loadCategoriesFromFirestore();await loadTabContent("products");}catch(e){}
 }
 init();

@@ -90,6 +90,7 @@ function applyLang(){
 document.getElementById("langToggle")?.addEventListener("click",()=>{
   setLang(getLang()==="ar"?"en":"ar");
   applyLang();
+  renderCart();
 });
 
 /* AUTH */
