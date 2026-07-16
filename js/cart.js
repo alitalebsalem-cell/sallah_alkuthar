@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import { generateInvoicePdf } from "./invoice-pdf.js";
 import {
-  collection, addDoc, getDocs, updateDoc, doc,
+  collection, addDoc, getDoc, getDocs, updateDoc, doc,
   query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel, applyFullLang, applyCartLang } from "./i18n.js";
@@ -103,6 +103,20 @@ function saveSession(c,p){
   updateAuthUI();showCart();
 }
 function clearSession(){ currentCustomer=null;currentCustomerPin="";localStorage.removeItem(SESSION_KEY);updateAuthUI();hideCart(); }
+async function refreshCustomerFromFirestore(){
+  if(!currentCustomer||!currentCustomer.id)return;
+  try{
+    const snap=await getDoc(doc(db,"customers",currentCustomer.id));
+    if(snap.exists()){
+      const d=snap.data();
+      currentCustomer.branch=d.branch||"";
+      currentCustomer.accountType=d.accountType||"";
+      currentCustomer.permissions=d.permissions||{};
+      localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentCustomer.id,name:currentCustomer.name,branch:currentCustomer.branch,pin:currentCustomerPin,accountType:currentCustomer.accountType,permissions:currentCustomer.permissions}));
+      updateAuthUI();
+    }
+  }catch(e){console.warn("Customer refresh failed:",e);}
+}
 function updateAuthUI(){
   if(currentCustomer){
     if(loginBtn)loginBtn.style.display="none";
@@ -466,4 +480,4 @@ function loadCategoryCounts(){
 }
 applyLang();
 loadSession();
-(async function(){ await loadCategoriesFromFirestore(); populateBranchDropdown(); renderCart(); })();
+(async function(){ await loadCategoriesFromFirestore(); populateBranchDropdown(); renderCart(); if(currentCustomer)await refreshCustomerFromFirestore(); })();
