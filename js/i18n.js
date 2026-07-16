@@ -605,8 +605,7 @@ export function applyCartLang(){
   // Header
   const h1 = document.querySelector(".store-header h1");
   if(h1) h1.textContent = t("cartTitle");
-  const backBtn = document.querySelector(".header-left .back-btn");
-  if(backBtn) backBtn.textContent = t("backToStore");
+  document.querySelectorAll(".store-header [data-i18n]").forEach(el=>{const k=el.getAttribute("data-i18n");if(k&&t(k)!==k)el.textContent=t(k);});
 
   // Category labels
   document.querySelectorAll(".cat-card .cat-label").forEach(el => {
