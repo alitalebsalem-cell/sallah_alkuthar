@@ -138,7 +138,7 @@ async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
-async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();rebuildCatPickCards();renderCategories();try{localStorage.removeItem("sallah_products_cache");}catch(e){}}
+async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();rebuildCatPickCards();renderCategories();try{localStorage.setItem("sallah_products_cache",JSON.stringify(allProducts));}catch(e){}}
 
 function updateCategoryBadges(){
   document.querySelectorAll(".cat-pick-card").forEach(c => {
@@ -882,6 +882,32 @@ function applyAdminLang(){
 
   // Products table buttons
   document.querySelectorAll(".edit-btn").forEach(b => b.textContent = t("editBtn"));
+
+  // Delete modals
+  const delCustTitle=document.getElementById("deleteCustTitle");
+  if(delCustTitle)delCustTitle.textContent=t("deleteCustomerTitle");
+  const delCustMsg=document.getElementById("deleteCustMsg");
+  if(delCustMsg)delCustMsg.textContent=t("deleteCustomerMsg");
+  const delCustType=document.getElementById("deleteCustConfirmType");
+  if(delCustType)delCustType.textContent=t("deleteCategoryConfirmType");
+  const delCustCancel=document.getElementById("deleteCustCancelBtn");
+  if(delCustCancel)delCustCancel.textContent=t("cancelDelete");
+  const delCustConfirm=document.getElementById("deleteCustConfirmBtn");
+  if(delCustConfirm)delCustConfirm.textContent=t("deleteConfirm");
+  const delCustInput=document.getElementById("deleteCustConfirmInput");
+  if(delCustInput)delCustInput.placeholder=t("confirmDelete");
+  const delInvTitle=document.getElementById("deleteInvTitle");
+  if(delInvTitle)delInvTitle.textContent=t("deleteInvoiceTitle");
+  const delInvMsg=document.getElementById("deleteInvMsg");
+  if(delInvMsg)delInvMsg.textContent=t("deleteInvoiceMsg");
+  const delInvType=document.getElementById("deleteInvConfirmType");
+  if(delInvType)delInvType.textContent=t("deleteCategoryConfirmType");
+  const delInvCancel=document.getElementById("deleteInvCancelBtn");
+  if(delInvCancel)delInvCancel.textContent=t("cancelDelete");
+  const delInvConfirm=document.getElementById("deleteInvConfirmBtn");
+  if(delInvConfirm)delInvConfirm.textContent=t("deleteConfirm");
+  const delInvInput=document.getElementById("deleteInvoiceConfirmInput");
+  if(delInvInput)delInvInput.placeholder=t("confirmDelete");
   document.querySelectorAll(".delete-btn").forEach(b => b.textContent = t("deleteBtn"));
 
   // Invoices section
