@@ -63,7 +63,7 @@
       <select id="loginName" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:10px;font-size:14px;margin-bottom:10px;background:#f9f8f6;display:none;">
         <option value="">-- اختر الاسم --</option>
       </select>
-      <input type="password" id="loginPin" placeholder="كلمة المرور (4 أرقام)" maxlength="4" inputmode="numeric" autocomplete="off" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:10px;font-size:14px;margin-bottom:10px;display:none;">
+      <input type="password" id="loginPin" placeholder="كلمة المرور" autocomplete="off" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:10px;font-size:14px;margin-bottom:10px;display:none;">
       <button id="loginSubmit" type="button" style="width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#325247,#414935);color:#fff;font-size:16px;font-weight:800;cursor:pointer;display:none;">دخول</button>
       <div id="loginError" style="color:#dc3545;font-size:13px;margin-top:8px;min-height:18px;"></div>
     </div>
@@ -115,27 +115,27 @@
       ar: {
         loginTitle:"عرض الفواتير", loginSub:"سجّل دخولك لعرض الفواتير",
         accountType:"-- نوع الحساب --", accountTypeLab:"حساب معمل", accountTypeBranch:"حساب فرع",
-        selectName:"-- اختر الاسم --", pinPlaceholder:"كلمة المرور (4 أرقام)",
+        selectName:"-- اختر الاسم --", pinPlaceholder:"كلمة المرور",
         submit:"دخول", title:"📄 عرض الفواتير",
         search:"🔍 البحث بالعميل أو رقم الفاتورة...", loading:"جاري تحميل الفواتير...",
         empty:"لا توجد فواتير", show:"عرض التفاصيل", hide:"إخفاء", print:"🖨 طباعة",
         items:"المنتجات", qty:"الكمية", product:"المنتج", sku:"KOD", noItems:"لا توجد منتجات",
         customer:"العميل", logout:"🚪 تسجيل الخروج", logoutConfirm:"هل تريد تسجيل الخروج؟",
         toggle:"EN", selectAccountType:"اختر نوع الحساب", selectNameErr:"اختر الاسم",
-        pinFourDigits:"كلمة المرور 4 أرقام", accountNotFound:"الحساب غير موجود", wrongPassword:"كلمة المرور خاطئة",
+        pinFourDigits:"الرجاء إدخال كلمة المرور", enterPin:"الرجاء إدخال كلمة المرور", accountNotFound:"الحساب غير موجود", wrongPassword:"كلمة المرور خاطئة",
         menuStore:"المتجر", menuCart:"السلة", menuAdmin:"لوحة الإدارة", menuInvoices:"عرض الفواتير", menuDashboard:"Dashboard",
       },
       en: {
         loginTitle:"Invoices View", loginSub:"Login to view invoices",
         accountType:"-- Account Type --", accountTypeLab:"Lab Account", accountTypeBranch:"Branch Account",
-        selectName:"-- Select Name --", pinPlaceholder:"PIN (4 digits)",
+        selectName:"-- Select Name --", pinPlaceholder:"Password",
         submit:"Login", title:"📄 Invoices View",
         search:"🔍 Search by customer or invoice number...", loading:"Loading invoices...",
         empty:"No invoices found", show:"Show Details", hide:"Hide", print:"🖨 Print",
         items:"Items", qty:"Qty", product:"Product", sku:"SKU", noItems:"No items",
         customer:"Customer", logout:"🚪 Logout", logoutConfirm:"Are you sure you want to logout?",
         toggle:"عربي", selectAccountType:"Select account type", selectNameErr:"Select a name",
-        pinFourDigits:"PIN must be 4 digits", accountNotFound:"Account not found", wrongPassword:"Wrong PIN",
+        pinFourDigits:"Please enter password", enterPin:"Please enter password", accountNotFound:"Account not found", wrongPassword:"Wrong PIN",
         menuStore:"Store", menuCart:"Cart", menuAdmin:"Admin Panel", menuInvoices:"Invoices", menuDashboard:"Dashboard",
       }
     };
@@ -277,7 +277,7 @@
       const pin = loginPin.value;
       if(!at){ loginError.textContent = tt("selectAccountType"); return; }
       if(!name){ loginError.textContent = tt("selectNameErr"); return; }
-      if(!pin || pin.length !== 4){ loginError.textContent = tt("pinFourDigits"); return; }
+      if(!pin){ loginError.textContent = tt("enterPin"); return; }
       try{
         const { getDocs: gd, collection: gc, query: gq, where: gw } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
         let match = null;
