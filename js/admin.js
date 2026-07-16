@@ -79,6 +79,9 @@ function formatArabicDate(date){if(!date)return"";const d=date.toDate?date.toDat
 const AUTH_KEY="sallah_admin_unlocked";
 const VERIFIED_KEY="sallah_admin_verified";
 const ADMIN_SESSION_KEY="sallah_admin_session";
+const LOCAL_ADMIN_KEY="sallah_local_admin";
+function getLocalAdmin(){try{const d=localStorage.getItem(LOCAL_ADMIN_KEY);if(d)return JSON.parse(d);}catch(e){}return null;}
+function saveLocalAdmin(username,password){try{localStorage.setItem(LOCAL_ADMIN_KEY,JSON.stringify({username,password}));}catch(e){}}
 let currentAdminData=null;
 let currentAdminDocId=null;
 
@@ -88,7 +91,7 @@ function revertToLoginScreen(msg){
   getElement("adminLoginScreen").hidden=false;
   getElement("adminPanel").hidden=true;
   if(msg){const e=getElement("adminLoginError");if(e)e.textContent=msg;}
-  const s=document.querySelector("script[data-admin-module='true']");if(s)s.remove();
+  // Keep script tag in DOM so processLogin() works on retry
 }
 function showAdminPanel(){
   sessionStorage.setItem(AUTH_KEY,"true");
@@ -99,20 +102,34 @@ async function checkAdminAuth(){
   if(sessionStorage.getItem(VERIFIED_KEY)==="true"){
     const savedUser=sessionStorage.getItem(ADMIN_SESSION_KEY);
     if(savedUser&&(!currentAdminData||currentAdminData.username!==savedUser)){
-      try{const q=query(adminsCollection,where("username","==",savedUser));const snap=await getDocs(q);if(!snap.empty){currentAdminData=snap.docs[0].data();currentAdminDocId=snap.docs[0].id;}}catch(e){}
+      try{const local=JSON.parse(localStorage.getItem(LOCAL_ADMIN_KEY));if(local&&local.username===savedUser){currentAdminData={username:local.username,password:local.password};currentAdminDocId="local";}}catch(e){}
+      if(!currentAdminData)try{const q=query(adminsCollection,where("username","==",savedUser));const snap=await Promise.race([getDocs(q),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),15000))]);if(!snap.empty){currentAdminData=snap.docs[0].data();currentAdminDocId=snap.docs[0].id;}}catch(e){}
     }
     return true;
   }
+  // Check for pending login from inline script
+  return await processLoginInternal();
+}
+async function processLoginInternal(){
   const la=sessionStorage.getItem("admin_login_attempt");
   if(!la){revertToLoginScreen("");return false;}
   const{username,password}=JSON.parse(la);sessionStorage.removeItem("admin_login_attempt");
+  // 1) Try localStorage cache first (instant)
+  const local=getLocalAdmin();
+  if(local&&local.username===username&&local.password===password){
+    currentAdminData={username:local.username,password:local.password};currentAdminDocId="local";
+    sessionStorage.setItem(VERIFIED_KEY,"true");sessionStorage.setItem(ADMIN_SESSION_KEY,username);
+    showAdminPanel();return true;
+  }
+  // 2) Fall back to Firestore with timeout
   try{
     const q=query(adminsCollection,where("username","==",username));
     const snap=await Promise.race([getDocs(q),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),15000))]);
-    if(!snap.empty){const a=snap.docs[0];const d=a.data();if(d.password===password){currentAdminData=d;currentAdminDocId=a.id;sessionStorage.setItem(VERIFIED_KEY,"true");sessionStorage.setItem(ADMIN_SESSION_KEY,username);showAdminPanel();return true;}}
+    if(!snap.empty){const a=snap.docs[0];const d=a.data();if(d.password===password){currentAdminData=d;currentAdminDocId=a.id;sessionStorage.setItem(VERIFIED_KEY,"true");sessionStorage.setItem(ADMIN_SESSION_KEY,username);saveLocalAdmin(d.username||username,d.password||password);showAdminPanel();return true;}}
     revertToLoginScreen(t("adminLoginError"));return false;
   }catch(e){revertToLoginScreen(t("adminConnError"));return false;}
 }
+window.processLogin=processLoginInternal;
 async function seedDefaultAdmin(){try{const s=await Promise.race([getDocs(adminsCollection),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),10000))]);if(s.empty)await addDoc(adminsCollection,{username:"admin",password:"admin"});}catch(e){}}
 
 /* TABS */
@@ -981,5 +998,5 @@ document.getElementById("branchRenameModal")?.addEventListener("keydown", e => {
   });
 });
 
-async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed)return;sessionStorage.setItem(AUTH_KEY,"true");await loadCategoriesFromFirestore();applyAdminLang();initTabs();await loadTabContent("products");}
+async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed){if(!getLocalAdmin())saveLocalAdmin("admin","admin");return;}sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");await loadCategoriesFromFirestore();applyAdminLang();initTabs();await loadTabContent("products");}
 init();
