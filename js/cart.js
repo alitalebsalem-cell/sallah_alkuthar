@@ -305,6 +305,9 @@ function renderCart(){
   if(cart.length===0)cartItems.innerHTML=`<div class="cart-item"><div class="info"><h3>${t("cartEmpty")}</h3></div></div>`;
   else if(vis===0)cartItems.innerHTML=`<div class="cart-item"><div class="info"><h3>${t("noResults")}</h3></div></div>`;
   if(cartTotal)cartTotal.textContent=getCartTotalQty();
+  // Update mobile invoice modal total
+  const invModalTotal=document.getElementById("invoiceModalTotal");
+  if(invModalTotal)invModalTotal.textContent=getCartTotalQty();
   saveCart();
   loadCategoryCounts();
 }
@@ -423,6 +426,25 @@ if(cartSearch)cartSearch.addEventListener("input",renderCart);
 if(createInvoiceButton)createInvoiceButton.addEventListener("click",createInvoice);
 document.getElementById("whatsappBtn")?.addEventListener("click",()=>window.open("https://wa.me/966541429240","_blank"));
 if(clearCartButton)clearCartButton.addEventListener("click",openClearCartModal);
+
+// Mobile: FAB + invoice modal
+const invoiceFab=document.getElementById("invoiceFab");
+const invoiceModal=document.getElementById("invoiceModal");
+const invoiceModalClose=document.getElementById("invoiceModalClose");
+const createInvoiceMobile=document.getElementById("createInvoiceMobile");
+const whatsappMobile=document.getElementById("whatsappMobile");
+const branchNameMobile=document.getElementById("branchNameMobile");
+const clearCartTopBtn=document.getElementById("clearCartTopBtn");
+
+function populateBranchMobile(){if(!branchNameMobile)return;const cv=branchNameMobile.value;branchNameMobile.innerHTML='<option value="">-- اختر الفرع --</option>';getBranches().forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;branchNameMobile.appendChild(o);});if(cv)branchNameMobile.value=cv;}
+function openInvoiceModal(){if(!invoiceModal)return;populateBranchMobile();const t=document.getElementById("invoiceModalTotal");if(t)t.textContent=getCartTotalQty();invoiceModal.hidden=false;invoiceModal.setAttribute("aria-hidden","false");requestAnimationFrame(()=>invoiceModal.classList.add("active"));}
+function closeInvoiceModal(){if(!invoiceModal)return;invoiceModal.classList.remove("active");invoiceModal.setAttribute("aria-hidden","true");setTimeout(()=>{invoiceModal.hidden=true;},200);}
+invoiceFab?.addEventListener("click",openInvoiceModal);
+invoiceModalClose?.addEventListener("click",closeInvoiceModal);
+invoiceModal?.addEventListener("click",e=>{if(e.target===invoiceModal)closeInvoiceModal();});
+createInvoiceMobile?.addEventListener("click",()=>{const m=document.getElementById("branchNameMobile");if(m){const mb=document.getElementById("branchName");if(mb)mb.value=m.value;}closeInvoiceModal();createInvoice();});
+whatsappMobile?.addEventListener("click",()=>window.open("https://wa.me/966541429240","_blank"));
+clearCartTopBtn?.addEventListener("click",openClearCartModal);
 if(confirmClearInput&&confirmClearCartButton){confirmClearInput.addEventListener("input",()=>{confirmClearCartButton.disabled=!isClearCartConfirmed();});confirmClearInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&isClearCartConfirmed())clearCart();});}
 if(cancelClearCartButton)cancelClearCartButton.addEventListener("click",closeClearCartModal);
 if(confirmClearCartButton)confirmClearCartButton.addEventListener("click",()=>{if(isClearCartConfirmed())clearCart();});

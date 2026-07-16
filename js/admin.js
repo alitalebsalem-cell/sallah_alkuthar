@@ -661,6 +661,8 @@ function applyAdminLang(){
   document.documentElement.dir = isEn ? "ltr" : "rtl";
   const btn = document.getElementById("adminLangToggle");
   if(btn) btn.textContent = isEn ? "🌐 عربي" : "🌐 EN";
+  const logoutBtn = document.getElementById("adminLogoutBtn");
+  if(logoutBtn) logoutBtn.textContent = t("logout");
 
   // Admin login screen
   const loginH1 = document.querySelector("#adminLoginScreen h1");
@@ -805,6 +807,10 @@ function applyAdminLang(){
 getElement("adminLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");
   applyAdminLang();
+});
+
+document.getElementById("adminLogoutBtn")?.addEventListener("click", () => {
+  if(confirm(t("logoutConfirm"))) revertToLoginScreen("");
 });
 
 // Add new category button

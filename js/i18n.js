@@ -639,6 +639,19 @@ export function applyCartLang(){
   const branchSel = document.querySelector("#branchName option");
   if(branchSel) branchSel.textContent = t("selectBranch");
 
+  // Mobile cart elements
+  document.querySelectorAll("#cartTopBar [data-i18n]").forEach(el=>{const k=el.getAttribute("data-i18n");if(k&&t(k)!==k)el.textContent=t(k);});
+  const invFab=document.getElementById("invoiceFab");
+  if(invFab)invFab.title=t("createInvoice");
+  const invModTitle=document.querySelector("#invoiceModal h2 span");
+  if(invModTitle)invModTitle.textContent=t("createInvoice");
+  const createInvMob=document.getElementById("createInvoiceMobile");
+  if(createInvMob)createInvMob.querySelector("span").textContent=t("createInvoice");
+  const whatsMob=document.getElementById("whatsappMobile");
+  if(whatsMob)whatsMob.querySelector("span").textContent=t("whatsapp");
+  const brMobOpt=document.querySelector("#branchNameMobile option");
+  if(brMobOpt)brMobOpt.textContent=t("selectBranch");
+
   // Cart search
   const cartSearch = document.getElementById("cartSearch");
   if(cartSearch) cartSearch.placeholder = t("cartSearchPlaceholder");
