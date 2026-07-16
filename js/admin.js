@@ -492,6 +492,7 @@ window.confirmDeleteInvoice=async function(){if(!deleteInvoiceTargetId)return;co
 /* BRANCHES */
 const BRANCHES_KEY="sallah_branches";
 const DEFAULT_BRANCHES=["فرع الحمدانية - Hamdanya","فرع الطائف - Altayf","فرع السامر - Al-Samer","فرع المعمل - Almamal"];
+const LOCAL_ADMIN_KEY="sallah_local_admin";
 function getBranches(){try{const d=localStorage.getItem(BRANCHES_KEY);if(d){const p=JSON.parse(d);if(Array.isArray(p)&&p.length)return p;}}catch(e){}return[...DEFAULT_BRANCHES];}
 function saveBranches(l){localStorage.setItem(BRANCHES_KEY,JSON.stringify(l));}
 function populateCustBranchDropdown(){
@@ -960,6 +961,8 @@ document.getElementById("adminSaveProfileBtn")?.addEventListener("click",async()
   if(np)updates.password=np;
   if(Object.keys(updates).length===0){alert(t("noChanges"));return;}
   try{await updateDoc(doc(db,"admins",currentAdminDocId),updates);Object.assign(currentAdminData,updates);document.getElementById("adminProfileEditSection").style.display="none";applyAdminLang();alert(t("profileUpdated"));}catch(e){alert(t("errorOccurredShort"));}
+  // Sync to localStorage for offline login
+  try{localStorage.setItem(LOCAL_ADMIN_KEY,JSON.stringify({username:currentAdminData.username||"admin",password:currentAdminData.password||"admin"}));}catch(e){}
 });
 
 // Branch rename modal
