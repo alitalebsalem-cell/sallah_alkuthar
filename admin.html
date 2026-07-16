@@ -315,8 +315,8 @@
 <!-- DELETE CUSTOMER CONFIRM MODAL -->
 <div id="deleteCustomerModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="clear-cart-dialog">
-    <h3>حذف العميل</h3>
-    <p>هل أنت متأكد من حذف <strong id="deleteCustName"></strong>؟<br><br>اكتب <strong>Yes</strong> للتأكيد:</p>
+    <h3 id="deleteCustTitle">حذف العميل</h3>
+    <p><span id="deleteCustMsg">هل أنت متأكد من حذف</span> <strong id="deleteCustName"></strong>؟<br><br><span id="deleteCustConfirmType">اكتب Yes للتأكيد:</span></p>
     <input type="text" id="deleteCustConfirmInput" placeholder="Yes" autocomplete="off" spellcheck="false">
     <div class="clear-cart-actions">
       <button id="deleteCustCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteCustomerModal()">إلغاء</button>
@@ -328,12 +328,12 @@
 <!-- DELETE INVOICE CONFIRM MODAL -->
 <div id="deleteInvoiceModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="clear-cart-dialog">
-    <h3>حذف الفاتورة</h3>
-    <p>هل أنت متأكد من حذف فاتورة <strong id="deleteInvoiceName"></strong>؟<br><br>اكتب <strong>Yes</strong> للتأكيد:</p>
+    <h3 id="deleteInvTitle">حذف الفاتورة</h3>
+    <p><span id="deleteInvMsg">هل أنت متأكد من حذف فاتورة</span> <strong id="deleteInvoiceName"></strong>؟<br><br><span id="deleteInvConfirmType">اكتب Yes للتأكيد:</span></p>
     <input type="text" id="deleteInvoiceConfirmInput" placeholder="Yes" autocomplete="off" spellcheck="false">
     <div class="clear-cart-actions">
-      <button id="deleteInvoiceCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteInvoiceModal()">إلغاء</button>
-      <button id="deleteInvoiceConfirmBtn" class="confirm-clear-cart" type="button" disabled onclick="if(!this.disabled){this.disabled=true;confirmDeleteInvoice()}">حذف</button>
+      <button id="deleteInvCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteInvoiceModal()">إلغاء</button>
+      <button id="deleteInvConfirmBtn" class="confirm-clear-cart" type="button" disabled onclick="if(!this.disabled){this.disabled=true;confirmDeleteInvoice()}">حذف</button>
     </div>
   </div>
 </div>
