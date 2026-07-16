@@ -243,11 +243,15 @@
     if(!username || !password){ loginError.textContent = tr.err1; return; }
     loginError.textContent = tr.checking;
     sessionStorage.setItem("admin_login_attempt", JSON.stringify({username, password}));
-    loadAdminScript();
+    // Reload so admin.js module runs fresh (avoids module caching issues)
+    location.reload();
   });
 
   if(sessionStorage.getItem("sallah_admin_verified") === "true"){
     showAdminPanelUI();
+    loadAdminScript();
+  }else if(sessionStorage.getItem("admin_login_attempt")){
+    // Pending login from a reload — load admin.js to process it
     loadAdminScript();
   }else{
     sessionStorage.removeItem(AUTH_KEY);
