@@ -62,7 +62,7 @@
 <script type="module">
 import { db } from "./js/firebase.js";
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-import { getLang, setLang, t, catLabel } from "./js/i18n.js";
+import { getLang, setLang, t, catLabel, applyMenuLang } from "./js/i18n.js";
 
 const adminmanagerColl = collection(db, "adminmanager");
 const adminsColl = collection(db, "admins");
@@ -97,6 +97,7 @@ function applyAdminMgrLang(){
   const ph3=document.getElementById("newAdminUser");if(ph3)ph3.placeholder=t("username");
   const ph4=document.getElementById("newAdminPass");if(ph4)ph4.placeholder=t("password");
   const ab=document.getElementById("addAdminBtn");if(ab)ab.innerHTML=t("add")?'➕ '+t("add"):'➕ Add';
+  applyMenuLang();
 }
 
 document.getElementById("adminMgrLangToggle")?.addEventListener("click",()=>{setLang(getLang()==="en"?"ar":"en");applyAdminMgrLang();});
@@ -253,6 +254,24 @@ async function renderAdmins(){
 function escapeHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
 
 applyAdminMgrLang();
+</script>
+
+<button class="dash-menu-btn" id="dashMenuBtn" aria-label="القائمة"><span></span><span></span><span></span></button>
+<div class="dash-menu-dropdown" id="dashMenuDropdown">
+  <a href="index.html" data-i18n-menu="menuStore"><span class="dash-icon">🛒</span> المتجر</a>
+  <a href="cart.html" data-i18n-menu="menuCart"><span class="dash-icon">📋</span> السلة</a>
+  <a href="admin.html" data-i18n-menu="menuAdmin"><span class="dash-icon">⚙️</span> لوحة الإدارة</a>
+  <a href="admins.html" data-i18n-menu="menuAdmins"><span class="dash-icon">🔐</span> إدارة المدراء</a>
+  <a href="invoices-view.html" data-i18n-menu="menuInvoices"><span class="dash-icon">📄</span> عرض الفواتير</a>
+  <a href="dashboard.html" data-i18n-menu="menuDashboard"><span class="dash-icon">🏠</span> Dashboard</a>
+</div>
+<script>
+document.addEventListener("click",function(e){
+  var btn=document.getElementById("dashMenuBtn"),menu=document.getElementById("dashMenuDropdown");
+  if(!btn||!menu)return;
+  if(btn.contains(e.target)){btn.classList.toggle("active");menu.classList.toggle("show");}
+  else{btn.classList.remove("active");menu.classList.remove("show");}
+});
 </script>
 </body>
 </html>

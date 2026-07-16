@@ -32,9 +32,22 @@
     <a href="dashboard.html"><img src="images/logo.png" class="logo" alt="Logo" style="width:120px;height:auto;"></a>
   </div>
 
-  <div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">
-    <button id="adminLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
-    <button id="adminLogoutBtn" type="button" style="padding:6px 14px;border:1.5px solid #dc3545;border-radius:8px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">🚪 تسجيل الخروج</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="adminProfileDisplay" style="font-size:14px;font-weight:800;color:var(--dark);"></span>
+      <button id="adminProfileEditBtn" type="button" style="padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">✏️</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button id="adminLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
+      <button id="adminLogoutBtn" type="button" style="padding:6px 14px;border:1.5px solid #dc3545;border-radius:8px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">🚪 تسجيل الخروج</button>
+    </div>
+  </div>
+  <div id="adminProfileEditSection" style="display:none;margin-bottom:12px;padding:12px;background:var(--white);border-radius:var(--radius);border:1.5px solid var(--accent);">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+      <input type="text" id="adminEditProfileUser" placeholder="Username" style="flex:1;min-width:120px;padding:8px;border:1.5px solid rgba(122,102,85,.2);border-radius:6px;font-size:13px;">
+      <input type="password" id="adminEditProfilePass" placeholder="New password" style="flex:1;min-width:120px;padding:8px;border:1.5px solid rgba(122,102,85,.2);border-radius:6px;font-size:13px;">
+      <button id="adminSaveProfileBtn" type="button" style="padding:8px 16px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:13px;">💾 حفظ</button>
+    </div>
   </div>
 
   <div class="admin-tabs">
@@ -379,6 +392,20 @@ document.addEventListener("click",function(e){
     <div class="clear-cart-actions">
       <button id="renameCatCancelBtn" class="cancel-clear-cart" type="button" data-i18n="cancelDelete">Cancel</button>
       <button id="renameCatConfirmBtn" class="confirm-clear-cart" type="button" data-i18n="save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BRANCH RENAME MODAL -->
+<div id="branchRenameModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="clear-cart-dialog">
+    <h3 id="branchRenameModalTitle" data-i18n="editBranch">Edit Branch Name</h3>
+    <p style="font-size:13px;color:var(--secondary);margin-bottom:10px;" data-i18n="branchNameFormat">Enter the name as: Arabic name - English name</p>
+    <input type="text" id="branchRenameArInput" data-i18n-placeholder="branchNameAr" placeholder="Branch name (Arabic)" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <input type="text" id="branchRenameEnInput" data-i18n-placeholder="branchNameEn" placeholder="Branch name (English)" autocomplete="off" spellcheck="false" style="margin-bottom:8px;">
+    <div class="clear-cart-actions">
+      <button id="branchRenameCancelBtn" class="cancel-clear-cart" type="button" data-i18n="cancelDelete">Cancel</button>
+      <button id="branchRenameConfirmBtn" class="confirm-clear-cart" type="button" data-i18n="save">Save</button>
     </div>
   </div>
 </div>
