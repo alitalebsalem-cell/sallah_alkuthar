@@ -30,6 +30,7 @@ async function loadCategoriesFromFirestore(){
     const meta={};
     snap.forEach(d=>{const d2=d.data();meta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,desc:d2.desc||"",showDesc:d2.showDesc!==false};});
     const existing=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};
+    Object.keys(meta).forEach(k=>{if(existing[k]&&existing[k].showDesc!==undefined)meta[k].showDesc=existing[k].showDesc;});
     Object.assign(existing,meta);existing._catOrder=snap.docs.map(d=>d.data().nameAr);
     localStorage.setItem("simsim_cat_meta",JSON.stringify(existing));
   }catch(e){}

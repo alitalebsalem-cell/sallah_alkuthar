@@ -110,7 +110,7 @@ async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
-async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();rebuildCatPickCards();renderCategories();}
+async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();rebuildCatPickCards();renderCategories();try{localStorage.removeItem("sallah_products_cache");}catch(e){}}
 
 function updateCategoryBadges(){
   document.querySelectorAll(".cat-pick-card").forEach(c => {
@@ -365,7 +365,7 @@ function renderAllCustomers(customers){
     const ds=cust.createdAt?formatArabicDate(cust.createdAt):"";
     const acc=cust.accountType||"غير محدد";
     const card=document.createElement("div");card.className="customer-admin-card";
-    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong><span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-edit-acc-btn" type="button" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""} | ${t("branchName")}: <span class="cust-branch-label">${cust.branch?escapeHTML(cust.branch):"---"}</span> <button class="cust-edit-branch-btn" type="button" style="font-size:10px;padding:1px 6px;border:1px solid var(--accent);border-radius:4px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="cust-toggle-btn" type="button">${t("showInvoices")}</button><button class="cust-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><div class="cust-invoices"></div>`;
+    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong> <span style="font-size:11px;color:var(--secondary);font-weight:600;">PIN: ${escapeHTML(cust.pin||"")}</span> <span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-edit-acc-btn" type="button" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""} | ${t("branchName")}: <span class="cust-branch-label">${cust.branch?escapeHTML(cust.branch):"---"}</span> <button class="cust-edit-branch-btn" type="button" style="font-size:10px;padding:1px 6px;border:1px solid var(--accent);border-radius:4px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="cust-toggle-btn" type="button">${t("showInvoices")}</button><button class="cust-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><div class="cust-invoices"></div>`;
     const toggleBtn=card.querySelector(".cust-toggle-btn");
     const delBtn=card.querySelector(".cust-del-btn");
     const editAccBtn=card.querySelector(".cust-edit-acc-btn");
@@ -499,7 +499,7 @@ function catDisplayName(cat){const meta=getCatMetaObj(cat);return getLang()==="e
 
 function rebuildCatPickCards(){
   const cont=document.getElementById("catPickCardsContainer");if(!cont)return;
-  const cats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
+  const cats=[...new Set([...CAT_ORDER_ADMIN,...allProducts.filter(p=>p.category).map(p=>p.category)])];
   cont.innerHTML="";
   cats.forEach(cat=>{
     const count=allProducts.filter(p=>p.category===cat).length;
@@ -627,7 +627,7 @@ function renderCategories(){
   const list=document.getElementById("categoriesList");const sec=document.getElementById("catProdSection");
   if(!list)return;
   if(sec)sec.style.display="none";list.style.display="";
-  const cats=[...new Set(allProducts.map(p=>p.category).filter(Boolean))];
+  const cats=[...new Set([...CAT_ORDER_ADMIN,...allProducts.map(p=>p.category).filter(Boolean)])];
   list.innerHTML="";
   if(cats.length===0){list.innerHTML=`<div class='empty-msg'>${t("noProductsInCat")}</div>`;return;}
   cats.forEach(cat=>{
@@ -635,13 +635,14 @@ function renderCategories(){
     const dispName=catDisplayName(cat);
     const hasDesc=!!meta.desc;
     const showDesc=meta.showDesc!==false;
+    const toggleLabel=showDesc?t("hideDescLabel")||"🕶️":t("showDescLabel")||"👁️";
     const card=document.createElement("div");card.className="cat-admin-card";
-    card.innerHTML=`<div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${hasDesc?`<div class="cat-admin-desc" style="display:${showDesc?'':'none'}">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button>${hasDesc?`<button class="cat-desc-toggle-btn" type="button" style="font-size:11px;">${showDesc?'🕶️':'👁️'}</button>`:""}<button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
+    card.innerHTML=`<div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${hasDesc?`<div class="cat-admin-desc" style="display:${showDesc?'':'none'}">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button>${hasDesc?`<button class="cat-desc-toggle-btn" type="button" style="font-size:11px;">${toggleLabel}</button>`:""}<button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
     card.querySelector(".cat-admin-name").addEventListener("click",()=>showCategoryProducts(cat));
     card.querySelector(".cat-rename-btn").addEventListener("click",e=>{e.stopPropagation();openRenameCatModal(cat);});
     card.querySelector(".cat-del-btn").addEventListener("click",e=>{e.stopPropagation();deleteCategory(cat);});
     const toggleBtn=card.querySelector(".cat-desc-toggle-btn");
-    if(toggleBtn)toggleBtn.addEventListener("click",e=>{e.stopPropagation();const allMeta=getCatMeta();if(!allMeta[cat])allMeta[cat]={};allMeta[cat].showDesc=!showDesc;saveCatMeta(allMeta);renderCategories();});
+    if(toggleBtn)toggleBtn.addEventListener("click",e=>{e.stopPropagation();const allMeta=getCatMeta();if(!allMeta[cat])allMeta[cat]={};const next=!allMeta[cat].showDesc;allMeta[cat].showDesc=next;saveCatMeta(allMeta);renderCategories();(async()=>{try{const cs=await getDocs(query(categoriesCollection,where("nameAr","==",cat)));if(!cs.empty){for(const d of cs.docs){await updateDoc(doc(db,"categories",d.id),{showDesc:next});}}}catch(e){}})();});
     list.appendChild(card);
   });
 }

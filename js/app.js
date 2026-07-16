@@ -21,6 +21,7 @@ async function loadCategoriesFromFirestore(){
     const meta={};
     snap.forEach(d=>{const d2=d.data();meta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,desc:d2.desc||"",showDesc:d2.showDesc!==false};});
     const existing=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};
+    Object.keys(meta).forEach(k=>{if(existing[k]&&existing[k].showDesc!==undefined)meta[k].showDesc=existing[k].showDesc;});
     Object.assign(existing,meta);existing._catOrder=snap.docs.map(d=>d.data().nameAr);
     localStorage.setItem("simsim_cat_meta",JSON.stringify(existing));
   }catch(e){}
@@ -33,6 +34,12 @@ let currentCustomerPin = "";
 let customersCache = [];
 let productQuantities = {};
 let currentCategory = null;
+
+const PRODS_CACHE_KEY="sallah_products_cache";
+function getCachedProducts(){
+  try{const d=localStorage.getItem(PRODS_CACHE_KEY);if(d){const p=JSON.parse(d);if(Array.isArray(p))return p;}}catch(e){}return null;
+}
+function setCachedProducts(p){try{localStorage.setItem(PRODS_CACHE_KEY,JSON.stringify(p));}catch(e){}}
 
 const productsDiv = document.getElementById("products");
 const searchInput = document.getElementById("search");
@@ -184,12 +191,14 @@ function setActiveCategory(){
 function buildCategoryCards(){
   const bar=document.getElementById("categoriesBar");if(!bar)return;
   const cats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
-  bar.innerHTML="";
+  let html="";
   cats.forEach(cat=>{
     const count=allProducts.filter(p=>p.category===cat).length;
     const meta=getCatMetaObj(cat);
-    const card=document.createElement("div");card.className="cat-card";card.dataset.cat=cat;
-    card.innerHTML=`<span class="cat-badge" data-cat-count="${cat}" style="display:${count>0?"":"none"}">${count}</span><span class="cat-label" data-i18n-cat="${cat}">${catLabel(cat)}</span>${meta.showDesc!==false&&meta.desc?`<div class="cat-desc">${escapeHTML(meta.desc)}</div>`:""}`;
+    html+=`<div class="cat-card" data-cat="${cat}"><span class="cat-badge" data-cat-count="${cat}" style="display:${count>0?"":"none"}">${count}</span><span class="cat-label" data-i18n-cat="${cat}">${catLabel(cat)}</span>${meta.showDesc!==false&&meta.desc?`<div class="cat-desc">${escapeHTML(meta.desc)}</div>`:""}</div>`;
+  });
+  bar.innerHTML=html;
+  bar.querySelectorAll(".cat-card").forEach(card=>{
     card.addEventListener("click",()=>{
       currentCategory=card.dataset.cat;
       setActiveCategory();
@@ -198,7 +207,6 @@ function buildCategoryCards(){
       if(value)filtered=filtered.filter(p=>{const t=`${p.name||""} ${p.description||""} ${p.code||""}`.toLowerCase();return t.includes(value);});
       renderProducts(filtered);
     });
-    bar.appendChild(card);
   });
   applyPermissions();
   if(!currentCategory||!getAllowedCategories().includes(currentCategory)){
@@ -214,13 +222,24 @@ function buildCategoryCards(){
 productsDiv.innerHTML = `<div style="text-align:center;padding:40px;color:var(--secondary);">${t("loading")}</div>`;
 
 async function loadProducts(){
-  const querySnapshot = await getDocs(collection(db,"products"));
-  allProducts = [];
-  querySnapshot.forEach(doc => allProducts.push({id:doc.id,...doc.data()}));
-  buildCategoryCards();
-  applyFullLang({ langToggle: "langToggle", search: "search", loginBtn: "loginBtn", loginRequiredOverlay: "loginRequiredOverlay", loginModal: "loginModal", profile: true });
-  if(currentCustomer) renderProducts(getFilteredProducts());
-  updateCategoryBadges();
+  const cached=getCachedProducts();
+  if(cached&&cached.length){
+    allProducts=cached;
+    buildCategoryCards();
+    applyFullLang({ langToggle: "langToggle", search: "search", loginBtn: "loginBtn", loginRequiredOverlay: "loginRequiredOverlay", loginModal: "loginModal", profile: true });
+    if(currentCustomer) renderProducts(getFilteredProducts());
+    updateCategoryBadges();
+  }
+  try{
+    const querySnapshot = await getDocs(collection(db,"products"));
+    allProducts = [];
+    querySnapshot.forEach(doc => allProducts.push({id:doc.id,...doc.data()}));
+    setCachedProducts(allProducts);
+    buildCategoryCards();
+    applyFullLang({ langToggle: "langToggle", search: "search", loginBtn: "loginBtn", loginRequiredOverlay: "loginRequiredOverlay", loginModal: "loginModal", profile: true });
+    if(currentCustomer) renderProducts(getFilteredProducts());
+    updateCategoryBadges();
+  }catch(e){console.error(e);}
 }
 
 function updateCategoryBadges(){
@@ -241,37 +260,37 @@ function getFilteredProducts(){
 
 function renderProducts(products){
   if(!productsDiv) return;
-  productsDiv.innerHTML = "";
   if(products.length === 0){
     productsDiv.innerHTML = `<div style="text-align:center;padding:40px;color:var(--secondary);grid-column:1/-1;">${t("noProducts")}</div>`;
     return;
   }
-  products.forEach(product => {
+  let html="";
+  for(let i=0;i<products.length;i++){
+    const product=products[i];
     const pid = product.id;
     if(!productQuantities[pid]) productQuantities[pid] = 1;
     const qty = productQuantities[pid];
-    productsDiv.insertAdjacentHTML("beforeend",`
-      <div class="product" style="animation-delay:${Math.random()*.2}s">
-        <div class="product-img-wrap">
-          <img src="${escapeHTML(getProductImage(product))}" alt="${escapeHTML(product.name||"")}" loading="lazy" decoding="async" onerror="this.src='images/noimg.jpg'">
-        </div>
-        <div class="product-info">
-          <h3>${escapeHTML(product.description||"")}</h3>
-          <p class="product-name-ar">${escapeHTML(product.name||"")}</p>
-          <p class="product-sku">SKU: ${escapeHTML(product.code||"")}</p>
-        </div>
-        <div class="product-qty-row">
-          <button type="button" data-action="dec" data-id="${escapeHTML(pid)}">−</button>
-          <input class="qty-val" id="qty-${escapeHTML(pid)}" value="${qty}" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-          <button type="button" data-action="inc" data-id="${escapeHTML(pid)}">+</button>
-        </div>
-        <button class="product-cart-btn" data-id="${escapeHTML(pid)}" type="button">
-          <span class="cart-btn-icon">🛒</span>
-          <span data-i18n="addToCart">${t("addToCart")}</span>
-        </button>
+    html+=`<div class="product" style="animation-delay:${Math.random()*.2}s">
+      <div class="product-img-wrap">
+        <img src="${escapeHTML(getProductImage(product))}" alt="${escapeHTML(product.name||"")}" loading="lazy" decoding="async" onerror="this.src='images/noimg.jpg'">
       </div>
-    `);
-  });
+      <div class="product-info">
+        <h3>${escapeHTML(product.description||"")}</h3>
+        <p class="product-name-ar">${escapeHTML(product.name||"")}</p>
+        <p class="product-sku">SKU: ${escapeHTML(product.code||"")}</p>
+      </div>
+      <div class="product-qty-row">
+        <button type="button" data-action="dec" data-id="${escapeHTML(pid)}">−</button>
+        <input class="qty-val" id="qty-${escapeHTML(pid)}" value="${qty}" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+        <button type="button" data-action="inc" data-id="${escapeHTML(pid)}">+</button>
+      </div>
+      <button class="product-cart-btn" data-id="${escapeHTML(pid)}" type="button">
+        <span class="cart-btn-icon">🛒</span>
+        <span data-i18n="addToCart">${t("addToCart")}</span>
+      </button>
+    </div>`;
+  }
+  productsDiv.innerHTML = html;
 }
 
 if(productsDiv){
