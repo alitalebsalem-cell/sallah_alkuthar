@@ -106,12 +106,14 @@ async function checkAdminAuth(){
   const la=sessionStorage.getItem("admin_login_attempt");
   if(!la){revertToLoginScreen("");return false;}
   const{username,password}=JSON.parse(la);sessionStorage.removeItem("admin_login_attempt");
-  try{const q=query(adminsCollection,where("username","==",username));const snap=await getDocs(q);
-  if(!snap.empty){const a=snap.docs[0];const d=a.data();if(d.password===password){currentAdminData=d;currentAdminDocId=a.id;sessionStorage.setItem(VERIFIED_KEY,"true");sessionStorage.setItem(ADMIN_SESSION_KEY,username);showAdminPanel();return true;}}
-  revertToLoginScreen(t("adminLoginError"));return false;
+  try{
+    const q=query(adminsCollection,where("username","==",username));
+    const snap=await Promise.race([getDocs(q),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),15000))]);
+    if(!snap.empty){const a=snap.docs[0];const d=a.data();if(d.password===password){currentAdminData=d;currentAdminDocId=a.id;sessionStorage.setItem(VERIFIED_KEY,"true");sessionStorage.setItem(ADMIN_SESSION_KEY,username);showAdminPanel();return true;}}
+    revertToLoginScreen(t("adminLoginError"));return false;
   }catch(e){revertToLoginScreen(t("adminConnError"));return false;}
 }
-async function seedDefaultAdmin(){try{const s=await getDocs(adminsCollection);if(s.empty)await addDoc(adminsCollection,{username:"admin",password:"admin"});}catch(e){}}
+async function seedDefaultAdmin(){try{const s=await Promise.race([getDocs(adminsCollection),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),10000))]);if(s.empty)await addDoc(adminsCollection,{username:"admin",password:"admin"});}catch(e){}}
 
 /* TABS */
 const loadedTabs={};
