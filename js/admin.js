@@ -106,7 +106,7 @@ async function seedDefaultAdmin(){try{const s=await getDocs(adminsCollection);if
 
 /* TABS */
 const loadedTabs={};
-async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();populateCustBranchDropdown();break;case"categories":renderCategories();break;}}
+async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();populateCustBranchDropdown();break;case"branches":renderBranches();break;case"categories":renderCategories();break;}}
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
@@ -453,6 +453,20 @@ function populateCustBranchDropdown(){
   const blank=document.createElement("option");blank.value="";blank.textContent=t("selectBranch");sel.appendChild(blank);
   branches.forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;sel.appendChild(o);});
 }
+function renderBranches(){
+  const list=document.getElementById("branchesList");if(!list)return;
+  const branches=getBranches();
+  if(!branches.length){list.innerHTML=`<div class='empty-msg'>${t("noBranches")}</div>`;return;}
+  list.innerHTML="";
+  branches.forEach((b,idx)=>{
+    const card=document.createElement("div");card.className="customer-admin-card";
+    card.innerHTML=`<div class="cust-header"><strong>${escapeHTML(b)}</strong></div><div style="display:flex;gap:8px;margin-top:8px;"><button class="branch-edit-btn" type="button" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;" data-index="${idx}">✏️ ${t("editBtn")}</button><button class="branch-del-btn" type="button" style="background:rgba(220,53,69,.1);color:#dc3545;border:none;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;" data-index="${idx}">🗑 ${t("deleteBtn")}</button></div>`;
+    card.querySelector(".branch-del-btn").addEventListener("click",function(){const br=getBranches();const i=parseInt(this.dataset.index);if(i>=0&&i<br.length){if(confirm(`Delete "${br[i]}"?`)){br.splice(i,1);saveBranches(br);renderBranches();}}});
+    card.querySelector(".branch-edit-btn").addEventListener("click",function(){const br=getBranches();const i=parseInt(this.dataset.index);if(i<0||i>=br.length)return;const cur=br[i];const parts=cur.split(" - ");const ar=parts[0]||cur;const en=parts[1]||"";const newName=prompt(`${t("editBtn")}: ${cur}\n\n${t("branchName")} (عربي - English):`,cur);if(!newName||newName.trim()===cur)return;const trimmed=newName.trim();br[i]=trimmed;saveBranches(br);renderBranches();});
+    list.appendChild(card);
+  });
+}
+getElement("addBranchBtn")?.addEventListener("click",function(){const n=getInputValue("newBranchName");if(!n){alert(t("enterBranchName"));return;}const b=getBranches();if(b.includes(n)){alert(t("branchExists"));return;}b.push(n);saveBranches(b);getElement("newBranchName").value="";renderBranches();});
 
 /* CATEGORIES MANAGEMENT */
 const CAT_META_KEY="simsim_cat_meta";
@@ -666,7 +680,7 @@ function applyAdminLang(){
 
   // Tabs
   const tabs = document.querySelectorAll(".admin-tab");
-  const tabKeys = ["productsTab","invoicesTab","customersTab","categoriesTab"];
+  const tabKeys = ["productsTab","invoicesTab","customersTab","branchesTab","categoriesTab"];
   tabs.forEach((tab,i) => {
     if(tabKeys[i]) tab.textContent = t(tabKeys[i]);
   });
@@ -778,6 +792,14 @@ function applyAdminLang(){
 
   // Customer branch dropdown
   populateCustBranchDropdown();
+
+  // Branches section
+  const brTitle = document.querySelector("#section-branches h2");
+  if(brTitle) brTitle.textContent = t("manageBranches");
+  const brName = document.getElementById("newBranchName");
+  if(brName) brName.placeholder = t("branchName");
+  const brBtn = document.getElementById("addBranchBtn");
+  if(brBtn) brBtn.textContent = t("addBranchBtn");
 
   // Floating menu
   applyMenuLang();
