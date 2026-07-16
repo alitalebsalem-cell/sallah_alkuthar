@@ -618,6 +618,5 @@ document.addEventListener("keydown", e => {
    ======================== */
 applyLang();
 updateCartCount();
-loadCategoriesFromFirestore();
-loadProducts();
 loadSession();
+(async function(){ await loadCategoriesFromFirestore(); loadProducts(); })();
