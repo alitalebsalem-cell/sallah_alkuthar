@@ -365,13 +365,34 @@ function renderAllCustomers(customers){
     const ds=cust.createdAt?formatArabicDate(cust.createdAt):"";
     const acc=cust.accountType||"غير محدد";
     const card=document.createElement("div");card.className="customer-admin-card";
-    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong><span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-edit-acc-btn" type="button" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""}${cust.branch?` | ${t("branchName")}: ${escapeHTML(cust.branch)}`:""}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="cust-toggle-btn" type="button">${t("showInvoices")}</button><button class="cust-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><div class="cust-invoices"></div>`;
+    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong><span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-edit-acc-btn" type="button" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""} | ${t("branchName")}: <span class="cust-branch-label">${cust.branch?escapeHTML(cust.branch):"---"}</span> <button class="cust-edit-branch-btn" type="button" style="font-size:10px;padding:1px 6px;border:1px solid var(--accent);border-radius:4px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="cust-toggle-btn" type="button">${t("showInvoices")}</button><button class="cust-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><div class="cust-invoices"></div>`;
     const toggleBtn=card.querySelector(".cust-toggle-btn");
     const delBtn=card.querySelector(".cust-del-btn");
     const editAccBtn=card.querySelector(".cust-edit-acc-btn");
     const accSpan=card.querySelector(".cust-acc-type");
     const invDiv=card.querySelector(".cust-invoices");
     delBtn.addEventListener("click",()=>openDeleteCustomerModal(cust.id,cust.name));
+    const editBranchBtn=card.querySelector(".cust-edit-branch-btn");
+    const branchLabel=card.querySelector(".cust-branch-label");
+    editBranchBtn.addEventListener("click",()=>{
+        const branches=getBranches();
+        const cur=cust.branch||branches[0]||"";
+        const sel=document.createElement("select");sel.style.cssText="padding:6px;border:1.5px solid var(--accent);border-radius:6px;font-size:12px;font-weight:600;background:var(--white);color:var(--dark);cursor:pointer;";
+        const blank=document.createElement("option");blank.value="";blank.textContent="--";sel.appendChild(blank);
+        branches.forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;if(b===cur)o.selected=true;sel.appendChild(o);});
+        const saveBtn=document.createElement("button");saveBtn.textContent=t("saveBtn")||"💾 حفظ";saveBtn.style.cssText="padding:4px 10px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;";
+        const container=document.createElement("span");container.style.cssText="display:inline-flex;align-items:center;gap:4px;";container.appendChild(sel);container.appendChild(saveBtn);
+        editBranchBtn.replaceWith(container);
+        saveBtn.addEventListener("click",async()=>{
+          const newBranch=sel.value;
+          cust.branch=newBranch;
+          const lcArr=getLocalCustomers();const lc2=lcArr.find(c=>c.id===cust.id);if(lc2)lc2.branch=newBranch;
+          saveLocalCustomers(lcArr);
+          try{await updateDoc(doc(db,"customers",cust.id),{branch:newBranch});}catch(e){}
+          if(branchLabel)branchLabel.textContent=newBranch||"---";
+          container.replaceWith(editBranchBtn);
+        });
+    });
     editAccBtn.addEventListener("click",async()=>{
       const existingPerms=card.querySelector(".cust-perm-section");
       if(existingPerms)existingPerms.remove();
@@ -420,7 +441,7 @@ function renderAllCustomers(customers){
 getElement("addCustBtn")?.addEventListener("click",async()=>{
   const name=getInputValue("newCustName");const pin=getInputValue("newCustPin");const acc=getInputValue("newCustAccountType");const branch=document.getElementById("newCustBranch")?.value||"";
   if(!name||name.length<2){alert(t("nameMinTwo"));return;}
-  if(!pin||pin.length!==4||!/^\d{4}$/.test(pin)){alert(t("pinMustFourDigits"));return;}
+  if(!pin){alert(t("enterPin"));return;}
   if(allCustomers.find(c=>String(c.name||"").trim().toLowerCase()===name.toLowerCase())){alert(t("customerExists"));return;}
   const id="local_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);
   const local=getLocalCustomers();local.push({id,name,pin,accountType:acc,branch,createdAt:Date.now()});saveLocalCustomers(local);

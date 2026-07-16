@@ -205,7 +205,7 @@ loginSubmitBtn?.addEventListener("click",()=>{
   const at=loginAccountType?.value||"";
   if(!at){loginError.textContent=t("selectAccountType");return;}
   if(!name){loginError.textContent=t("selectNameErr");return;}
-  if(!pin||pin.length!==4){loginError.textContent=t("pinFourDigits");return;}
+  if(!pin){loginError.textContent=t("enterPin");return;}
   const match=customersCache.find(c=>String(c.name||"").trim().toLowerCase()===name.trim().toLowerCase());
   if(!match){loginError.textContent=t("accountNotFound");return;}
   if(String(match.pin)===pin){saveSession({id:match.id,name:match.name,accountType:match.accountType||at,permissions:match.permissions||{}},pin);closeLoginModal();}
@@ -223,7 +223,7 @@ profileToggle?.addEventListener("click",e=>{e.stopPropagation();profileDropdown?
 document.addEventListener("click",e=>{if(profileDropdown?.classList.contains("show")&&!profileDropdown.contains(e.target)&&e.target!==profileToggle)profileDropdown.classList.remove("show");});
 document.getElementById("profileLogoutBtn")?.addEventListener("click",()=>{profileDropdown?.classList.remove("show");if(confirm("هل تريد تسجيل الخروج؟"))clearSession();});
 document.getElementById("profileTogglePin")?.addEventListener("click",()=>{const el=document.getElementById("profilePin");if(!el)return;if(el.textContent==="****"){el.textContent=currentCustomerPin||"N/A";document.getElementById("profileTogglePin").textContent="إخفاء";}else{el.textContent="****";document.getElementById("profileTogglePin").textContent="إظهار";}});
-document.getElementById("profileChangePinBtn")?.addEventListener("click",async()=>{profileDropdown?.classList.remove("show");const np=prompt("كلمة المرور الجديدة (4 أرقام):");if(!np||!/^\d{4}$/.test(np)){alert("يجب أن تكون 4 أرقام");return;}currentCustomerPin=np;const s=JSON.parse(localStorage.getItem(SESSION_KEY)||"{}");s.pin=np;localStorage.setItem(SESSION_KEY,JSON.stringify(s));try{const{doc:d,updateDoc}=await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");const{db:dbRef}=await import("./firebase.js");await updateDoc(d(dbRef,"customers",currentCustomer.id),{pin:np});}catch(e){}alert("تم تغيير كلمة المرور");});
+document.getElementById("profileChangePinBtn")?.addEventListener("click",async()=>{profileDropdown?.classList.remove("show");const np=prompt("كلمة المرور الجديدة:");if(!np){alert("الرجاء إدخال كلمة المرور");return;}currentCustomerPin=np;const s=JSON.parse(localStorage.getItem(SESSION_KEY)||"{}");s.pin=np;localStorage.setItem(SESSION_KEY,JSON.stringify(s));try{const{doc:d,updateDoc}=await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");const{db:dbRef}=await import("./firebase.js");await updateDoc(d(dbRef,"customers",currentCustomer.id),{pin:np});}catch(e){}alert("تم تغيير كلمة المرور");});
 document.getElementById("profileInvoicesBtn")?.addEventListener("click",()=>{profileDropdown?.classList.remove("show");openInvoicesModal();});
 
 /* INVOICES MODAL */

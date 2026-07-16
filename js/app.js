@@ -478,7 +478,7 @@ loginSubmitBtn?.addEventListener("click", () => {
   const accountType = loginAccountType ? loginAccountType.value : "";
   if(!accountType){ loginError.textContent = t("selectAccountType"); return; }
   if(!name){ loginError.textContent = t("selectNameErr"); return; }
-  if(!pin || pin.length !== 4){ loginError.textContent = t("pinFourDigits"); return; }
+  if(!pin){ loginError.textContent = t("enterPin"); return; }
   const trimmedName = name.trim().toLowerCase();
   const match = customersCache.find(c => String(c.name||"").trim().toLowerCase() === trimmedName);
   if(!match){ loginError.textContent = t("accountNotFound"); return; }
@@ -517,7 +517,7 @@ document.getElementById("profileTogglePin")?.addEventListener("click", () => {
 document.getElementById("profileChangePinBtn")?.addEventListener("click", async () => {
   profileDropdown?.classList.remove("show");
   const newPin = prompt(t("changePinPrompt"));
-  if(!newPin || !/^\d{4}$/.test(newPin)){ alert(t("pinMustBeFour")); return; }
+  if(!newPin){ alert(t("enterPin")); return; }
   currentCustomerPin = newPin;
   const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
   stored.pin = newPin;
