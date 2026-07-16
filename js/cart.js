@@ -25,13 +25,12 @@ const CAT_EN_NAMES = {
 };
 const CAT_ORDER = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 const CAT_META_KEY="simsim_cat_meta";
-const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
 async function loadCategoriesFromFirestore(){
   try{
     const snap=await getDocs(query(collection(db,"categories"),orderBy("order","asc")));
     if(snap.empty)return;
     const meta={};
-    snap.forEach(d=>{const d2=d.data();meta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,icon:d2.icon||"📦",desc:d2.desc||"",showDesc:d2.showDesc!==false};});
+    snap.forEach(d=>{const d2=d.data();meta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,desc:d2.desc||"",showDesc:d2.showDesc!==false};});
     const existing=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};
     Object.assign(existing,meta);existing._catOrder=snap.docs.map(d=>d.data().nameAr);
     localStorage.setItem("simsim_cat_meta",JSON.stringify(existing));
@@ -269,15 +268,14 @@ function getFilteredCart(){if(cartCategory==="all")return cart;return cart.filte
 function buildCartCatCards(){
   const filter=document.getElementById("cartCategoryFilter");if(!filter)return;
   const cats=[...new Set(cart.filter(i=>i.category).map(i=>i.category))];
-  filter.innerHTML=`<button type="button" class="cat-card" data-cat="all"><span class="cat-badge" data-cat-count="all" style="display:none;">0</span><span class="cat-icon">📦</span><span class="cat-label" data-i18n-cat="all">${t("all")}</span></button>`;
+  filter.innerHTML=`<button type="button" class="cat-card" data-cat="all"><span class="cat-badge" data-cat-count="all" style="display:none;">0</span><span class="cat-label" data-i18n-cat="all">${t("all")}</span></button>`;
   filter.querySelector(".cat-card[data-cat='all']").addEventListener("click",function(){
     filter.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("active"));
     this.classList.add("active");cartCategory="all";renderCart();
   });
   cats.forEach(cat=>{
-    const icon=getCatMetaObj(cat).icon||CAT_ICONS[cat]||"📦";
     const btn=document.createElement("button");btn.type="button";btn.className="cat-card";btn.dataset.cat=cat;
-    btn.innerHTML=`<span class="cat-badge" data-cat-count="${cat}" style="display:none;">0</span><span class="cat-icon">${icon}</span><span class="cat-label" data-i18n-cat="${cat}">${catLabel(cat)}</span>`;
+    btn.innerHTML=`<span class="cat-badge" data-cat-count="${cat}" style="display:none;">0</span><span class="cat-label" data-i18n-cat="${cat}">${catLabel(cat)}</span>`;
     btn.addEventListener("click",()=>{
       filter.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("active"));
       btn.classList.add("active");cartCategory=btn.dataset.cat;renderCart();
@@ -453,6 +451,4 @@ function loadCategoryCounts(){
 }
 applyLang();
 loadSession();
-loadCategoriesFromFirestore();
-populateBranchDropdown();
-renderCart();
+(async function(){ await loadCategoriesFromFirestore(); populateBranchDropdown(); renderCart(); })();

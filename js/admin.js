@@ -17,7 +17,7 @@ const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","ما
 const CAT_EN_NAMES_ADMIN = {"قسم المعمل":"Almamal","قسم السوبرماركت":"AlsuperNarket","قسم محلات الجملة":"Aljumllah","قسم المستودع":"Almstudaa","احتياجات المعمل":"AhtyagatAlmamal"};
 const CAT_ORDER_ADMIN = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
-const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
+
 
 const productsTable = document.getElementById("productsTable");
 const productsCollection = collection(db,"products");
@@ -30,8 +30,8 @@ async function loadCategoriesFromFirestore(){
   try{
     const snap=await getDocs(query(categoriesCollection,orderBy("order","asc")));
     if(snap.empty){await seedDefaultCategories();return;}
-    CAT_ORDER_ADMIN.length=0;Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);
-    snap.forEach(d=>{const d2=d.data();CAT_ORDER_ADMIN.push(d2.nameAr);CAT_ICONS[d2.nameAr]=d2.icon||"📦";CAT_EN_NAMES_ADMIN[d2.nameAr]=d2.nameEn||d2.nameAr;});
+    CAT_ORDER_ADMIN.length=0;Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);
+    snap.forEach(d=>{const d2=d.data();CAT_ORDER_ADMIN.push(d2.nameAr);CAT_EN_NAMES_ADMIN[d2.nameAr]=d2.nameEn||d2.nameAr;});
     // Update CATEGORY_PERMISSIONS — replace old names with current Firestore names
     for(const at in CATEGORY_PERMISSIONS){
       const arr=CATEGORY_PERMISSIONS[at];
@@ -47,22 +47,22 @@ async function loadCategoriesFromFirestore(){
       }
     }
     // Save to localStorage as cache
-    const allMeta={};snap.forEach(d=>{const d2=d.data();allMeta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,icon:d2.icon||"📦",desc:d2.desc||"",showDesc:d2.showDesc!==false};});
-    allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catIcons={...CAT_ICONS};allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};allMeta._defaultPerms=JSON.parse(JSON.stringify(CATEGORY_PERMISSIONS));
+    const allMeta={};snap.forEach(d=>{const d2=d.data();allMeta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,desc:d2.desc||"",showDesc:d2.showDesc!==false};});
+    allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};allMeta._defaultPerms=JSON.parse(JSON.stringify(CATEGORY_PERMISSIONS));
     localStorage.setItem("simsim_cat_meta",JSON.stringify(allMeta));
   }catch(e){console.error("loadCategoriesFromFirestore error:",e);
     // Fallback: restore from localStorage
-    try{const _m=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};if(_m._catOrder){CAT_ORDER_ADMIN.length=0;CAT_ORDER_ADMIN.push(..._m._catOrder);}if(_m._catIcons){Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(_m._catIcons).forEach(k=>CAT_ICONS[k]=_m._catIcons[k]);}if(_m._catEnNames){Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);Object.keys(_m._catEnNames).forEach(k=>CAT_EN_NAMES_ADMIN[k]=_m._catEnNames[k]);}if(_m._defaultPerms){Object.keys(CATEGORY_PERMISSIONS).forEach(k=>delete CATEGORY_PERMISSIONS[k]);Object.keys(_m._defaultPerms).forEach(k=>CATEGORY_PERMISSIONS[k]=_m._defaultPerms[k]);}}catch(e2){}
+    try{const _m=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};if(_m._catOrder){CAT_ORDER_ADMIN.length=0;CAT_ORDER_ADMIN.push(..._m._catOrder);}if(_m._catEnNames){Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);Object.keys(_m._catEnNames).forEach(k=>CAT_EN_NAMES_ADMIN[k]=_m._catEnNames[k]);}if(_m._defaultPerms){Object.keys(CATEGORY_PERMISSIONS).forEach(k=>delete CATEGORY_PERMISSIONS[k]);Object.keys(_m._defaultPerms).forEach(k=>CATEGORY_PERMISSIONS[k]=_m._defaultPerms[k]);}}catch(e2){}
   }
 }
 async function seedDefaultCategories(){
   const snap=await getDocs(categoriesCollection);
   if(!snap.empty)return;
-  const defaults=[{nameAr:"قسم المعمل",nameEn:"Lab",icon:"🔬",order:0,desc:"",showDesc:true},{nameAr:"قسم السوبرماركت",nameEn:"Supermarket",icon:"🛒",order:1,desc:"",showDesc:true},{nameAr:"قسم محلات الجملة",nameEn:"Wholesale",icon:"🏪",order:2,desc:"",showDesc:true},{nameAr:"قسم المستودع",nameEn:"Warehouse",icon:"🏭",order:3,desc:"",showDesc:true},{nameAr:"احتياجات المعمل",nameEn:"Lab Needs",icon:"📋",order:4,desc:"",showDesc:true}];
+  const defaults=[{nameAr:"قسم المعمل",nameEn:"Lab",order:0,desc:"",showDesc:true},{nameAr:"قسم السوبرماركت",nameEn:"Supermarket",order:1,desc:"",showDesc:true},{nameAr:"قسم محلات الجملة",nameEn:"Wholesale",order:2,desc:"",showDesc:true},{nameAr:"قسم المستودع",nameEn:"Warehouse",order:3,desc:"",showDesc:true},{nameAr:"احتياجات المعمل",nameEn:"Lab Needs",order:4,desc:"",showDesc:true}];
   for(const c of defaults){try{await addDoc(categoriesCollection,c);}catch(e){}}
   // Reload into constants
-  CAT_ORDER_ADMIN.length=0;Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);
-  defaults.forEach(c=>{CAT_ORDER_ADMIN.push(c.nameAr);CAT_ICONS[c.nameAr]=c.icon;CAT_EN_NAMES_ADMIN[c.nameAr]=c.nameEn;});
+  CAT_ORDER_ADMIN.length=0;Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);
+  defaults.forEach(c=>{CAT_ORDER_ADMIN.push(c.nameAr);CAT_EN_NAMES_ADMIN[c.nameAr]=c.nameEn;});
 }
 
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
@@ -475,10 +475,9 @@ function rebuildCatPickCards(){
   const cats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
   cont.innerHTML="";
   cats.forEach(cat=>{
-    const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
     const count=allProducts.filter(p=>p.category===cat).length;
     const btn=document.createElement("button");btn.type="button";btn.className="cat-pick-card";btn.dataset.cat=cat;
-    btn.innerHTML=`${icon}<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`;
+    btn.innerHTML=`<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`;
     btn.addEventListener("click",()=>showProductForm(cat));
     cont.appendChild(btn);
   });
@@ -488,9 +487,8 @@ function rebuildCatPickCards(){
     const curVal=catSelect.value;
     catSelect.innerHTML="";
     cats.forEach(cat=>{
-      const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
       const opt=document.createElement("option");opt.value=cat;
-      opt.textContent=`${icon} ${catDisplayName(cat)}`;
+      opt.textContent=catDisplayName(cat);
       catSelect.appendChild(opt);
     });
     if(cats.includes(curVal))catSelect.value=curVal;
@@ -501,9 +499,8 @@ function rebuildCatPickCards(){
     const curVal2=bulkSelect.value;
     bulkSelect.innerHTML=`<option value="">-- ${t("selectCategory")} --</option>`;
     cats.forEach(cat=>{
-      const meta=getCatMetaObj(cat);const icon=meta.icon||CAT_ICONS[cat]||"📦";
       const opt=document.createElement("option");opt.value=cat;
-      opt.textContent=`${icon} ${catDisplayName(cat)}`;
+      opt.textContent=catDisplayName(cat);
       bulkSelect.appendChild(opt);
     });
     if(cats.includes(curVal2))bulkSelect.value=curVal2;
@@ -517,43 +514,84 @@ window.openRenameCatModal=function(oldName){
   const meta=getCatMetaObj(oldName);
   document.getElementById("renameCatDescInput").value=meta.desc||"";
   document.getElementById("renameCatShowDesc").checked=meta.showDesc!==false;
+  document.getElementById("renameCatModalTitle").textContent=t("renameCatTitle");
+  applyRenameModalLang();
   const m=document.getElementById("renameCatModal");m.classList.add("active");m.setAttribute("aria-hidden","false");
   setTimeout(()=>document.getElementById("renameCatArInput").focus(),100);
 };
 window.closeRenameCatModal=function(){
   const m=document.getElementById("renameCatModal");m.classList.remove("active");m.setAttribute("aria-hidden","true");
 };
+window.openAddCategoryModal=function(){
+  _renameCatOldName=null;
+  document.getElementById("renameCatArInput").value="";
+  document.getElementById("renameCatEnInput").value="";
+  document.getElementById("renameCatDescInput").value="";
+  document.getElementById("renameCatShowDesc").checked=true;
+  document.getElementById("renameCatModalTitle").textContent=t("addCatTitle");
+  applyRenameModalLang();
+  const m=document.getElementById("renameCatModal");m.classList.add("active");m.setAttribute("aria-hidden","false");
+  setTimeout(()=>document.getElementById("renameCatArInput").focus(),100);
+};
+
+function applyRenameModalLang(){
+  const lang=getLang();
+  ["renameCatArInput","renameCatEnInput","renameCatDescInput"].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const key=el.getAttribute("data-i18n-placeholder");if(key&&t(key)!==key)el.placeholder=t(key);
+  });
+  document.querySelectorAll("#renameCatModal [data-i18n]").forEach(el=>{const k=el.getAttribute("data-i18n");if(k&&t(k)!==k)el.textContent=t(k);});
+  const cbLabel=document.querySelector("#renameCatShowDesc + [data-i18n]");
+  if(cbLabel){const k=cbLabel.getAttribute("data-i18n");if(k)cbLabel.textContent=t(k);}
+}
 
 window.confirmRenameCat=async function(){
   if(document.getElementById("renameCatConfirmBtn").disabled)return;
   document.getElementById("renameCatConfirmBtn").disabled=true;
   const arName=document.getElementById("renameCatArInput").value.trim();
   const enName=document.getElementById("renameCatEnInput").value.trim();
-  if(!arName){alert("Arabic name required");document.getElementById("renameCatConfirmBtn").disabled=false;return;}
+  if(!arName){alert(getLang()==="ar"?"الاسم بالعربي مطلوب":"Arabic name required");document.getElementById("renameCatConfirmBtn").disabled=false;return;}
   const oldName=_renameCatOldName;
   const desc=document.getElementById("renameCatDescInput").value.trim();
   const showDesc=document.getElementById("renameCatShowDesc").checked;
+
+  // ADD mode
+  if(!oldName){
+    if(CAT_ORDER_ADMIN.includes(arName)){alert(t("adminExists"));document.getElementById("renameCatConfirmBtn").disabled=false;return;}
+    CAT_ORDER_ADMIN.push(arName);
+    CAT_EN_NAMES_ADMIN[arName]=enName||arName;
+    for(const at in CATEGORY_PERMISSIONS){if(!CATEGORY_PERMISSIONS[at].includes(arName))CATEGORY_PERMISSIONS[at].push(arName);}
+    try{await addDoc(categoriesCollection,{nameAr:arName,nameEn:enName||arName,order:CAT_ORDER_ADMIN.length-1,desc:desc,showDesc:showDesc});}catch(e){console.error(e);}
+    const allMeta=getCatMeta();
+    allMeta[arName]={nameEn:enName||arName,desc:desc,showDesc:showDesc};
+    allMeta._defaultPerms=JSON.parse(JSON.stringify(CATEGORY_PERMISSIONS));
+    allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};
+    saveCatMeta(allMeta);
+    closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;
+    await loadProducts();applyAdminLang();
+    return;
+  }
+
+  // RENAME mode
   if(arName===oldName&&enName===(getCatMetaObj(oldName).nameEn||oldName)&&desc===(getCatMetaObj(oldName).desc||"")&&showDesc===(getCatMetaObj(oldName).showDesc!==false)){closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;return;}
-  const icon=getCatMetaObj(oldName).icon||CAT_ICONS[oldName]||"📦";
   const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
   for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:arName});s++;}catch(e){f++;}}
   if(oldName!==arName){
     const allCats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
     try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const np={};allCats.forEach(cat=>np[cat]=true);await updateDoc(doc(db,"customers",d.id),{permissions:np});}}catch(e){console.error(e);}
     const localC=getLocalCustomers();if(localC){localC.forEach(c=>{c.permissions={};allCats.forEach(cat=>c.permissions[cat]=true);});saveLocalCustomers(localC);}
-    if(CAT_ICONS[oldName]){CAT_ICONS[arName]=CAT_ICONS[oldName];delete CAT_ICONS[oldName];}
     const idx=CAT_ORDER_ADMIN.indexOf(oldName);if(idx!==-1)CAT_ORDER_ADMIN[idx]=arName;
     if(CAT_EN_NAMES_ADMIN[oldName]){CAT_EN_NAMES_ADMIN[arName]=CAT_EN_NAMES_ADMIN[oldName];delete CAT_EN_NAMES_ADMIN[oldName];}
     for(const at in CATEGORY_PERMISSIONS){const arr=CATEGORY_PERMISSIONS[at];const oi=arr.indexOf(oldName);if(oi!==-1)arr[oi]=arName;}
-    try{const cs=await getDocs(query(categoriesCollection,where("nameAr","==",oldName)));if(cs.empty){await addDoc(categoriesCollection,{nameAr:arName,nameEn:enName||oldName,icon:icon,order:CAT_ORDER_ADMIN.indexOf(arName),desc:desc||"",showDesc:showDesc});}else{for(const d of cs.docs){await updateDoc(doc(db,"categories",d.id),{nameAr:arName,nameEn:enName||oldName,icon:icon,desc:desc||"",showDesc:showDesc});}}}catch(e){console.error(e);}
+    try{const cs=await getDocs(query(categoriesCollection,where("nameAr","==",oldName)));if(cs.empty){await addDoc(categoriesCollection,{nameAr:arName,nameEn:enName||oldName,order:CAT_ORDER_ADMIN.indexOf(arName),desc:desc||"",showDesc:showDesc});}else{for(const d of cs.docs){await updateDoc(doc(db,"categories",d.id),{nameAr:arName,nameEn:enName||oldName,desc:desc||"",showDesc:showDesc});}}}catch(e){console.error(e);}
   }
   const allMeta=getCatMeta();
   if(allMeta[oldName]){allMeta[arName]=allMeta[oldName];delete allMeta[oldName];}
   if(!allMeta[arName])allMeta[arName]={};
-  allMeta[arName].nameEn=enName||arName;allMeta[arName].icon=icon;
+  allMeta[arName].nameEn=enName||arName;
   allMeta[arName].desc=desc;allMeta[arName].showDesc=showDesc;
   allMeta._defaultPerms=CATEGORY_PERMISSIONS;
-  allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catIcons={...CAT_ICONS};allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};
+  allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};
   saveCatMeta(allMeta);
   closeRenameCatModal();document.getElementById("renameCatConfirmBtn").disabled=false;
   await loadProducts();applyAdminLang();await loadAllCustomers();
@@ -567,12 +605,11 @@ function renderCategories(){
   if(cats.length===0){list.innerHTML=`<div class='empty-msg'>${t("noProductsInCat")}</div>`;return;}
   cats.forEach(cat=>{
     const count=allProducts.filter(p=>p.category===cat).length;const meta=getCatMetaObj(cat);
-    const icon=meta.icon||CAT_ICONS[cat]||"📦";
     const dispName=catDisplayName(cat);
     const hasDesc=!!meta.desc;
     const showDesc=meta.showDesc!==false;
     const card=document.createElement("div");card.className="cat-admin-card";
-    card.innerHTML=`<span class="cat-admin-icon">${icon}</span><div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${hasDesc?`<div class="cat-admin-desc" style="display:${showDesc?'':'none'}">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button>${hasDesc?`<button class="cat-desc-toggle-btn" type="button" style="font-size:11px;">${showDesc?'🕶️':'👁️'}</button>`:""}<button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
+    card.innerHTML=`<div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${hasDesc?`<div class="cat-admin-desc" style="display:${showDesc?'':'none'}">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button>${hasDesc?`<button class="cat-desc-toggle-btn" type="button" style="font-size:11px;">${showDesc?'🕶️':'👁️'}</button>`:""}<button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
     card.querySelector(".cat-admin-name").addEventListener("click",()=>showCategoryProducts(cat));
     card.querySelector(".cat-rename-btn").addEventListener("click",e=>{e.stopPropagation();openRenameCatModal(cat);});
     card.querySelector(".cat-del-btn").addEventListener("click",e=>{e.stopPropagation();deleteCategory(cat);});
@@ -596,9 +633,20 @@ function showCategoryProducts(cat){
 }
 async function deleteCategory(cat){
   if(!confirm(`${t("deleteCategoryConfirm")}\n${t("products")} ${t("qty")}: ${allProducts.filter(p=>p.category===cat).length}`))return;
+  // Unlink products
   const ids=allProducts.filter(p=>p.category===cat).map(p=>p.id);let s=0,f=0;
   for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:""});s++;}catch(e){f++;}}
-  const allMeta=getCatMeta();delete allMeta[cat];saveCatMeta(allMeta);
+  // Remove from constants
+  const oi=CAT_ORDER_ADMIN.indexOf(cat);if(oi!==-1)CAT_ORDER_ADMIN.splice(oi,1);
+  if(CAT_EN_NAMES_ADMIN[cat])delete CAT_EN_NAMES_ADMIN[cat];
+  for(const at in CATEGORY_PERMISSIONS){const arr=CATEGORY_PERMISSIONS[at];const ci=arr.indexOf(cat);if(ci!==-1)arr.splice(ci,1);}
+  // Remove from Firestore categories collection
+  try{const cs=await getDocs(query(categoriesCollection,where("nameAr","==",cat)));for(const d of cs.docs)await deleteDoc(doc(db,"categories",d.id));}catch(e){}
+  // Remove from customer permissions
+  try{const custSnap=await getDocs(customersCollection);for(const d of custSnap.docs){const perms=d.data().permissions||{};if(perms[cat]!==undefined){delete perms[cat];await updateDoc(doc(db,"customers",d.id),{permissions:perms});}}}catch(e){}
+  try{const lc=getLocalCustomers();let changed=false;lc.forEach(c=>{if(c.permissions&&c.permissions[cat]!==undefined){delete c.permissions[cat];changed=true;}});if(changed)saveLocalCustomers(lc);}catch(e){}
+  // Remove from meta cache
+  const allMeta=getCatMeta();delete allMeta[cat];allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};allMeta._defaultPerms=JSON.parse(JSON.stringify(CATEGORY_PERMISSIONS));saveCatMeta(allMeta);
   alert(`${t("deleteCategorySuccess")} (${s}/${ids.length})`);await loadProducts();renderCategories();
 }
 
@@ -688,6 +736,8 @@ function applyAdminLang(){
   if(catBackBtn) catBackBtn.textContent = t("catProductsBack");
   const catAddBtn = document.getElementById("addProductFromCat");
   if(catAddBtn) catAddBtn.textContent = t("addProductToCat");
+  const addNewCatBtn = document.getElementById("addNewCategoryBtn");
+  if(addNewCatBtn) addNewCatBtn.textContent = t("addNewCategory");
 
   // Category names in dynamic sections (e.g. customer permissions)
   document.querySelectorAll("[data-i18n-cat]").forEach(el => {
@@ -744,6 +794,9 @@ function applyAdminLang(){
   // Floating menu
   applyMenuLang();
 
+  // Rename/Add category modal i18n
+  applyRenameModalLang();
+
   // Re-render category products / categories list on language switch
   if(selectedAdminCategory) renderCategoryProducts(selectedAdminCategory);
   const catSec = document.getElementById("section-categories");
@@ -753,6 +806,9 @@ getElement("adminLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");
   applyAdminLang();
 });
+
+// Add new category button
+document.getElementById("addNewCategoryBtn")?.addEventListener("click", openAddCategoryModal);
 
 // Rename category modal
 document.getElementById("renameCatCancelBtn")?.addEventListener("click", closeRenameCatModal);
