@@ -78,6 +78,9 @@ function formatArabicDate(date){if(!date)return"";const d=date.toDate?date.toDat
 /* AUTH */
 const AUTH_KEY="sallah_admin_unlocked";
 const VERIFIED_KEY="sallah_admin_verified";
+const ADMIN_SESSION_KEY="sallah_admin_session";
+let currentAdminData=null;
+let currentAdminDocId=null;
 
 function revertToLoginScreen(msg){
   sessionStorage.removeItem(AUTH_KEY);
@@ -93,12 +96,18 @@ function showAdminPanel(){
   else{document.body.classList.remove("admin-locked");getElement("adminLoginScreen").hidden=true;getElement("adminPanel").hidden=false;}
 }
 async function checkAdminAuth(){
-  if(sessionStorage.getItem(VERIFIED_KEY)==="true")return true;
+  if(sessionStorage.getItem(VERIFIED_KEY)==="true"){
+    const savedUser=sessionStorage.getItem(ADMIN_SESSION_KEY);
+    if(savedUser&&(!currentAdminData||currentAdminData.username!==savedUser)){
+      try{const q=query(adminsCollection,where("username","==",savedUser));const snap=await getDocs(q);if(!snap.empty){currentAdminData=snap.docs[0].data();currentAdminDocId=snap.docs[0].id;}}catch(e){}
+    }
+    return true;
+  }
   const la=sessionStorage.getItem("admin_login_attempt");
   if(!la){revertToLoginScreen("");return false;}
   const{username,password}=JSON.parse(la);sessionStorage.removeItem("admin_login_attempt");
   try{const q=query(adminsCollection,where("username","==",username));const snap=await getDocs(q);
-  if(!snap.empty){const a=snap.docs[0].data();if(a.password===password){sessionStorage.setItem(VERIFIED_KEY,"true");showAdminPanel();return true;}}
+  if(!snap.empty){const a=snap.docs[0];const d=a.data();if(d.password===password){currentAdminData=d;currentAdminDocId=a.id;sessionStorage.setItem(VERIFIED_KEY,"true");sessionStorage.setItem(ADMIN_SESSION_KEY,username);showAdminPanel();return true;}}
   revertToLoginScreen(t("adminLoginError"));return false;
   }catch(e){revertToLoginScreen(t("adminConnError"));return false;}
 }
@@ -365,76 +374,91 @@ function renderAllCustomers(customers){
     const ds=cust.createdAt?formatArabicDate(cust.createdAt):"";
     const acc=cust.accountType||"غير محدد";
     const card=document.createElement("div");card.className="customer-admin-card";
-    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong> <span style="font-size:11px;color:var(--secondary);font-weight:600;">PIN: ${escapeHTML(cust.pin||"")}</span> <span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-edit-acc-btn" type="button" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""} | ${t("branchName")}: <span class="cust-branch-label">${cust.branch?escapeHTML(cust.branch):"---"}</span> <button class="cust-edit-branch-btn" type="button" style="font-size:10px;padding:1px 6px;border:1px solid var(--accent);border-radius:4px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">✏️</button></div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="cust-toggle-btn" type="button">${t("showInvoices")}</button><button class="cust-del-btn" type="button">🗑 ${t("deleteBtn")}</button></div><div class="cust-invoices"></div>`;
-    const toggleBtn=card.querySelector(".cust-toggle-btn");
-    const delBtn=card.querySelector(".cust-del-btn");
-    const editAccBtn=card.querySelector(".cust-edit-acc-btn");
-    const accSpan=card.querySelector(".cust-acc-type");
+    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong> <span style="font-size:11px;color:var(--secondary);font-weight:600;">PIN: ${escapeHTML(cust.pin||"")}</span> <span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-action-btn" type="button" style="font-size:16px;padding:2px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">▾</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""} | ${t("branchName")}: <span class="cust-branch-label">${cust.branch?escapeHTML(cust.branch):"---"}</span></div><div class="cust-invoices"></div><div class="cust-actions-dropdown" style="display:none;margin-top:8px;padding:8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);flex-direction:column;gap:6px;"></div>`;
     const invDiv=card.querySelector(".cust-invoices");
-    delBtn.addEventListener("click",()=>openDeleteCustomerModal(cust.id,cust.name));
-    const editBranchBtn=card.querySelector(".cust-edit-branch-btn");
+    const dropdown=card.querySelector(".cust-actions-dropdown");
     const branchLabel=card.querySelector(".cust-branch-label");
-    editBranchBtn.addEventListener("click",()=>{
-        const branches=getBranches();
-        const cur=cust.branch||branches[0]||"";
-        const sel=document.createElement("select");sel.style.cssText="padding:6px;border:1.5px solid var(--accent);border-radius:6px;font-size:12px;font-weight:600;background:var(--white);color:var(--dark);cursor:pointer;";
-        const blank=document.createElement("option");blank.value="";blank.textContent="--";sel.appendChild(blank);
-        branches.forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;if(b===cur)o.selected=true;sel.appendChild(o);});
-        const saveBtn=document.createElement("button");saveBtn.textContent=t("saveBtn")||"💾 حفظ";saveBtn.style.cssText="padding:4px 10px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;";
-        const container=document.createElement("span");container.style.cssText="display:inline-flex;align-items:center;gap:4px;";container.appendChild(sel);container.appendChild(saveBtn);
-        editBranchBtn.replaceWith(container);
-        saveBtn.addEventListener("click",async()=>{
-          const newBranch=sel.value;
-          cust.branch=newBranch;
-          const lcArr=getLocalCustomers();const lc2=lcArr.find(c=>c.id===cust.id);if(lc2)lc2.branch=newBranch;
-          saveLocalCustomers(lcArr);
-          try{await updateDoc(doc(db,"customers",cust.id),{branch:newBranch});}catch(e){}
-          if(branchLabel)branchLabel.textContent=newBranch||"---";
-          container.replaceWith(editBranchBtn);
-        });
-    });
-    editAccBtn.addEventListener("click",async()=>{
-      const existingPerms=card.querySelector(".cust-perm-section");
-      if(existingPerms)existingPerms.remove();
-      const permSection=document.createElement("div");permSection.className="cust-perm-section";
-      permSection.style.cssText="margin-top:8px;padding:8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);";
-      const curPerms=cust.permissions||{};
-      const defPerms=CATEGORY_PERMISSIONS[cust.accountType]||CAT_ORDER_ADMIN;
-      const hasCustom=typeof curPerms==='object'&&Object.keys(curPerms).length>0;
-      let ph=`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--accent);">${t("permissionsLabel")}</div>`;
-      CAT_ORDER_ADMIN.forEach(cat=>{
-        const checked=hasCustom?!!curPerms[cat]:defPerms.includes(cat);
-        ph+=`<label class="perm-label"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span data-i18n-cat="${cat}">${catLabel(cat)}</span></label>`;
-      });
-      ph+=`<div style="display:flex;gap:8px;margin-top:8px;"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
-      permSection.innerHTML=ph;
-      card.appendChild(permSection);
-      permSection.querySelector(".perm-save-btn").addEventListener("click",async()=>{
-        const perms={};CAT_ORDER_ADMIN.forEach(cat=>{const cb=permSection.querySelector(`.perm-checkbox[data-cat="${cat}"]`);if(cb)perms[cat]=cb.checked;});
-        cust.permissions=perms;
-        const lcArr=getLocalCustomers();const lc2=lcArr.find(c=>c.id===cust.id);if(lc2)lc2.permissions=perms;
-        saveLocalCustomers(lcArr);
-        try{await updateDoc(doc(db,"customers",cust.id),{permissions:perms});alert(t("permsSaved"));}catch(e){alert(t("errorOccurredShort"));}
-      });
-      permSection.querySelector(".perm-reset-btn").addEventListener("click",async()=>{
-        cust.permissions={};
-        const lcArr2=getLocalCustomers();const lc3=lcArr2.find(c=>c.id===cust.id);if(lc3)lc3.permissions={};
-        saveLocalCustomers(lcArr2);
-        try{await updateDoc(doc(db,"customers",cust.id),{permissions:{}});alert(t("permsReset"));}catch(e){alert(t("errorOccurredShort"));}
-        permSection.querySelectorAll(".perm-checkbox").forEach(cb=>{const cat=cb.dataset.cat;cb.checked=defPerms.includes(cat);});
-      });
-    });
-    toggleBtn.addEventListener("click",async()=>{
-      if(invDiv.classList.contains("show")){invDiv.classList.remove("show");invDiv.innerHTML="";toggleBtn.textContent=t("showInvoices");return;}
-      toggleBtn.textContent=t("uploading");
-      try{let snap;try{const q=query(invoicesCollection,where("customerId","==",cust.id),orderBy("createdAt","desc"));snap=await getDocs(q);}catch(e){snap=await getDocs(query(invoicesCollection,where("customerId","==",cust.id)));}
-      invDiv.innerHTML="";if(snap.empty){invDiv.innerHTML=`<p style='color:var(--secondary);padding:10px;'>${t("noInvoicesAdmin")}</p>`;}
-      else{snap.forEach(d=>{const inv=d.data();const ids=inv.branchName||inv.invoiceNo||"";const idv=document.createElement("div");idv.style.cssText="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:6px;border-right:3px solid var(--accent);";idv.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:13px;"><strong>${escapeHTML(ids)}</strong><span>${formatArabicDate(inv.createdAt||inv.date)}</span></div><div style="font-size:12px;color:var(--secondary);margin-top:3px;">المنتجات: ${inv.totalItems||0} | الكمية: ${inv.totalQty||0}</div>`;invDiv.appendChild(idv);});}
-      invDiv.classList.add("show");toggleBtn.textContent=t("hideInvoices");
-      }catch(e){invDiv.innerHTML=`<p style='color:#dc3545;padding:10px;'>${t("errorOccurred")}</p>`;invDiv.classList.add("show");}
+    const actionBtn=card.querySelector(".cust-action-btn");
+    actionBtn.addEventListener("click",()=>{
+      const vis=dropdown.style.display;
+      if(vis==="none"||!vis){
+        dropdown.style.display="flex";
+        dropdown.innerHTML=`
+          <button class="cust-perm-action-btn" type="button" style="padding:8px 12px;border:none;border-radius:6px;background:var(--white);color:var(--dark);font-size:13px;font-weight:700;cursor:pointer;text-align:right;box-shadow:var(--shadow);">🔑 ${t("permissionsLabel")}</button>
+          <button class="cust-branch-action-btn" type="button" style="padding:8px 12px;border:none;border-radius:6px;background:var(--white);color:var(--dark);font-size:13px;font-weight:700;cursor:pointer;text-align:right;box-shadow:var(--shadow);">🏪 ${t("editBranch")}</button>
+          <button class="cust-inv-action-btn" type="button" style="padding:8px 12px;border:none;border-radius:6px;background:var(--white);color:var(--dark);font-size:13px;font-weight:700;cursor:pointer;text-align:right;box-shadow:var(--shadow);">📄 ${t("showInvoices")}</button>
+          <button class="cust-del-action-btn" type="button" style="padding:8px 12px;border:none;border-radius:6px;background:rgba(220,53,69,.1);color:#dc3545;font-size:13px;font-weight:700;cursor:pointer;text-align:right;box-shadow:var(--shadow);">🗑 ${t("deleteBtn")}</button>`;
+        dropdown.querySelector(".cust-perm-action-btn").addEventListener("click",()=>{openCustPerms(cust,card,dropdown);});
+        dropdown.querySelector(".cust-branch-action-btn").addEventListener("click",()=>{openCustBranchEdit(cust,card,branchLabel,dropdown);});
+        dropdown.querySelector(".cust-inv-action-btn").addEventListener("click",()=>{toggleCustInvoices(cust,invDiv,dropdown);});
+        dropdown.querySelector(".cust-del-action-btn").addEventListener("click",()=>{openDeleteCustomerModal(cust.id,cust.name);dropdown.style.display="none";});
+      }else{
+        dropdown.style.display="none";
+      }
     });
     list.appendChild(card);
   });
+}
+function openCustBranchEdit(cust,card,branchLabel,dropdown){
+  const branches=getBranches();
+  const cur=cust.branch||branches[0]||"";
+  const sel=document.createElement("select");sel.style.cssText="padding:6px;border:1.5px solid var(--accent);border-radius:6px;font-size:12px;font-weight:600;background:var(--white);color:var(--dark);cursor:pointer;width:100%;margin-bottom:6px;";
+  const blank=document.createElement("option");blank.value="";blank.textContent="--";sel.appendChild(blank);
+  branches.forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;if(b===cur)o.selected=true;sel.appendChild(o);});
+  const saveBtn=document.createElement("button");saveBtn.textContent=t("saveBtn")||"💾 حفظ";saveBtn.style.cssText="padding:6px 12px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;width:100%;";
+  const cont=document.createElement("div");cont.style.cssText="margin-top:6px;";
+  cont.appendChild(sel);cont.appendChild(saveBtn);
+  dropdown.innerHTML="";dropdown.appendChild(cont);
+  saveBtn.addEventListener("click",async()=>{
+    const newBranch=sel.value;
+    cust.branch=newBranch;
+    const lcArr=getLocalCustomers();const lc2=lcArr.find(c=>c.id===cust.id);if(lc2)lc2.branch=newBranch;
+    saveLocalCustomers(lcArr);
+    try{await updateDoc(doc(db,"customers",cust.id),{branch:newBranch});}catch(e){}
+    if(branchLabel)branchLabel.textContent=newBranch||"---";
+    dropdown.style.display="none";
+  });
+}
+function openCustPerms(cust,card,dropdown){
+  const permSection=document.createElement("div");permSection.className="cust-perm-section";
+  const curPerms=cust.permissions||{};
+  const defPerms=CATEGORY_PERMISSIONS[cust.accountType]||CAT_ORDER_ADMIN;
+  const hasCustom=typeof curPerms==='object'&&Object.keys(curPerms).length>0;
+  let ph=`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--accent);">${t("permissionsLabel")}</div>`;
+  CAT_ORDER_ADMIN.forEach(cat=>{
+    const checked=hasCustom?!!curPerms[cat]:defPerms.includes(cat);
+    ph+=`<label class="perm-label"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span data-i18n-cat="${cat}">${catLabel(cat)}</span></label>`;
+  });
+  ph+=`<div style="display:flex;gap:8px;margin-top:8px;"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
+  permSection.innerHTML=ph;
+  dropdown.innerHTML="";dropdown.appendChild(permSection);
+  permSection.querySelector(".perm-save-btn").addEventListener("click",async()=>{
+    const perms={};CAT_ORDER_ADMIN.forEach(cat=>{const cb=permSection.querySelector(`.perm-checkbox[data-cat="${cat}"]`);if(cb)perms[cat]=cb.checked;});
+    cust.permissions=perms;
+    const lcArr=getLocalCustomers();const lc2=lcArr.find(c=>c.id===cust.id);if(lc2)lc2.permissions=perms;
+    saveLocalCustomers(lcArr);
+    try{await updateDoc(doc(db,"customers",cust.id),{permissions:perms});alert(t("permsSaved"));}catch(e){alert(t("errorOccurredShort"));}
+    dropdown.style.display="none";
+  });
+  permSection.querySelector(".perm-reset-btn").addEventListener("click",async()=>{
+    cust.permissions={};
+    const lcArr2=getLocalCustomers();const lc3=lcArr2.find(c=>c.id===cust.id);if(lc3)lc3.permissions={};
+    saveLocalCustomers(lcArr2);
+    try{await updateDoc(doc(db,"customers",cust.id),{permissions:{}});alert(t("permsReset"));}catch(e){alert(t("errorOccurredShort"));}
+    permSection.querySelectorAll(".perm-checkbox").forEach(cb=>{const cat=cb.dataset.cat;cb.checked=defPerms.includes(cat);});
+  });
+}
+function toggleCustInvoices(cust,invDiv,dropdown){
+  if(invDiv.classList.contains("show")){invDiv.classList.remove("show");invDiv.innerHTML="";return;}
+  invDiv.innerHTML=`<div style='text-align:center;padding:10px;color:var(--secondary);'>${t("loadingInvoices")}</div>`;
+  dropdown.style.display="none";
+  (async()=>{
+    try{let snap;try{const q=query(invoicesCollection,where("customerId","==",cust.id),orderBy("createdAt","desc"));snap=await getDocs(q);}catch(e){snap=await getDocs(query(invoicesCollection,where("customerId","==",cust.id)));}
+    invDiv.innerHTML="";if(snap.empty){invDiv.innerHTML=`<p style='color:var(--secondary);padding:10px;'>${t("noInvoicesAdmin")}</p>`;}
+    else{snap.forEach(d=>{const inv=d.data();const ids=inv.branchName||inv.invoiceNo||"";const idv=document.createElement("div");idv.style.cssText="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:6px;border-right:3px solid var(--accent);";idv.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:13px;"><strong>${escapeHTML(ids)}</strong><span>${formatArabicDate(inv.createdAt||inv.date)}</span></div><div style="font-size:12px;color:var(--secondary);margin-top:3px;">${t("products")}: ${inv.totalItems||0} | ${t("qty")}: ${inv.totalQty||0}</div>`;invDiv.appendChild(idv);});}
+    invDiv.classList.add("show");
+    }catch(e){invDiv.innerHTML=`<p style='color:#dc3545;padding:10px;'>${t("errorOccurred")}</p>`;invDiv.classList.add("show");}
+  })();
 }
 
 /* ADD CUSTOMER */
@@ -474,6 +498,47 @@ function populateCustBranchDropdown(){
   const blank=document.createElement("option");blank.value="";blank.textContent=t("selectBranch");sel.appendChild(blank);
   branches.forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;sel.appendChild(o);});
 }
+let _branchEditIdx=-1;
+function openBranchRenameModal(idx){
+  _branchEditIdx=idx;
+  const br=getBranches();
+  if(idx<0||idx>=br.length)return;
+  const cur=br[idx];
+  const parts=cur.split(" - ");
+  const ar=parts[0]||cur;
+  const en=parts[1]||"";
+  document.getElementById("branchRenameArInput").value=ar;
+  document.getElementById("branchRenameEnInput").value=en;
+  document.getElementById("branchRenameModalTitle").textContent=t("editBranch");
+  applyBranchRenameModalLang();
+  const m=document.getElementById("branchRenameModal");m.classList.add("active");m.setAttribute("aria-hidden","false");
+  setTimeout(()=>document.getElementById("branchRenameArInput").focus(),100);
+}
+function closeBranchRenameModal(){
+  const m=document.getElementById("branchRenameModal");m.classList.remove("active");m.setAttribute("aria-hidden","true");
+}
+function applyBranchRenameModalLang(){
+  const lang=getLang();
+  ["branchRenameArInput","branchRenameEnInput"].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const key=el.getAttribute("data-i18n-placeholder");if(key&&t(key)!==key)el.placeholder=t(key);
+  });
+  document.querySelectorAll("#branchRenameModal [data-i18n]").forEach(el=>{const k=el.getAttribute("data-i18n");if(k&&t(k)!==k)el.textContent=t(k);});
+}
+window.confirmBranchRename=function(){
+  const ar=document.getElementById("branchRenameArInput").value.trim();
+  const en=document.getElementById("branchRenameEnInput").value.trim();
+  if(!ar){alert(getLang()==="ar"?"الاسم بالعربي مطلوب":"Arabic name required");return;}
+  const newName=ar+(en?" - "+en:"");
+  const br=getBranches();
+  if(_branchEditIdx<0||_branchEditIdx>=br.length)return;
+  if(br.includes(newName)&&br[_branchEditIdx]!==newName){alert(t("branchExists"));return;}
+  br[_branchEditIdx]=newName;
+  saveBranches(br);
+  closeBranchRenameModal();
+  renderBranches();
+};
+
 function renderBranches(){
   const list=document.getElementById("branchesList");if(!list)return;
   const branches=getBranches();
@@ -483,7 +548,7 @@ function renderBranches(){
     const card=document.createElement("div");card.className="customer-admin-card";
     card.innerHTML=`<div class="cust-header"><strong>${escapeHTML(b)}</strong></div><div style="display:flex;gap:8px;margin-top:8px;"><button class="branch-edit-btn" type="button" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;" data-index="${idx}">✏️ ${t("editBtn")}</button><button class="branch-del-btn" type="button" style="background:rgba(220,53,69,.1);color:#dc3545;border:none;border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;" data-index="${idx}">🗑 ${t("deleteBtn")}</button></div>`;
     card.querySelector(".branch-del-btn").addEventListener("click",function(){const br=getBranches();const i=parseInt(this.dataset.index);if(i>=0&&i<br.length){if(confirm(`Delete "${br[i]}"?`)){br.splice(i,1);saveBranches(br);renderBranches();}}});
-    card.querySelector(".branch-edit-btn").addEventListener("click",function(){const br=getBranches();const i=parseInt(this.dataset.index);if(i<0||i>=br.length)return;const cur=br[i];const parts=cur.split(" - ");const ar=parts[0]||cur;const en=parts[1]||"";const newName=prompt(`${t("editBtn")}: ${cur}\n\n${t("branchName")} (عربي - English):`,cur);if(!newName||newName.trim()===cur)return;const trimmed=newName.trim();br[i]=trimmed;saveBranches(br);renderBranches();});
+    card.querySelector(".branch-edit-btn").addEventListener("click",function(){openBranchRenameModal(parseInt(this.dataset.index));});
     list.appendChild(card);
   });
 }
@@ -692,6 +757,19 @@ function applyAdminLang(){
   const logoutBtn = document.getElementById("adminLogoutBtn");
   if(logoutBtn) logoutBtn.textContent = t("logout");
 
+  // Admin profile
+  const profDisplay=document.getElementById("adminProfileDisplay");
+  if(profDisplay)profDisplay.textContent=currentAdminData?`🔑 ${currentAdminData.username}`:"";
+  const profEditBtn=document.getElementById("adminProfileEditBtn");
+  const profEditSection=document.getElementById("adminProfileEditSection");
+  if(profEditBtn)profEditBtn.textContent="✏️";
+  const editUser=document.getElementById("adminEditProfileUser");
+  if(editUser)editUser.placeholder=t("newUsername");
+  const editPass=document.getElementById("adminEditProfilePass");
+  if(editPass)editPass.placeholder=t("newPassword");
+  const saveBtn=document.getElementById("adminSaveProfileBtn");
+  if(saveBtn)saveBtn.textContent=t("saveBtn")||"💾 حفظ";
+
   // Admin login screen
   const loginH1 = document.querySelector("#adminLoginScreen h1");
   const loginP = document.querySelector("#adminLoginScreen p");
@@ -829,6 +907,9 @@ function applyAdminLang(){
   // Rename/Add category modal i18n
   applyRenameModalLang();
 
+  // Branch rename modal i18n
+  applyBranchRenameModalLang();
+
   // Re-render category products / categories list on language switch
   if(selectedAdminCategory) renderCategoryProducts(selectedAdminCategory);
   const catSec = document.getElementById("section-categories");
@@ -840,7 +921,7 @@ getElement("adminLangToggle")?.addEventListener("click", () => {
 });
 
 document.getElementById("adminLogoutBtn")?.addEventListener("click", () => {
-  if(confirm(t("logoutConfirm"))) revertToLoginScreen("");
+  if(confirm(t("logoutConfirm"))){revertToLoginScreen("");currentAdminData=null;currentAdminDocId=null;sessionStorage.removeItem(ADMIN_SESSION_KEY);}
 });
 
 // Add new category button
@@ -859,6 +940,39 @@ document.getElementById("renameCatModal")?.addEventListener("keydown", e => {
 ['renameCatArInput','renameCatEnInput','renameCatDescInput'].forEach(id => {
   document.getElementById(id)?.addEventListener("keydown", e => {
     if(e.key === "Enter"){ e.stopPropagation(); document.getElementById("renameCatConfirmBtn")?.click(); }
+  });
+});
+document.getElementById("adminProfileEditBtn")?.addEventListener("click",()=>{
+  const s=document.getElementById("adminProfileEditSection");if(!s)return;
+  s.style.display=s.style.display==="none"?"":"none";
+  const eu=document.getElementById("adminEditProfileUser");if(eu&&currentAdminData)eu.value=currentAdminData.username||"";
+  const ep=document.getElementById("adminEditProfilePass");if(ep)ep.value="";
+});
+document.getElementById("adminSaveProfileBtn")?.addEventListener("click",async()=>{
+  if(!currentAdminData||!currentAdminDocId){alert(t("errorOccurredShort"));return;}
+  const nu=document.getElementById("adminEditProfileUser").value.trim();
+  const np=document.getElementById("adminEditProfilePass").value.trim();
+  if(!nu&&!np){alert(t("enterAtLeastOne"));return;}
+  const updates={};
+  if(nu&&nu!==(currentAdminData.username||""))updates.username=nu;
+  if(np)updates.password=np;
+  if(Object.keys(updates).length===0){alert(t("noChanges"));return;}
+  try{await updateDoc(doc(db,"admins",currentAdminDocId),updates);Object.assign(currentAdminData,updates);document.getElementById("adminProfileEditSection").style.display="none";applyAdminLang();alert(t("profileUpdated"));}catch(e){alert(t("errorOccurredShort"));}
+});
+
+// Branch rename modal
+document.getElementById("branchRenameCancelBtn")?.addEventListener("click", closeBranchRenameModal);
+document.getElementById("branchRenameConfirmBtn")?.addEventListener("click", confirmBranchRename);
+document.getElementById("branchRenameModal")?.addEventListener("click", e => {
+  if(e.target === e.currentTarget) closeBranchRenameModal();
+});
+document.getElementById("branchRenameModal")?.addEventListener("keydown", e => {
+  if(e.key === "Escape") closeBranchRenameModal();
+  if(e.key === "Enter") confirmBranchRename();
+});
+['branchRenameArInput','branchRenameEnInput'].forEach(id => {
+  document.getElementById(id)?.addEventListener("keydown", e => {
+    if(e.key === "Enter"){ e.stopPropagation(); confirmBranchRename(); }
   });
 });
 
