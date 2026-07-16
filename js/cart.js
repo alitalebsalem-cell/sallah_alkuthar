@@ -26,6 +26,17 @@ const CAT_EN_NAMES = {
 const CAT_ORDER = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 const CAT_META_KEY="simsim_cat_meta";
 const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
+async function loadCategoriesFromFirestore(){
+  try{
+    const snap=await getDocs(query(collection(db,"categories"),orderBy("order","asc")));
+    if(snap.empty)return;
+    const meta={};
+    snap.forEach(d=>{const d2=d.data();meta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,icon:d2.icon||"📦",desc:d2.desc||"",showDesc:d2.showDesc!==false};});
+    const existing=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};
+    Object.assign(existing,meta);existing._catOrder=snap.docs.map(d=>d.data().nameAr);
+    localStorage.setItem("simsim_cat_meta",JSON.stringify(existing));
+  }catch(e){}
+}
 function getCatMeta(){try{return JSON.parse(localStorage.getItem(CAT_META_KEY))||{};}catch(e){return{};}}
 function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:false};}
 
@@ -442,5 +453,6 @@ function loadCategoryCounts(){
 }
 applyLang();
 loadSession();
+loadCategoriesFromFirestore();
 populateBranchDropdown();
 renderCart();

@@ -18,13 +18,52 @@ const CAT_EN_NAMES_ADMIN = {"قسم المعمل":"Almamal","قسم السوبر
 const CAT_ORDER_ADMIN = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
 const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
 const CAT_ICONS={"قسم المعمل":"🔬","قسم السوبرماركت":"🛒","قسم محلات الجملة":"🏪","قسم المستودع":"🏭","احتياجات المعمل":"📋"};
-try{const _m=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};if(_m._catOrder){CAT_ORDER_ADMIN.length=0;CAT_ORDER_ADMIN.push(..._m._catOrder);}if(_m._catIcons){Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(_m._catIcons).forEach(k=>CAT_ICONS[k]=_m._catIcons[k]);}if(_m._catEnNames){Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);Object.keys(_m._catEnNames).forEach(k=>CAT_EN_NAMES_ADMIN[k]=_m._catEnNames[k]);}if(_m._defaultPerms){Object.keys(CATEGORY_PERMISSIONS).forEach(k=>delete CATEGORY_PERMISSIONS[k]);Object.keys(_m._defaultPerms).forEach(k=>CATEGORY_PERMISSIONS[k]=_m._defaultPerms[k]);}}catch(e){}
 
 const productsTable = document.getElementById("productsTable");
 const productsCollection = collection(db,"products");
 const invoicesCollection = collection(db,"invoices");
 const customersCollection = collection(db,"customers");
 const adminsCollection = collection(db,"admins");
+const categoriesCollection = collection(db,"categories");
+
+async function loadCategoriesFromFirestore(){
+  try{
+    const snap=await getDocs(query(categoriesCollection,orderBy("order","asc")));
+    if(snap.empty){await seedDefaultCategories();return;}
+    CAT_ORDER_ADMIN.length=0;Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);
+    snap.forEach(d=>{const d2=d.data();CAT_ORDER_ADMIN.push(d2.nameAr);CAT_ICONS[d2.nameAr]=d2.icon||"📦";CAT_EN_NAMES_ADMIN[d2.nameAr]=d2.nameEn||d2.nameAr;});
+    // Update CATEGORY_PERMISSIONS — replace old names with current Firestore names
+    for(const at in CATEGORY_PERMISSIONS){
+      const arr=CATEGORY_PERMISSIONS[at];
+      for(let i=0;i<arr.length;i++){
+        const metaDoc=snap.docs.find(d=>d.data().nameAr===arr[i]);
+        if(!metaDoc){
+          // Try to find renamed category by checking if any doc has the previous nameAr
+          const allMeta=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};
+          for(const key in allMeta){
+            if(key!==arr[i]&&!key.startsWith("_")&&allMeta[key].nameEn&&snap.docs.find(d=>d.data().nameAr===key)){arr[i]=key;break;}
+          }
+        }
+      }
+    }
+    // Save to localStorage as cache
+    const allMeta={};snap.forEach(d=>{const d2=d.data();allMeta[d2.nameAr]={nameEn:d2.nameEn||d2.nameAr,icon:d2.icon||"📦",desc:d2.desc||"",showDesc:d2.showDesc!==false};});
+    allMeta._catOrder=[...CAT_ORDER_ADMIN];allMeta._catIcons={...CAT_ICONS};allMeta._catEnNames={...CAT_EN_NAMES_ADMIN};allMeta._defaultPerms=JSON.parse(JSON.stringify(CATEGORY_PERMISSIONS));
+    localStorage.setItem("simsim_cat_meta",JSON.stringify(allMeta));
+  }catch(e){console.error("loadCategoriesFromFirestore error:",e);
+    // Fallback: restore from localStorage
+    try{const _m=JSON.parse(localStorage.getItem("simsim_cat_meta"))||{};if(_m._catOrder){CAT_ORDER_ADMIN.length=0;CAT_ORDER_ADMIN.push(..._m._catOrder);}if(_m._catIcons){Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(_m._catIcons).forEach(k=>CAT_ICONS[k]=_m._catIcons[k]);}if(_m._catEnNames){Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);Object.keys(_m._catEnNames).forEach(k=>CAT_EN_NAMES_ADMIN[k]=_m._catEnNames[k]);}if(_m._defaultPerms){Object.keys(CATEGORY_PERMISSIONS).forEach(k=>delete CATEGORY_PERMISSIONS[k]);Object.keys(_m._defaultPerms).forEach(k=>CATEGORY_PERMISSIONS[k]=_m._defaultPerms[k]);}}catch(e2){}
+  }
+}
+async function seedDefaultCategories(){
+  const snap=await getDocs(categoriesCollection);
+  if(!snap.empty)return;
+  const defaults=[{nameAr:"قسم المعمل",nameEn:"Lab",icon:"🔬",order:0,desc:"",showDesc:true},{nameAr:"قسم السوبرماركت",nameEn:"Supermarket",icon:"🛒",order:1,desc:"",showDesc:true},{nameAr:"قسم محلات الجملة",nameEn:"Wholesale",icon:"🏪",order:2,desc:"",showDesc:true},{nameAr:"قسم المستودع",nameEn:"Warehouse",icon:"🏭",order:3,desc:"",showDesc:true},{nameAr:"احتياجات المعمل",nameEn:"Lab Needs",icon:"📋",order:4,desc:"",showDesc:true}];
+  for(const c of defaults){try{await addDoc(categoriesCollection,c);}catch(e){}}
+  // Reload into constants
+  CAT_ORDER_ADMIN.length=0;Object.keys(CAT_ICONS).forEach(k=>delete CAT_ICONS[k]);Object.keys(CAT_EN_NAMES_ADMIN).forEach(k=>delete CAT_EN_NAMES_ADMIN[k]);
+  defaults.forEach(c=>{CAT_ORDER_ADMIN.push(c.nameAr);CAT_ICONS[c.nameAr]=c.icon;CAT_EN_NAMES_ADMIN[c.nameAr]=c.nameEn;});
+}
 
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 function getElement(id){return document.getElementById(id);}
@@ -506,6 +545,7 @@ window.confirmRenameCat=async function(){
     const idx=CAT_ORDER_ADMIN.indexOf(oldName);if(idx!==-1)CAT_ORDER_ADMIN[idx]=arName;
     if(CAT_EN_NAMES_ADMIN[oldName]){CAT_EN_NAMES_ADMIN[arName]=CAT_EN_NAMES_ADMIN[oldName];delete CAT_EN_NAMES_ADMIN[oldName];}
     for(const at in CATEGORY_PERMISSIONS){const arr=CATEGORY_PERMISSIONS[at];const oi=arr.indexOf(oldName);if(oi!==-1)arr[oi]=arName;}
+    try{const cs=await getDocs(query(categoriesCollection,where("nameAr","==",oldName)));if(cs.empty){await addDoc(categoriesCollection,{nameAr:arName,nameEn:enName||oldName,icon:icon,order:CAT_ORDER_ADMIN.indexOf(arName),desc:desc||"",showDesc:showDesc});}else{for(const d of cs.docs){await updateDoc(doc(db,"categories",d.id),{nameAr:arName,nameEn:enName||oldName,icon:icon,desc:desc||"",showDesc:showDesc});}}}catch(e){console.error(e);}
   }
   const allMeta=getCatMeta();
   if(allMeta[oldName]){allMeta[arName]=allMeta[oldName];delete allMeta[oldName];}
@@ -730,5 +770,5 @@ document.getElementById("renameCatModal")?.addEventListener("keydown", e => {
   });
 });
 
-async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed)return;sessionStorage.setItem(AUTH_KEY,"true");applyAdminLang();initTabs();await loadTabContent("products");}
+async function init(){await seedDefaultAdmin();const authed=await checkAdminAuth();if(!authed)return;sessionStorage.setItem(AUTH_KEY,"true");await loadCategoriesFromFirestore();applyAdminLang();initTabs();await loadTabContent("products");}
 init();
