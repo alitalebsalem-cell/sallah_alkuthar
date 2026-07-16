@@ -117,8 +117,8 @@
     function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
     function setLang(l){ localStorage.setItem(LANG_KEY, l); }
     const T_DASH = {
-      ar: { title:"لوحة التحكم", sub:"اختر القسم", store:"🛒 المتجر", admin:"⚙️ لوحة الإدارة", invoices:"📄 عرض الفواتير", toggle:"EN" },
-      en: { title:"Dashboard", sub:"Choose a section", store:"🛒 Store", admin:"⚙️ Admin Panel", invoices:"📄 Invoices View", toggle:"عربي" }
+      ar: { title:"لوحة التحكم", sub:"اختر القسم", store:" المتجر", admin:" لوحة الإدارة", invoices:" عرض الفواتير", toggle:"EN" },
+      en: { title:"Dashboard", sub:"Choose a section", store:" Store", admin:" Admin Panel", invoices:" Invoices View", toggle:"عربي" }
     };
     function applyDashLang(){
       const lang = getLang();
