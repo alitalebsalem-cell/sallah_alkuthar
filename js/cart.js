@@ -95,11 +95,11 @@ document.getElementById("langToggle")?.addEventListener("click",()=>{
 /* AUTH */
 function loadSession(){
   const s=localStorage.getItem(SESSION_KEY);
-  if(s){try{const d=JSON.parse(s);currentCustomer={id:d.id,name:d.name,accountType:d.accountType||"",permissions:d.permissions||{}};currentCustomerPin=d.pin||"";updateAuthUI();showCart();}catch(e){currentCustomer=null;}}
+  if(s){try{const d=JSON.parse(s);currentCustomer={id:d.id,name:d.name,branch:d.branch||"",accountType:d.accountType||"",permissions:d.permissions||{}};currentCustomerPin=d.pin||"";updateAuthUI();showCart();}catch(e){currentCustomer=null;}}
 }
 function saveSession(c,p){
   currentCustomer=c;currentCustomerPin=p||"";
-  localStorage.setItem(SESSION_KEY,JSON.stringify({id:c.id,name:c.name,pin:currentCustomerPin,accountType:c.accountType||"",permissions:c.permissions||{}}));
+  localStorage.setItem(SESSION_KEY,JSON.stringify({id:c.id,name:c.name,branch:c.branch||"",pin:currentCustomerPin,accountType:c.accountType||"",permissions:c.permissions||{}}));
   updateAuthUI();showCart();
 }
 function clearSession(){ currentCustomer=null;currentCustomerPin="";localStorage.removeItem(SESSION_KEY);updateAuthUI();hideCart(); }
@@ -209,7 +209,7 @@ loginSubmitBtn?.addEventListener("click",()=>{
   if(!pin){loginError.textContent=t("enterPin");return;}
   const match=customersCache.find(c=>String(c.name||"").trim().toLowerCase()===name.trim().toLowerCase());
   if(!match){loginError.textContent=t("accountNotFound");return;}
-  if(String(match.pin)===pin){saveSession({id:match.id,name:match.name,accountType:match.accountType||at,permissions:match.permissions||{}},pin);closeLoginModal();}
+    if(String(match.pin)===pin){saveSession({id:match.id,name:match.name,branch:match.branch||"",accountType:match.accountType||at,permissions:match.permissions||{}},pin);closeLoginModal();}
   else{loginError.textContent=t("wrongPassword");}
 });
 document.getElementById("loginRequiredBtn")?.addEventListener("click",openLoginModal);
