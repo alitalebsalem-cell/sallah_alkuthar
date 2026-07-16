@@ -509,7 +509,6 @@ window.confirmDeleteInvoice=async function(){if(!deleteInvoiceTargetId)return;co
 /* BRANCHES */
 const BRANCHES_KEY="sallah_branches";
 const DEFAULT_BRANCHES=["فرع الحمدانية - Hamdanya","فرع الطائف - Altayf","فرع السامر - Al-Samer","فرع المعمل - Almamal"];
-const LOCAL_ADMIN_KEY="sallah_local_admin";
 function getBranches(){try{const d=localStorage.getItem(BRANCHES_KEY);if(d){const p=JSON.parse(d);if(Array.isArray(p)&&p.length)return p;}}catch(e){}return[...DEFAULT_BRANCHES];}
 function saveBranches(l){localStorage.setItem(BRANCHES_KEY,JSON.stringify(l));}
 function populateCustBranchDropdown(){
@@ -826,8 +825,8 @@ function applyAdminLang(){
     const el = document.getElementById(id);
     if(el) el.placeholder = t(key);
   });
-  const saveBtn = document.getElementById("save");
-  if(saveBtn) saveBtn.textContent = t("saveProduct");
+  const saveProductBtn = document.getElementById("save");
+  if(saveProductBtn) saveProductBtn.textContent = t("saveProduct");
 
   // Category select in product form
   const catSelect = document.getElementById("category");
