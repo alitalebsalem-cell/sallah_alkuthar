@@ -360,14 +360,6 @@ a{text-decoration:none;color:inherit;}
   box-shadow:0 0 0 4px rgba(176,138,82,.12);
 }
 
-#branchName{
-  width:100%;padding:12px;margin-bottom:10px;
-  border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);
-  font-size:14px;font-weight:600;color:var(--dark);
-  background:var(--white);cursor:pointer;appearance:auto;
-}
-#branchName:focus{border-color:var(--accent);outline:none;}
-
 #createInvoice,#whatsappBtn,#clearCartBtn,.back-btn{
   width:100%;padding:14px;border:none;border-radius:var(--radius-sm);
   color:#fff;font-size:16px;font-weight:800;cursor:pointer;
@@ -1046,7 +1038,6 @@ body{background:linear-gradient(135deg,var(--bg) 0%,#ede7df 100%);}
   #invoiceFab{display:flex !important;}
   .cart-top-bar{display:flex !important;}
   .cart-page{padding-bottom:140px;}
-  #branchNameMobile{padding:8px;font-size:12px;margin-bottom:4px;}
   #createInvoiceMobile,#whatsappMobile{font-size:12px;padding:10px;}
   #whatsappMobile{margin-top:6px !important;}
   .confirm-actions,.clear-cart-actions{grid-template-columns:1fr;}
