@@ -230,10 +230,13 @@
       loginName.style.display = "block";
       loginSubmit.style.display = "none";
       loginPin.style.display = "none";
-      // Load customer names ONLY from Firebase (no cache) for the selected account type
       try{
+        let snap;
         const q = query(collection(db, "customers"), where("accountType", "==", at));
-        const snap = await getDocs(q);
+        snap = await getDocs(q);
+        if(snap.empty){
+          snap = await getDocs(collection(db, "customers"));
+        }
         const def = loginName.querySelector('option[value=""]');
         loginName.innerHTML = "";
         if(def){def.textContent = tt("selectName");loginName.appendChild(def);}
@@ -365,26 +368,28 @@
         try{ const q = query(invoicesRef, orderBy("createdAt", "desc")); snapshot = await getDocs(q); }catch(e){ snapshot = await getDocs(invoicesRef); }
         allInvoices = [];
         snapshot.forEach(d => allInvoices.push({ id: d.id, ...d.data() }));
-        // Filter by account type: lab sees only lab, branch sees only branch
+        // Filter by account type
         const accType = currentUser?.accountType || "";
-        let filtered = allInvoices;
-        if(accType === "حساب معمل"){
-          filtered = allInvoices.filter(inv => inv.accountType === "حساب معمل");
-        } else if(accType === "حساب فرع"){
-          filtered = allInvoices.filter(inv => inv.accountType !== "حساب معمل");
-        }
+        const filtered = filterInvoicesByType(allInvoices, accType);
         renderInvoices(filtered);
       }catch(error){
         container.innerHTML = `<div class="view-error">${error.message}</div>`;
       }
     }
 
+    function filterInvoicesByType(list, accType){
+      if(accType === "حساب معمل"){
+        return list.filter(inv => inv.accountType === "حساب معمل");
+      } else if(accType === "حساب فرع"){
+        return list.filter(inv => inv.accountType !== "حساب معمل");
+      }
+      return list;
+    }
+
     document.getElementById("viewSearch")?.addEventListener("input", function(){
       const value = this.value.toLowerCase().trim();
       const accType = currentUser?.accountType || "";
-      let base = allInvoices;
-      if(accType === "حساب معمل") base = allInvoices.filter(inv => inv.accountType === "حساب معمل");
-      else if(accType === "حساب فرع") base = allInvoices.filter(inv => inv.accountType !== "حساب معمل");
+      let base = filterInvoicesByType(allInvoices, accType);
       if(!value){ renderInvoices(base); return; }
       const filtered = base.filter(inv =>
         (inv.customerName || "").toLowerCase().includes(value) ||
