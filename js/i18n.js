@@ -97,6 +97,7 @@ const T = {
     arabicName: "الاسم بالعربي",
     englishName: "الاسم بالإنجليزي",
     productCode: "كود المنتج",
+    suggestCode: "اقتراح كود",
     imageLink: "رابط الصورة",
     importExcel: "📥 استيراد من ملف إكسل",
     exportExcel: "📤 تصدير إلى إكسل",
@@ -536,7 +537,7 @@ export function applyFullLang(selectors){
 
   if(selectors?.langToggle){
     const btn = document.getElementById(selectors.langToggle);
-    if(btn) btn.textContent = isEn ? "عربي" : "EN";
+    if(btn) btn.textContent = isEn ? "🌐 عربي" : "🌐 EN";
   }
 
   if(selectors?.search) {
