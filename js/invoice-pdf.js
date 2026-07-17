@@ -66,11 +66,6 @@ function renderProductRows(items, accountType) {
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  // Lab account: only show lab category items
-  if (accountType === "حساب معمل") {
-    items = items.filter(it => it.category === "احتياجات المعمل");
-  }
-
   // Group by category
   const groups = {};
   items.forEach(it => {

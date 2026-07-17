@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { collection, getDocs, query, orderBy, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel, applyFullLang } from "./i18n.js";
 import { generateInvoicePdf } from "./invoice-pdf.js";
 
@@ -541,7 +541,12 @@ document.getElementById("profileChangePinBtn")?.addEventListener("click", async 
   const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
   stored.pin = newPin;
   localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
-  try{ const {doc,updateDoc} = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"); const {db:d} = await import("./firebase.js"); await updateDoc(doc(d,"customers",currentCustomer.id),{pin:newPin}); }catch(e){}
+  // Update pin in Firestore
+  try{ await updateDoc(doc(db,"customers",currentCustomer.id),{pin:newPin}); }catch(e){ console.warn("Pin update failed:",e); }
+  // Also update customersCache so re-login works immediately
+  const cached = customersCache.find(c => c.id === currentCustomer.id);
+  if(cached) cached.pin = newPin;
+  saveLocalCustomers(customersCache);
   alert(t("pinChanged"));
 });
 document.getElementById("profileInvoicesBtn")?.addEventListener("click", () => {

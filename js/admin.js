@@ -85,6 +85,7 @@ function saveLocalAdmin(username,password){try{localStorage.setItem(LOCAL_ADMIN_
 let currentAdminData=null;
 let currentAdminDocId=null;
 let currentAdminPerms={};
+let currentAdminPermsLoaded=false;
 
 function revertToLoginScreen(msg){
   sessionStorage.removeItem(AUTH_KEY);
@@ -174,7 +175,11 @@ function showProductForm(cat){
   if(categorySelect){ categorySelect.value = cat; }
   // Control save button based on permissions
   const pProds=currentAdminPerms.canAddProducts;
-  const canAdd=!pProds||Object.keys(pProds).length===0||pProds[cat]===true;
+  let canAdd=true;
+  if(currentAdminPermsLoaded){
+    if(!pProds||Object.keys(pProds).length===0)canAdd=false;
+    else canAdd=pProds[cat]===true;
+  }
   const saveBtn=getElement("save");
   if(saveBtn)saveBtn.style.display=canAdd?"":"none";
   // Show category products below the form
@@ -239,7 +244,7 @@ function clearForm(){["name","description","code","image"].forEach(id=>{const e=
 function compressImageFile(file){return new Promise((res,rej)=>{const img=new Image();const r=new FileReader();r.onload=e=>{img.onload=()=>{const c=document.createElement("canvas");let w=img.width,h=img.height;if(w>800){h=h*(800/w);w=800;}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);const d=c.toDataURL("image/jpeg",0.6);if(Math.ceil((d.length*3)/4)>1000000){rej(new Error("Image > 1MB"));return;}res(d);};img.onerror=()=>rej(new Error("Failed to load"));img.src=e.target.result;};r.onerror=()=>rej(new Error("Failed to read"));r.readAsDataURL(file);});}
 
 getElement("save")?.addEventListener("click",async()=>{
-  try{const pCat=getInputValue("category");const pProds=currentAdminPerms.canAddProducts;if(pProds&&Object.keys(pProds).length>0&&pProds[pCat]!==true){alert(t("errorSaving"));return;}
+  try{const pCat=getInputValue("category");const pProds=currentAdminPerms.canAddProducts;if(currentAdminPermsLoaded&&(!pProds||Object.keys(pProds).length===0||pProds[pCat]!==true)){alert(t("errorSaving"));return;}
   let img=getInputValue("image");const f=getElement("imageFile")?.files[0];if(f)img=await compressImageFile(f);if(!img)img="images/noimg.jpg";
   const p={name:getInputValue("name"),description:getInputValue("description"),code:getInputValue("code"),category:pCat,image:img,createdAt:Date.now()};
   if(!p.name||!p.code){alert(t("fillRequired"));return;}
@@ -274,6 +279,8 @@ function updateBulkUI(){
     allCb.checked = total > 0 && ids.length === total;
     allCb.indeterminate = ids.length > 0 && ids.length < total;
   }
+  const toolbar = document.getElementById("bulkToolbar");
+  if(toolbar) toolbar.classList.toggle("has-selection", ids.length > 0);
 }
 document.getElementById("selectAllCheckbox")?.addEventListener("change", function(){
   document.querySelectorAll(".prod-cb").forEach(cb => cb.checked = this.checked);
@@ -386,8 +393,8 @@ async function loadAllCustomers(){
   list.innerHTML=`<div class='loading-msg'>${t("loadingCustomers")}</div>`;
   allCustomers=getLocalCustomers();
   try{const snap=await getDocs(customersCollection);const fids=new Set();
-   snap.forEach(d=>{fids.add(d.id);const data=d.data();const existing=allCustomers.find(c=>c.id===d.id);if(existing){existing.permissions=data.permissions||{};existing.branch=data.branch||"";}else{allCustomers.push({id:d.id,name:data.name,pin:data.pin,accountType:data.accountType||"",branch:data.branch||"",permissions:data.permissions||{},createdAt:data.createdAt});}});
-  const lids=new Set(allCustomers.map(c=>c.id));fids.forEach(fid=>{if(!lids.has(fid))allCustomers=allCustomers.filter(c=>c.id!==fid);});
+   snap.forEach(d=>{fids.add(d.id);const data=d.data();const existing=allCustomers.find(c=>c.id===d.id);if(existing){existing.permissions=data.permissions||{};existing.branch=data.branch||"";}else{const byName=allCustomers.find(c=>String(c.name||"").trim().toLowerCase()===String(data.name||"").trim().toLowerCase());if(byName){byName.id=d.id;byName.permissions=data.permissions||{};byName.branch=data.branch||"";}else{allCustomers.push({id:d.id,name:data.name,pin:data.pin,accountType:data.accountType||"",branch:data.branch||"",permissions:data.permissions||{},createdAt:data.createdAt});}}});
+  allCustomers=allCustomers.filter(c=>fids.has(c.id)||String(c.id).startsWith("local_"));
   allCustomers.forEach(c=>{const s=snap.docs.find(dd=>dd.id===c.id);if(s&&!s.data().accountType){try{updateDoc(doc(db,"customers",c.id),{accountType:"حساب معمل"});c.accountType="حساب معمل";}catch(e){}}});
   saveLocalCustomers(allCustomers);}catch(e){}
   renderAllCustomers(allCustomers);
@@ -493,10 +500,8 @@ getElement("addCustBtn")?.addEventListener("click",async()=>{
   if(!name||name.length<2){alert(t("nameMinTwo"));return;}
   if(!pin){alert(t("enterPin"));return;}
   if(allCustomers.find(c=>String(c.name||"").trim().toLowerCase()===name.toLowerCase())){alert(t("customerExists"));return;}
-  const id="local_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);
-  const local=getLocalCustomers();local.push({id,name,pin,accountType:acc,branch,createdAt:Date.now()});saveLocalCustomers(local);
   getElement("newCustName").value="";getElement("newCustPin").value="";document.getElementById("newCustBranch").value="";
-  try{await addDoc(customersCollection,{name,pin,accountType:acc,branch,createdAt:serverTimestamp()});}catch(e){}
+  try{const ref=await addDoc(customersCollection,{name,pin,accountType:acc,branch,createdAt:serverTimestamp()});removeLocalCustomer("local_"+name.toLowerCase());const local=getLocalCustomers();local.push({id:ref.id,name,pin,accountType:acc,branch,createdAt:Date.now()});saveLocalCustomers(local);}catch(e){const id="local_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);const local=getLocalCustomers();local.push({id,name,pin,accountType:acc,branch,createdAt:Date.now()});saveLocalCustomers(local);}
   alert(t("customerAdded"));await loadAllCustomers();
 });
 
@@ -588,17 +593,30 @@ function saveCatMeta(m){localStorage.setItem(CAT_META_KEY,JSON.stringify(m));}
 function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:true};}
 function catDisplayName(cat){const meta=getCatMetaObj(cat);return getLang()==="en"?meta.nameEn:cat;}
 
+function canAddProductsToCat(cat){
+  const pProds=currentAdminPerms.canAddProducts;
+  if(!currentAdminPermsLoaded)return true;
+  if(!pProds||Object.keys(pProds).length===0)return false;
+  return pProds[cat]===true;
+}
 function rebuildCatPickCards(){
   const cont=document.getElementById("catPickCardsContainer");if(!cont)return;
   const cats=[...new Set([...CAT_ORDER_ADMIN,...allProducts.filter(p=>p.category).map(p=>p.category)])];
   const pCats=currentAdminPerms.categories;
-  const allowed=cats.filter(cat=>!pCats||Object.keys(pCats).length===0||pCats[cat]!==false);
+  let allowed;
+  if(!currentAdminPermsLoaded){allowed=[...cats];}
+  else if(!pCats||Object.keys(pCats).length===0){allowed=[];}
+  else{allowed=cats.filter(cat=>pCats[cat]!==false);}
   cont.innerHTML="";
   allowed.forEach(cat=>{
     const count=allProducts.filter(p=>p.category===cat).length;
-    const btn=document.createElement("button");btn.type="button";btn.className="cat-pick-card";btn.dataset.cat=cat;
-    btn.innerHTML=`<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`;
-    btn.addEventListener("click",()=>showProductForm(cat));
+    const canAdd=canAddProductsToCat(cat);
+    const btn=document.createElement("button");btn.type="button";btn.className="cat-pick-card"+(canAdd?"":" no-add-perm");btn.dataset.cat=cat;
+    btn.innerHTML=`<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`+(canAdd?"":`<br><small class="no-add-perm-msg">${t("noAddPermForCat")}</small>`);
+    btn.addEventListener("click",()=>{
+      if(!canAdd){alert(t("noAddPermForCat"));return;}
+      showProductForm(cat);
+    });
     cont.appendChild(btn);
   });
   // Also rebuild the category select in product form
@@ -1034,12 +1052,24 @@ document.getElementById("branchRenameModal")?.addEventListener("keydown", e => {
 });
 
 async function loadAdminPermissions(){
-  if(currentAdminDocId&&currentAdminDocId!=="local"){
-    try{
-      const snap=await getDoc(doc(db,"admins",currentAdminDocId));
-      if(snap.exists()){currentAdminPerms=snap.data().permissions||{};}
-    }catch(e){}
-  }
+  currentAdminPermsLoaded=false;
+  try{
+    let docId=currentAdminDocId;
+    const uname=currentAdminData?currentAdminData.username:null;
+    if(!docId||docId==="local"){
+      if(!uname){currentAdminPerms={};return;}
+      const q=query(adminsCollection,where("username","==",uname));
+      const snap=await getDocs(q);
+      if(snap.empty){currentAdminPerms={};return;}
+      docId=snap.docs[0].id;
+      currentAdminDocId=docId;
+    }
+    const snap=await getDoc(doc(db,"admins",docId));
+    if(snap.exists()){
+      currentAdminPerms=snap.data().permissions||{};
+      currentAdminPermsLoaded=true;
+    }else{currentAdminPerms={};}
+  }catch(e){currentAdminPerms={};}
 }
 async function init(){
   if(sessionStorage.getItem(VERIFIED_KEY)!=="true")await seedDefaultAdmin();
