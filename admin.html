@@ -24,7 +24,7 @@
     <button type="submit">دخول</button>
     <div id="adminLoginError" class="admin-login-error"></div>
   </form>
-  <button id="adminLoginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:16px;left:16px;">EN</button>
+  <button id="adminLoginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:16px;left:16px;background:transparent;border:none;box-shadow:none;">EN</button>
 </section>
 
 <!-- ADMIN PANEL -->
@@ -39,7 +39,7 @@
       <button id="adminProfileEditBtn" type="button" style="padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">✏️</button>
     </div>
     <div style="display:flex;gap:8px;">
-      <button id="adminLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
+      <button id="adminLangToggle" class="lang-toggle-btn" type="button" style="background:transparent;border:none;box-shadow:none;">🌐 EN</button>
       <button id="adminLogoutBtn" type="button" style="padding:6px 14px;border:1.5px solid #dc3545;border-radius:8px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">🚪 تسجيل الخروج</button>
     </div>
   </div>
@@ -195,7 +195,7 @@
   const adminPanel = document.getElementById("adminPanel");
 
   const LANG_KEY = "sallah_lang";
-  function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
+  function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
   const T_LOGIN = {
     ar: { title:"لوحة الإدارة", subtitle:"الرجاء إدخال اسم المستخدم وكلمة المرور", user:"اسم المستخدم", pass:"كلمة السر", btn:"دخول", err1:"أدخل اسم المستخدم وكلمة المرور", checking:"جاري التحقق...", err2:"اسم المستخدم أو كلمة المرور خطأ", err3:"خطأ في الاتصال بقاعدة البيانات", toggle:"EN" },
     en: { title:"Admin Panel", subtitle:"Enter username and password", user:"Username", pass:"Password", btn:"Login", err1:"Enter username and password", checking:"Checking...", err2:"Invalid username or password", err3:"Database connection error", toggle:"عربي" }
@@ -227,44 +227,6 @@
     loginScreen.hidden = true;
     adminPanel.hidden = false;
   };
-
-  const FB_CONFIG = {
-    apiKey: "AIzaSyAE5T4yvDNKmo8sik4eFDbhjvc4K0uUi7M",
-    authDomain: "sallahkuthar.firebaseapp.com",
-    projectId: "sallahkuthar",
-    storageBucket: "sallahkuthar.firebasestorage.app",
-    messagingSenderId: "5993973139",
-    appId: "1:5993973139:web:735a1648d623dddf9b1466"
-  };
-
-  // Direct Firestore login from inline script (no module dependency)
-  async function firebaseLogin(username, password){
-    try{
-      const appMod = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js");
-      const fsMod = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
-      const app = appMod.initializeApp(FB_CONFIG, "adminLogin");
-      const db = fsMod.getFirestore(app);
-      const q = fsMod.query(fsMod.collection(db, "admins"), fsMod.where("username", "==", username));
-      const snap = await Promise.race([
-        fsMod.getDocs(q),
-        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000))
-      ]);
-      if(snap.empty){ loginError.textContent = T_LOGIN[getLang()].err2; return; }
-      const doc = snap.docs[0];
-      const data = doc.data();
-      if(data.password === password){
-        try{localStorage.setItem("sallah_local_admin", JSON.stringify({username, password}));}catch(e){}
-        sessionStorage.setItem(VERIFIED_KEY, "true");
-        sessionStorage.setItem(ADMIN_SESSION_KEY, username);
-        showAdminPanelUI();
-        loadAdminScript();
-      }else{
-        loginError.textContent = T_LOGIN[getLang()].err2;
-      }
-    }catch(e){
-      loginError.textContent = T_LOGIN[getLang()].err3;
-    }
-  }
 
   function loadAdminScript(){
     if(document.querySelector("script[data-admin-module='true']")) return;
@@ -299,8 +261,9 @@
       }
     }catch(e){}
 
-    // 2) Direct Firestore query via dynamic import
-    firebaseLogin(username, password);
+    // 2) Delegate to admin.js Firestore login via processLoginInternal
+    sessionStorage.setItem("admin_login_attempt", JSON.stringify({username, password}));
+    loadAdminScript();
   });
 
   if(sessionStorage.getItem(VERIFIED_KEY) === "true"){

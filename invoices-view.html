@@ -110,7 +110,7 @@
     let allInvoices = [];
 
     /* TRANSLATIONS */
-    function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
+    function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
     function setLang(l){ localStorage.setItem(LANG_KEY, l); }
     const TV = {
       ar: {
@@ -160,7 +160,7 @@
       document.getElementById("loginPin").placeholder = tt("pinPlaceholder");
       document.getElementById("loginSubmit").textContent = tt("submit");
       // Floating menu
-      const menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard"}};
+      const menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard",menuAdmins:"إدارة المدراء"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard",menuAdmins:"Admin Management"}};
       const mtr=menuT[lang]||menuT.ar;
       document.querySelectorAll("#dashMenuDropdown a").forEach(a=>{
         const key=a.getAttribute("data-i18n-menu");
@@ -184,7 +184,7 @@
 
     function applyMenuLangInline(){
       const lang = getLang();
-      const menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard"}};
+      const menuT={ar:{menuStore:"المتجر",menuCart:"السلة",menuAdmin:"لوحة الإدارة",menuInvoices:"عرض الفواتير",menuDashboard:"Dashboard",menuAdmins:"إدارة المدراء"},en:{menuStore:"Store",menuCart:"Cart",menuAdmin:"Admin Panel",menuInvoices:"Invoices",menuDashboard:"Dashboard",menuAdmins:"Admin Management"}};
       const mtr=menuT[lang]||menuT.ar;
       document.querySelectorAll("#dashMenuDropdown a").forEach(a=>{
         const key=a.getAttribute("data-i18n-menu");
@@ -230,14 +230,13 @@
       loginName.style.display = "block";
       loginSubmit.style.display = "none";
       loginPin.style.display = "none";
-      // Load customers for this account type
+      // Load customer names ONLY from Firebase (no cache) for the selected account type
       try{
-        const { getDocs: gd, collection: gc, query: gq, where: gw } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
-        const q = gq(gc(db, "customers"), gw("accountType", "==", at));
-        const snap = await gd(q);
+        const q = query(collection(db, "customers"), where("accountType", "==", at));
+        const snap = await getDocs(q);
         const def = loginName.querySelector('option[value=""]');
         loginName.innerHTML = "";
-        if(def) loginName.appendChild(def);
+        if(def){def.textContent = tt("selectName");loginName.appendChild(def);}
         snap.forEach(d => {
           const data = d.data();
           const opt = document.createElement("option");
@@ -247,23 +246,7 @@
         });
         loginName.style.display = "block";
       }catch(e){
-        // Fallback: load all customers
-        try{
-          const { getDocs: gd, collection: gc } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
-          const snap = await gd(gc(db, "customers"));
-          const def = loginName.querySelector('option[value=""]');
-          loginName.innerHTML = "";
-          if(def) loginName.appendChild(def);
-          snap.forEach(d => {
-            const data = d.data();
-            if(data.accountType === at){
-              const opt = document.createElement("option");
-              opt.value = data.name;
-              opt.textContent = data.name;
-              loginName.appendChild(opt);
-            }
-          });
-        }catch(e2){}
+        loginError.textContent = tt("accountNotFound");
       }
     });
 
@@ -280,16 +263,10 @@
       if(!name){ loginError.textContent = tt("selectNameErr"); return; }
       if(!pin){ loginError.textContent = tt("enterPin"); return; }
       try{
-        const { getDocs: gd, collection: gc, query: gq, where: gw } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
         let match = null;
-        try{
-          const q = gq(gc(db, "customers"), gw("name", "==", name));
-          const snap = await gd(q);
-          snap.forEach(d => { const data = d.data(); if(String(data.pin) === pin) match = { id: d.id, ...data }; });
-        }catch(e){
-          const snap = await gd(gc(db, "customers"));
-          snap.forEach(d => { const data = d.data(); if(data.name === name && String(data.pin) === pin) match = { id: d.id, ...data }; });
-        }
+        const q = query(collection(db, "customers"), where("name", "==", name));
+        const snap = await getDocs(q);
+        snap.forEach(d => { const data = d.data(); if(String(data.pin) === pin) match = { id: d.id, ...data }; });
         if(!match){ loginError.textContent = tt("accountNotFound"); return; }
         currentUser = { id: match.id, name: match.name, accountType: match.accountType || at };
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
@@ -335,10 +312,6 @@
         let itemsTableRows = "";
         if(inv.items && inv.items.length > 0){
           let viewItems = [...inv.items];
-          // Lab account filtering
-          if(inv.accountType === "حساب معمل"){
-            viewItems = viewItems.filter(it => it.category === "احتياجات المعمل");
-          }
           // Group by category
           const viewGroups = {};
           viewItems.forEach(it => {
