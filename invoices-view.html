@@ -39,8 +39,8 @@
     .view-empty { text-align:center; padding:40px; color:#7A6655; font-size:15px; }
     .view-error { text-align:center; padding:40px; color:#dc3545; font-size:15px; }
     .v-btns { display:flex; gap:6px; }
-    .lang-toggle-btn { background:rgba(255,255,255,.2); border:1.5px solid rgba(255,255,255,.4); border-radius:10px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; color:#fff; transition:all .3s; }
-    .lang-toggle-btn:hover { background:rgba(255,255,255,.3); }
+    .lang-toggle-btn { background:transparent; border:none; border-radius:6px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; color:#fff; transition:all .3s; }
+    .lang-toggle-btn:hover { opacity:.8; }
     .view-header-left { display:flex; align-items:center; gap:8px; }
     .view-user-info { font-size:12px; opacity:.9; }
     .view-logout-btn { background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.3); border-radius:10px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; color:#fff; transition:all .3s; }
@@ -52,7 +52,7 @@
   <!-- LOGIN REQUIRED OVERLAY -->
   <div id="loginOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#705f34 0%,#325247 50%,#414935 100%);z-index:9999;display:flex;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:24px;padding:36px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2);position:relative;">
-      <button id="loginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:12px;left:12px;color:#555;border-color:rgba(122,102,85,.2);background:rgba(122,102,85,.08);">EN</button>
+      <button id="loginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:12px;left:12px;background:transparent;border:none;box-shadow:none;">🌐 EN</button>
       <img src="images/logo.png" alt="Logo" style="width:100px;height:auto;margin:0 auto 12px;" onerror="this.style.display='none'">
       <h2 id="loginTitle" style="color:#111;font-size:22px;margin-bottom:4px;">عرض الفواتير</h2>
       <p id="loginSub" style="color:#888;font-size:14px;margin-bottom:20px;">سجّل دخولك لعرض الفواتير</p>
@@ -78,7 +78,7 @@
       <div class="view-header-left">
         <span id="viewUserInfo" class="view-user-info"></span>
         <button id="viewLogoutBtn" class="view-logout-btn" type="button">🚪 تسجيل الخروج</button>
-        <button id="viewLangToggle" class="lang-toggle-btn" type="button">EN</button>
+        <button id="viewLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
       </div>
     </div>
     <div class="view-container">
@@ -122,7 +122,7 @@
         empty:"لا توجد فواتير", show:"عرض التفاصيل", hide:"إخفاء", print:"🖨 طباعة",
         items:"المنتجات", qty:"الكمية", product:"المنتج", sku:"KOD", noItems:"لا توجد منتجات",
         customer:"العميل", logout:"🚪 تسجيل الخروج", logoutConfirm:"هل تريد تسجيل الخروج؟",
-        toggle:"EN", selectAccountType:"اختر نوع الحساب", selectNameErr:"اختر الاسم",
+        toggle:"🌐 EN", selectAccountType:"اختر نوع الحساب", selectNameErr:"اختر الاسم",
         pinFourDigits:"الرجاء إدخال كلمة المرور", enterPin:"الرجاء إدخال كلمة المرور", accountNotFound:"الحساب غير موجود", wrongPassword:"كلمة المرور خاطئة",
         menuStore:"المتجر", menuCart:"السلة", menuAdmin:"لوحة الإدارة", menuInvoices:"عرض الفواتير", menuDashboard:"Dashboard",
       },
@@ -135,7 +135,7 @@
         empty:"No invoices found", show:"Show Details", hide:"Hide", print:"🖨 Print",
         items:"Items", qty:"Qty", product:"Product", sku:"SKU", noItems:"No items",
         customer:"Customer", logout:"🚪 Logout", logoutConfirm:"Are you sure you want to logout?",
-        toggle:"عربي", selectAccountType:"Select account type", selectNameErr:"Select a name",
+        toggle:"🌐 عربي", selectAccountType:"Select account type", selectNameErr:"Select a name",
         pinFourDigits:"Please enter password", enterPin:"Please enter password", accountNotFound:"Account not found", wrongPassword:"Wrong PIN",
         menuStore:"Store", menuCart:"Cart", menuAdmin:"Admin Panel", menuInvoices:"Invoices", menuDashboard:"Dashboard",
       }
