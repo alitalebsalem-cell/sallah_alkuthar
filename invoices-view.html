@@ -368,6 +368,13 @@
         try{ const q = query(invoicesRef, orderBy("createdAt", "desc")); snapshot = await getDocs(q); }catch(e){ snapshot = await getDocs(invoicesRef); }
         allInvoices = [];
         snapshot.forEach(d => allInvoices.push({ id: d.id, ...d.data() }));
+        // Infer accountType for invoices missing it by looking up customer
+        try{
+          const custSnap = await getDocs(collection(db, "customers"));
+          const typeMap = {};
+          custSnap.forEach(d => { const dt = d.data(); if(dt.name && dt.accountType) typeMap[dt.name] = dt.accountType; });
+          allInvoices.forEach(inv => { if(!inv.accountType && inv.customerName && typeMap[inv.customerName]) inv.accountType = typeMap[inv.customerName]; });
+        }catch(e){}
         // Filter by account type
         const accType = currentUser?.accountType || "";
         const filtered = filterInvoicesByType(allInvoices, accType);
