@@ -144,7 +144,7 @@ function hideCart(){
 }
 
 /* PERMISSIONS */
-const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
+const CATEGORY_PERMISSIONS={"حساب معمل":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"]};
 function getAllowedCategories(){
   if(!currentCustomer)return[];
   const perms=currentCustomer.permissions;
