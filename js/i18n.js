@@ -344,6 +344,7 @@ const T = {
     arabicName: "Arabic Name",
     englishName: "English Name",
     productCode: "Product Code",
+    suggestCode: "Suggest Code",
     imageLink: "Image URL",
     importExcel: "📥 Import from Excel",
     exportExcel: "📤 Export to Excel",
