@@ -1150,6 +1150,6 @@ body{background:linear-gradient(135deg,var(--bg) 0%,#ede7df 100%);}
 .cat-admin-card .cat-admin-actions .cat-del-btn:hover{background:#dc3545;color:#fff;}
 .cat-admin-card .cat-admin-actions .cat-edit-meta-btn{background:var(--bg);color:var(--dark);font-size:14px;}
 .cat-admin-card .cat-admin-actions .cat-edit-meta-btn:hover{background:var(--card);color:var(--dark);}
-.cat-admin-card .cat-admin-actions .cat-desc-toggle-btn{background:var(--bg);color:var(--dark);font-size:13px;padding:5px 8px!important;}
-.cat-admin-card .cat-admin-actions .cat-desc-toggle-btn:hover{background:var(--card);}
+.cat-admin-card .cat-admin-actions .cat-desc-toggle-btn{background:rgba(26,115,232,.08);color:#1a73e8;font-size:13px;padding:5px 8px!important;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;line-height:1;}
+.cat-admin-card .cat-admin-actions .cat-desc-toggle-btn:hover{background:rgba(26,115,232,.16);}
 .category-products-list{display:flex;flex-direction:column;gap:8px;}
