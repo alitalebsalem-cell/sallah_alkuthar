@@ -69,8 +69,14 @@ function applyLang(){
     loginModal: "loginModal",
     profile: true,
   });
+  const loginLangBtn = document.getElementById("loginLangToggle");
+  if(loginLangBtn) loginLangBtn.textContent = getLang() === "en" ? "🌐 عربي" : "🌐 EN";
 }
 document.getElementById("langToggle")?.addEventListener("click", () => {
+  setLang(getLang() === "ar" ? "en" : "ar");
+  applyLang();
+});
+document.getElementById("loginLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");
   applyLang();
 });

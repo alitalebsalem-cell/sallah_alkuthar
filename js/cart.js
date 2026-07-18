@@ -85,9 +85,16 @@ function applyLang(){
   document.documentElement.dir = getLang() === "en" ? "ltr" : "rtl";
   const btn = document.getElementById("langToggle");
   if(btn) btn.textContent = getLang() === "en" ? "عربي" : "EN";
+  const loginLangBtn = document.getElementById("loginLangToggle");
+  if(loginLangBtn) loginLangBtn.textContent = getLang() === "en" ? "🌐 عربي" : "🌐 EN";
   applyCartLang();
 }
 document.getElementById("langToggle")?.addEventListener("click",()=>{
+  setLang(getLang()==="ar"?"en":"ar");
+  applyLang();
+  renderCart();
+});
+document.getElementById("loginLangToggle")?.addEventListener("click",()=>{
   setLang(getLang()==="ar"?"en":"ar");
   applyLang();
   renderCart();
