@@ -53,15 +53,14 @@ a{text-decoration:none;color:inherit;}
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
 }
-.cart-icon img{width:64px;height:64px;object-fit:contain;}
+.cart-icon img{width:65px;height:65px;object-fit:contain;}
 .cart-icon:hover{transform:scale(1.08);}
 .cart-icon span{
   position:absolute;top:-4px;right:-4px;
-  background:#E6D5C5;color:#000;
-  width:24px;height:24px;border-radius:50%;
+  color:#000;
+  width:24px;height:24px;
   display:flex;align-items:center;justify-content:center;
   font-size:13px;font-weight:900;
-  border:2px solid #F6F1EB;
 }
 .cart-icon.bounce span{animation:pulse .4s ease;}
 
