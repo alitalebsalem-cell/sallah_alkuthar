@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة الإدارة</title>
-  <link rel="icon" type="image/png" href="images/icon.png">
   <link rel="stylesheet" href="css/style.css?v=20260714-2">
+  <link rel="stylesheet" href="css/redesign.css?v=20260718-1">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -24,7 +24,7 @@
     <button type="submit">دخول</button>
     <div id="adminLoginError" class="admin-login-error"></div>
   </form>
-  <button id="adminLoginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:16px;left:16px;background:transparent;border:none;box-shadow:none;">🌐 EN</button>
+  <button id="adminLoginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:16px;left:16px;">EN</button>
 </section>
 
 <!-- ADMIN PANEL -->
@@ -39,7 +39,7 @@
       <button id="adminProfileEditBtn" type="button" style="padding:2px 8px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">✏️</button>
     </div>
     <div style="display:flex;gap:8px;">
-      <button id="adminLangToggle" class="lang-toggle-btn" type="button" style="background:transparent;border:none;box-shadow:none;">🌐 EN</button>
+      <button id="adminLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
       <button id="adminLogoutBtn" type="button" style="padding:6px 14px;border:1.5px solid #dc3545;border-radius:8px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">🚪 تسجيل الخروج</button>
     </div>
   </div>
@@ -102,12 +102,7 @@
       <div class="form-grid">
         <input id="name" placeholder="الاسم بالعربي">
         <input id="description" placeholder="الاسم بالإنجليزي">
-        <div style="position:relative;">
-          <input id="code" placeholder="كود المنتج" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);transition:var(--transition);outline:none;box-sizing:border-box;">
-          <label style="position:absolute;inset-inline-end:4px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;background:var(--white);padding:2px 6px;border-radius:4px;white-space:nowrap;">
-            <input type="checkbox" id="suggestCodeCheckbox"> <span id="suggestCodeLabel">اقتراح كود</span>
-          </label>
-        </div>
+        <input id="code" placeholder="كود المنتج">
         <select id="category">
           <option value="قسم المعمل">قسم المعمل</option>
           <option value="قسم السوبرماركت">قسم السوبرماركت</option>
@@ -200,10 +195,10 @@
   const adminPanel = document.getElementById("adminPanel");
 
   const LANG_KEY = "sallah_lang";
-  function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
+  function getLang(){ return localStorage.getItem(LANG_KEY) || "ar"; }
   const T_LOGIN = {
-    ar: { title:"لوحة الإدارة", subtitle:"الرجاء إدخال اسم المستخدم وكلمة المرور", user:"اسم المستخدم", pass:"كلمة السر", btn:"دخول", err1:"أدخل اسم المستخدم وكلمة المرور", checking:"جاري التحقق...", err2:"اسم المستخدم أو كلمة المرور خطأ", err3:"خطأ في الاتصال بقاعدة البيانات", toggle:"🌐 EN" },
-    en: { title:"Admin Panel", subtitle:"Enter username and password", user:"Username", pass:"Password", btn:"Login", err1:"Enter username and password", checking:"Checking...", err2:"Invalid username or password", err3:"Database connection error", toggle:"🌐 عربي" }
+    ar: { title:"لوحة الإدارة", subtitle:"الرجاء إدخال اسم المستخدم وكلمة المرور", user:"اسم المستخدم", pass:"كلمة السر", btn:"دخول", err1:"أدخل اسم المستخدم وكلمة المرور", checking:"جاري التحقق...", err2:"اسم المستخدم أو كلمة المرور خطأ", err3:"خطأ في الاتصال بقاعدة البيانات", toggle:"EN" },
+    en: { title:"Admin Panel", subtitle:"Enter username and password", user:"Username", pass:"Password", btn:"Login", err1:"Enter username and password", checking:"Checking...", err2:"Invalid username or password", err3:"Database connection error", toggle:"عربي" }
   };
   function applyLoginLang(){
     const lang = getLang();
@@ -232,6 +227,44 @@
     loginScreen.hidden = true;
     adminPanel.hidden = false;
   };
+
+  const FB_CONFIG = {
+    apiKey: "AIzaSyAE5T4yvDNKmo8sik4eFDbhjvc4K0uUi7M",
+    authDomain: "sallahkuthar.firebaseapp.com",
+    projectId: "sallahkuthar",
+    storageBucket: "sallahkuthar.firebasestorage.app",
+    messagingSenderId: "5993973139",
+    appId: "1:5993973139:web:735a1648d623dddf9b1466"
+  };
+
+  // Direct Firestore login from inline script (no module dependency)
+  async function firebaseLogin(username, password){
+    try{
+      const appMod = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js");
+      const fsMod = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
+      const app = appMod.initializeApp(FB_CONFIG, "adminLogin");
+      const db = fsMod.getFirestore(app);
+      const q = fsMod.query(fsMod.collection(db, "admins"), fsMod.where("username", "==", username));
+      const snap = await Promise.race([
+        fsMod.getDocs(q),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000))
+      ]);
+      if(snap.empty){ loginError.textContent = T_LOGIN[getLang()].err2; return; }
+      const doc = snap.docs[0];
+      const data = doc.data();
+      if(data.password === password){
+        try{localStorage.setItem("sallah_local_admin", JSON.stringify({username, password}));}catch(e){}
+        sessionStorage.setItem(VERIFIED_KEY, "true");
+        sessionStorage.setItem(ADMIN_SESSION_KEY, username);
+        showAdminPanelUI();
+        loadAdminScript();
+      }else{
+        loginError.textContent = T_LOGIN[getLang()].err2;
+      }
+    }catch(e){
+      loginError.textContent = T_LOGIN[getLang()].err3;
+    }
+  }
 
   function loadAdminScript(){
     if(document.querySelector("script[data-admin-module='true']")) return;
@@ -266,9 +299,8 @@
       }
     }catch(e){}
 
-    // 2) Delegate to admin.js Firestore login via processLoginInternal
-    sessionStorage.setItem("admin_login_attempt", JSON.stringify({username, password}));
-    loadAdminScript();
+    // 2) Direct Firestore query via dynamic import
+    firebaseLogin(username, password);
   });
 
   if(sessionStorage.getItem(VERIFIED_KEY) === "true"){
@@ -284,8 +316,8 @@
 <!-- DELETE CUSTOMER CONFIRM MODAL -->
 <div id="deleteCustomerModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="clear-cart-dialog">
-    <h3 id="deleteCustTitle">حذف العميل</h3>
-    <p><span id="deleteCustMsg">هل أنت متأكد من حذف</span> <strong id="deleteCustName"></strong>؟<br><br><span id="deleteCustConfirmType">اكتب Yes للتأكيد:</span></p>
+    <h3>حذف العميل</h3>
+    <p>هل أنت متأكد من حذف <strong id="deleteCustName"></strong>؟<br><br>اكتب <strong>Yes</strong> للتأكيد:</p>
     <input type="text" id="deleteCustConfirmInput" placeholder="Yes" autocomplete="off" spellcheck="false">
     <div class="clear-cart-actions">
       <button id="deleteCustCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteCustomerModal()">إلغاء</button>
@@ -297,12 +329,12 @@
 <!-- DELETE INVOICE CONFIRM MODAL -->
 <div id="deleteInvoiceModal" class="clear-cart-overlay" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="clear-cart-dialog">
-    <h3 id="deleteInvTitle">حذف الفاتورة</h3>
-    <p><span id="deleteInvMsg">هل أنت متأكد من حذف فاتورة</span> <strong id="deleteInvoiceName"></strong>؟<br><br><span id="deleteInvConfirmType">اكتب Yes للتأكيد:</span></p>
+    <h3>حذف الفاتورة</h3>
+    <p>هل أنت متأكد من حذف فاتورة <strong id="deleteInvoiceName"></strong>؟<br><br>اكتب <strong>Yes</strong> للتأكيد:</p>
     <input type="text" id="deleteInvoiceConfirmInput" placeholder="Yes" autocomplete="off" spellcheck="false">
     <div class="clear-cart-actions">
-      <button id="deleteInvCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteInvoiceModal()">إلغاء</button>
-      <button id="deleteInvConfirmBtn" class="confirm-clear-cart" type="button" disabled onclick="if(!this.disabled){this.disabled=true;confirmDeleteInvoice()}">حذف</button>
+      <button id="deleteInvoiceCancelBtn" class="cancel-clear-cart" type="button" onclick="closeDeleteInvoiceModal()">إلغاء</button>
+      <button id="deleteInvoiceConfirmBtn" class="confirm-clear-cart" type="button" disabled onclick="if(!this.disabled){this.disabled=true;confirmDeleteInvoice()}">حذف</button>
     </div>
   </div>
 </div>

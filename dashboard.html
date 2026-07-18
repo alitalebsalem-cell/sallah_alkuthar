@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة التحكم / Dashboard</title>
-  <link rel="icon" type="image/png" href="images/icon.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -83,9 +82,9 @@
       position: absolute;
       top: 16px;
       left: 16px;
-      background: transparent;
-      border: none;
-      border-radius: 6px;
+      background: rgba(122,102,85,.1);
+      border: 1.5px solid rgba(122,102,85,.2);
+      border-radius: 10px;
       padding: 6px 14px;
       font-size: 13px;
       font-weight: 700;
@@ -93,17 +92,19 @@
       color: #555;
       transition: all .2s;
     }
-    .lang-toggle-btn:hover { color: var(--accent); }
+    .lang-toggle-btn:hover { background: rgba(122,102,85,.2); }
     @media (max-width:480px){
       .dashboard { padding: 28px 20px; }
       .dashboard h1 { font-size: 20px; }
     }
   </style>
+  <link rel="stylesheet" href="css/redesign.css?v=20260718-1">
 </head>
 <body>
   <div class="dashboard">
-    <button id="dashLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
+    <button id="dashLangToggle" class="lang-toggle-btn" type="button">EN</button>
     <img src="images/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'">
+    <h1 id="dashTitle"></h1>
     <p class="subtitle" id="dashSub"></p>
     <div class="btn-group">
       <a href="index.html" class="btn btn-store" id="dashStoreBtn"><span class="icon">🛒</span> <span id="dashStoreText"></span></a>
@@ -117,14 +118,15 @@
     function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
     function setLang(l){ localStorage.setItem(LANG_KEY, l); }
     const T_DASH = {
-      ar: { title:"لوحة التحكم", sub:"اختر القسم", store:" المتجر", admin:" لوحة الإدارة", invoices:" عرض الفواتير", toggle:"🌐 EN" },
-      en: { title:"Dashboard", sub:"Choose a section", store:" Store", admin:" Admin Panel", invoices:" Invoices View", toggle:"🌐 عربي" }
+      ar: { title:"لوحة التحكم", sub:"اختر القسم", store:"المتجر", admin:"لوحة الإدارة", invoices:"عرض الفواتير", toggle:"EN" },
+      en: { title:"Dashboard", sub:"Choose a section", store:"Store", admin:"Admin Panel", invoices:"Invoices View", toggle:"عربي" }
     };
     function applyDashLang(){
       const lang = getLang();
       const tr = T_DASH[lang] || T_DASH.ar;
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
+      document.getElementById("dashTitle").textContent = tr.title;
       document.getElementById("dashSub").textContent = tr.sub;
       document.getElementById("dashStoreText").textContent = tr.store;
       document.getElementById("dashAdminText").textContent = tr.admin;

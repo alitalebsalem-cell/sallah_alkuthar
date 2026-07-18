@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سـمـسـم</title>
-  <link rel="icon" type="image/png" href="images/icon.png">
-  <link rel="stylesheet" href="css/style.css?v=20260714-2">
+<title>سمسم - متجر</title>
+<link rel="stylesheet" href="css/style.css?v=20260714-2">
+<link rel="stylesheet" href="css/redesign.css?v=20260718-1">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -13,14 +13,14 @@
 <body>
 
 <a href="cart.html" class="cart-icon" id="cartIconLink">
-  <img src="images/Cart.png" alt="Cart">
+  🛒
   <span id="cartCount">0</span>
 </a>
 
 <header class="store-header">
   <div class="header-row">
     <div class="header-right" style="display:flex;align-items:center;gap:8px;">
-      <button id="langToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
+      <button id="langToggle" class="lang-toggle-btn" type="button">EN</button>
       <button id="loginBtn" class="login-btn" type="button">🔑 دخول</button>
       <div id="userProfile" class="user-profile" style="display:none">
         <button id="profileToggle" class="profile-toggle-btn" type="button">
@@ -52,7 +52,7 @@
     <img src="images/logo.png" alt="Logo" style="width:120px;height:auto;margin:0 auto 16px;" onerror="this.style.display='none'">
     <h2 style="color:var(--dark);font-size:24px;margin-bottom:8px;">مرحباً بك في سمسم</h2>
     <p style="color:var(--secondary);margin-bottom:20px;">سجّل دخولك للوصول إلى المنتجات</p>
-    <button id="loginRequiredBtn" type="button">🔑 تسجيل الدخول</button>
+    <button id="loginRequiredBtn" type="button" style="padding:14px 32px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--dark),var(--accent));color:#fff;font-size:16px;font-weight:800;cursor:pointer;">🔑 تسجيل الدخول</button>
   </div>
 </div>
 
@@ -91,7 +91,6 @@
 <div id="loginModal" class="modal-overlay" aria-hidden="true" hidden>
   <div class="modal-dialog login-dialog">
     <button id="loginModalClose" class="modal-close-btn" type="button">&times;</button>
-    <button id="loginLangToggle" class="lang-toggle-btn" type="button" style="position:absolute;top:12px;right:12px;background:transparent;border:none;box-shadow:none;">🌐 EN</button>
     <img src="images/logo.png" class="login-logo" alt="Logo" onerror="this.style.display='none'">
     <h2>تسجيل الدخول</h2>
     <p class="login-subtitle">اختر نوع الحساب والاسم وأدخل كلمة المرور</p>
