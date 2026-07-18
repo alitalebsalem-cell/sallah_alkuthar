@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>سلة المشتريات</title>
+  <link rel="icon" type="image/png" href="images/icon.png">
   <link rel="stylesheet" href="css/style.css?v=20260714-2">
-  <link rel="stylesheet" href="css/redesign.css?v=20260718-1">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -13,9 +13,10 @@
 <body>
 
 <header class="store-header">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px;">
-    <div style="display:flex;align-items:center;gap:8px;flex:1;">
-      <button id="langToggle" class="lang-toggle-btn" type="button">EN</button>
+  <div class="header-row">
+    <div class="header-right" style="display:flex;align-items:center;gap:8px;">
+      <button id="langToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
+      <button id="loginBtn" class="login-btn" type="button">🔑 دخول</button>
       <div id="userProfile" class="user-profile" style="display:none">
         <button id="profileToggle" class="profile-toggle-btn" type="button">
           <span id="profileAvatar" class="profile-avatar"></span>
@@ -30,14 +31,14 @@
           <div class="profile-dropdown-item"><button id="profileLogoutBtn" type="button" style="background:rgba(220,53,69,.1);color:#dc3545;">🚪 تسجيل الخروج</button></div>
         </div>
       </div>
-      <button id="loginBtn" class="login-btn" type="button">🔑 دخول</button>
     </div>
-    <a href="index.html" style="padding:6px 14px;border:1.5px solid rgba(122,102,85,.2);border-radius:8px;background:var(--white);color:var(--dark);font-weight:700;cursor:pointer;font-size:12px;text-decoration:none;white-space:nowrap;"><span data-i18n="backToStore">← العودة للمتجر</span></a>
+    <div class="header-center">
+      <a href="index.html"><img src="images/logo.png" class="logo" alt="Logo"></a>
+    </div>
+    <div class="header-left"></div>
   </div>
-  <div style="text-align:center;margin:6px 0 2px;">
-    <a href="index.html"><img src="images/logo.png" class="logo" alt="Logo" style="width:110px;height:auto;"></a>
-  </div>
-  <h1 style="font-size:clamp(18px,4vw,28px);font-weight:900;text-align:center;color:var(--dark);margin:0 0 6px;">سلة المشتريات</h1>
+  <hr>
+  <h1 style="font-size:clamp(16px,3vw,22px);font-weight:900;text-align:center;color:var(--dark);margin:0 0 6px;">سلة المشتريات</h1>
 </header>
 
 <!-- CATEGORY FILTER BAR -->
@@ -62,20 +63,18 @@
 
 <main class="cart-page" style="display:none;" id="cartMain">
   <section>
-    <div id="cartTopBar" class="cart-top-bar" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <div id="cartTopBar" class="cart-top-bar" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
       <button id="clearCartTopBtn" type="button" style="padding:6px 14px;border:1.5px solid #dc3545;border-radius:8px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:4px;"><span data-i18n="clearCart">🗑 حذف الكل</span></button>
-      <a href="index.html" style="padding:6px 14px;border:1.5px solid rgba(122,102,85,.2);border-radius:8px;background:var(--white);color:var(--dark);font-weight:700;cursor:pointer;font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;">← <span data-i18n="backToStore">العودة للمتجر</span></a>
     </div>
-    <input type="text" id="cartSearch" placeholder="🔍 ابحث في السلة..." style="width:100%;padding:13px 18px;margin-bottom:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:999px;font-size:15px;background:var(--white);outline:none;text-align:center;">
+    <input type="text" id="cartSearch" placeholder="🔍 ابحث في السلة..." style="width:100%;padding:10px 14px;margin-bottom:10px;border:1.5px solid rgba(122,102,85,.2);border-radius:999px;font-size:13px;background:var(--white);outline:none;text-align:center;">
     <div id="cartItems"></div>
   </section>
   <aside class="cart-summary">
     <h2>عدد المنتجات</h2>
     <span id="cartTotal">0</span>
-    <button id="createInvoice" type="button">📄 إنشاء فاتورة</button>
+    <button id="createInvoice" type="button">إنشاء فاتورة</button>
     <button id="whatsappBtn" type="button" style="margin-top:10px;background:#25d366;">💬 واتساب</button>
     <button id="clearCartBtn" class="clear-cart-btn" type="button" style="margin-top:10px;background:rgba(220,53,69,.9);">🗑 حذف جميع المحتويات</button>
-    <a href="index.html" class="back-btn" style="margin-top:10px;display:block;text-align:center;">← العودة للمتجر</a>
   </aside>
 </main>
 
@@ -88,8 +87,8 @@
     <button id="invoiceModalClose" class="modal-close-btn" type="button">&times;</button>
     <h2 style="color:var(--dark);font-size:20px;margin-bottom:4px;">📄 <span data-i18n="createInvoice">إنشاء فاتورة</span></h2>
     <p style="color:var(--secondary);font-size:13px;margin-bottom:14px;"><span data-i18n="totalQty">عدد المنتجات</span>: <strong id="invoiceModalTotal">0</strong></p>
-    <button id="createInvoiceMobile" type="button" style="width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--dark),var(--accent));color:#fff;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📄 <span data-i18n="createInvoice">إنشاء فاتورة</span></button>
-    <button id="whatsappMobile" type="button" style="width:100%;padding:14px;border:none;border-radius:10px;background:#25d366;color:#fff;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;">💬 <span data-i18n="whatsapp">واتساب</span></button>
+    <button id="createInvoiceMobile" type="button" style="width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--dark),var(--accent));color:#fff;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><span data-i18n="createInvoice">إنشاء فاتورة</span></button>
+    <button id="whatsappMobile" type="button" style="width:100%;padding:14px;border:none;border-radius:10px;background:#25d366;color:#fff;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;"><span data-i18n="whatsapp">واتساب</span></button>
   </div>
 </div>
 

@@ -4,107 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة التحكم / Dashboard</title>
+  <link rel="icon" type="image/png" href="images/icon.png">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: linear-gradient(135deg, #705f34 0%, #325247 50%, #414935 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
-      padding: 20px;
-      direction: rtl;
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+    :root{--wine:#701426;--wine-deep:#490a16;--wine-light:#9a4150;--gold:#b58d59;--cream:#fbf4e8;--paper:#fffdfa;--ink:#421722;--muted:#8a6b63;--line:#ead9c9;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;direction:rtl;
+      font-family:'Tajawal',Arial,sans-serif;color:var(--ink);
+      background:radial-gradient(circle at 80% 15%,rgba(181,141,89,.24),transparent 28rem),linear-gradient(135deg,#4a0b17 0%,#7c1730 52%,#4a0b17 100%);
     }
-    .dashboard {
-      background: #fff;
-      border-radius: 24px;
-      padding: 40px 36px;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,.2);
-      text-align: center;
-      position: relative;
+    .dashboard{
+      width:min(920px,100%);padding:38px;border:1px solid rgba(255,248,238,.72);border-radius:30px;
+      background:rgba(255,253,250,.96);box-shadow:0 30px 76px rgba(42,4,12,.34);text-align:center;position:relative;
     }
-    .dashboard .logo {
-      width: 1.93in;
-      height: 1.34in;
-      margin-bottom: 14px;
+    .dashboard::before{content:'';position:absolute;inset:14px;border:1px solid rgba(181,141,89,.19);border-radius:22px;pointer-events:none;}
+    .dashboard .logo{position:relative;z-index:1;width:180px;height:auto;max-height:108px;object-fit:contain;margin:0 auto 19px;filter:contrast(1.08);}
+    .dashboard .subtitle{position:relative;z-index:1;color:var(--muted);font-size:14px;font-weight:500;letter-spacing:.01em;margin-bottom:28px;}
+    .dashboard .btn-group{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+    .dashboard .btn{
+      min-height:88px;display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;border:1px solid var(--line);border-radius:18px;
+      background:var(--paper)!important;color:var(--ink);box-shadow:0 5px 14px rgba(80,25,30,.045);font-size:15px;font-weight:800;text-decoration:none;cursor:pointer;transition:all .24s cubic-bezier(.22,.8,.25,1);
     }
-    .dashboard h1 {
-      font-size: 24px;
-      font-weight: 800;
-      color: #111;
-      margin-bottom: 4px;
-    }
-    .dashboard .subtitle {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 28px;
-    }
-    .dashboard .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .dashboard .btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 16px 20px;
-      border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 700;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all .2s;
-      color: #fff;
-    }
-    .btn-store {
-      background: #C9B99A;
-      box-shadow: 0 4px 14px rgba(201,185,154,.3);
-    }
-    .btn-store:hover { background: #B8A88A; transform: translateY(-2px); }
-    .btn-admin {
-      background: #1a73e8;
-      box-shadow: 0 4px 14px rgba(26,115,232,.3);
-    }
-    .btn-admin:hover { background: #1557b0; transform: translateY(-2px); }
-    .btn-invoices {
-      background: #f9a825;
-      box-shadow: 0 4px 14px rgba(249,168,37,.3);
-    }
-    .btn-invoices:hover { background: #e69500; transform: translateY(-2px); }
-    .btn .icon { font-size: 22px; }
-    .lang-toggle-btn {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      background: rgba(122,102,85,.1);
-      border: 1.5px solid rgba(122,102,85,.2);
-      border-radius: 10px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      color: #555;
-      transition: all .2s;
-    }
-    .lang-toggle-btn:hover { background: rgba(122,102,85,.2); }
-    @media (max-width:480px){
-      .dashboard { padding: 28px 20px; }
-      .dashboard h1 { font-size: 20px; }
-    }
+    .dashboard .btn:hover{transform:translateY(-3px);border-color:#d4b27f;background:#fdf4ec!important;color:var(--wine);box-shadow:0 13px 25px rgba(80,25,30,.1);}
+    .dashboard .btn:active{transform:translateY(-1px);}.dashboard .btn .icon{font-size:22px;line-height:1;}
+    .lang-toggle-btn{position:absolute;z-index:2;top:19px;left:19px;min-height:38px;padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:#fffaf4;color:var(--wine);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;}
+    .lang-toggle-btn:hover{background:#f7e9de;border-color:#d8bb91;}
+    @media(max-width:640px){body{padding:16px;align-items:flex-start;}.dashboard{margin-top:14px;padding:30px 18px;border-radius:24px;}.dashboard::before{inset:10px;border-radius:17px;}.dashboard .logo{width:145px;margin-bottom:14px;}.dashboard .subtitle{margin-bottom:22px;}.dashboard .btn-group{grid-template-columns:1fr;gap:10px;}.dashboard .btn{min-height:59px;justify-content:flex-start;padding-inline:18px;border-radius:15px;font-size:14px;}.lang-toggle-btn{top:15px;left:15px;}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;}}
   </style>
-  <link rel="stylesheet" href="css/redesign.css?v=20260718-1">
 </head>
 <body>
   <div class="dashboard">
-    <button id="dashLangToggle" class="lang-toggle-btn" type="button">EN</button>
+    <button id="dashLangToggle" class="lang-toggle-btn" type="button">🌐 EN</button>
     <img src="images/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'">
-    <h1 id="dashTitle"></h1>
     <p class="subtitle" id="dashSub"></p>
     <div class="btn-group">
       <a href="index.html" class="btn btn-store" id="dashStoreBtn"><span class="icon">🛒</span> <span id="dashStoreText"></span></a>
@@ -118,15 +51,14 @@
     function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
     function setLang(l){ localStorage.setItem(LANG_KEY, l); }
     const T_DASH = {
-      ar: { title:"لوحة التحكم", sub:"اختر القسم", store:"المتجر", admin:"لوحة الإدارة", invoices:"عرض الفواتير", toggle:"EN" },
-      en: { title:"Dashboard", sub:"Choose a section", store:"Store", admin:"Admin Panel", invoices:"Invoices View", toggle:"عربي" }
+      ar: { title:"لوحة التحكم", sub:"اختر القسم", store:" المتجر", admin:" لوحة الإدارة", invoices:" عرض الفواتير", toggle:"🌐 EN" },
+      en: { title:"Dashboard", sub:"Choose a section", store:" Store", admin:" Admin Panel", invoices:" Invoices View", toggle:"🌐 عربي" }
     };
     function applyDashLang(){
       const lang = getLang();
       const tr = T_DASH[lang] || T_DASH.ar;
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
-      document.getElementById("dashTitle").textContent = tr.title;
       document.getElementById("dashSub").textContent = tr.sub;
       document.getElementById("dashStoreText").textContent = tr.store;
       document.getElementById("dashAdminText").textContent = tr.admin;

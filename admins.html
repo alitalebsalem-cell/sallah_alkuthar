@@ -4,15 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Management</title>
+  <link rel="icon" type="image/png" href="images/icon.png">
   <link rel="stylesheet" href="css/style.css?v=20260714-2">
-  <link rel="stylesheet" href="css/redesign.css?v=20260718-1">
-</head>
+  <style>
+    .admin-mgr-toggle{background:transparent;color:var(--dark);border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:all .3s;}
+    .admin-mgr-toggle:hover{color:var(--accent);transform:translateY(-1px);}
+    @media(max-width:768px){.admin-mgr-toggle{padding:2px 6px;font-size:11px;border-radius:6px;}}
+  </style>
 <body>
 
 <!-- LOGIN SCREEN -->
 <section id="loginScreen" class="admin-login-screen" style="display:flex;">
   <form id="loginForm" class="admin-login-card" autocomplete="off">
-    <button id="adminMgrLangToggle" type="button" style="position:absolute;top:12px;right:12px;padding:5px 10px;border:1px solid rgba(122,102,85,.2);border-radius:6px;background:var(--white);color:var(--dark);font-size:12px;font-weight:700;cursor:pointer;">EN</button>
+    <button id="adminMgrLangToggle" class="admin-mgr-toggle" type="button" style="position:absolute;top:12px;right:12px;">EN</button>
     <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'">
     <h1 id="adminsLoginTitle">Admin Management</h1>
     <p id="adminsLoginSubtitle">Enter username and password</p>
@@ -32,6 +36,7 @@
       <div style="font-size:13px;color:var(--secondary);" id="adminsPanelSubtitle">Admin Management</div>
     </div>
     <button id="profileEditBtn" type="button" style="padding:6px 14px;border:1.5px solid var(--accent);border-radius:8px;background:var(--white);color:var(--accent);font-weight:700;cursor:pointer;font-size:13px;" data-i18n="editProfile">Edit Profile</button>
+    <button id="adminMgrLangToggleMain" class="admin-mgr-toggle" type="button">EN</button>
     <button id="logoutBtn" type="button" style="padding:6px 14px;border:1.5px solid #dc3545;border-radius:8px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:13px;" data-i18n="logout">Logout</button>
   </div>
 
@@ -87,6 +92,7 @@ function applyAdminMgrLang(){
   const lang=getLang();const isEn=lang==="en";
   document.documentElement.lang=lang;document.documentElement.dir=isEn?"ltr":"rtl";
   const tb=document.getElementById("adminMgrLangToggle");if(tb)tb.textContent=isEn?"🌐 عربي":"🌐 EN";
+  const tb2=document.getElementById("adminMgrLangToggleMain");if(tb2)tb2.textContent=isEn?"🌐 عربي":"🌐 EN";
   const t1=document.getElementById("adminsLoginTitle");if(t1)t1.textContent=t("adminManagement");
   const t2=document.getElementById("adminsLoginSubtitle");if(t2)t2.textContent=t("enterUserPass");
   const t3=document.getElementById("adminsLoginBtn");if(t3)t3.textContent=t("login");
@@ -102,6 +108,7 @@ function applyAdminMgrLang(){
 }
 
 document.getElementById("adminMgrLangToggle")?.addEventListener("click",()=>{setLang(getLang()==="en"?"ar":"en");applyAdminMgrLang();});
+document.getElementById("adminMgrLangToggleMain")?.addEventListener("click",()=>{setLang(getLang()==="en"?"ar":"en");applyAdminMgrLang();renderAdmins();});
 
 loginForm.addEventListener("submit", async e => {
   e.preventDefault();
@@ -173,21 +180,36 @@ document.getElementById("addAdminBtn").addEventListener("click", async () => {
     const q = query(adminsColl, where("username", "==", u));
     const snap = await getDocs(q);
     if(!snap.empty){ alert(t("usernameExists")); return; }
-    await addDoc(adminsColl, { username: u, password: p, permissions: {} });
+    const defaultPerms = { categories: {}, canAddProducts: {}, canManageCustomers: true };
+    _catsCache.forEach(cat => {
+      const k = cat.key || cat;
+      defaultPerms.categories[k] = true;
+      defaultPerms.canAddProducts[k] = true;
+    });
+    await addDoc(adminsColl, { username: u, password: p, permissions: defaultPerms });
     document.getElementById("newAdminUser").value = "";
     document.getElementById("newAdminPass").value = "";
     renderAdmins();
   } catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
 });
 
-// Fetch categories from Firestore
+// Fetch categories from Firestore (bilingual)
 let _catsCache = [];
 async function loadAdminMgrCats(){
   try{
     const snap=await getDocs(query(collection(db,"categories"),orderBy("order","asc")));
-    if(!snap.empty){_catsCache=snap.docs.map(d=>d.data().nameAr);return;}
+    if(!snap.empty){
+      _catsCache=snap.docs.map(d=>{const da=d.data();return{key:da.nameAr,nameAr:da.nameAr,nameEn:da.nameEn||da.nameAr};});
+      return;
+    }
   }catch(e){}
-  _catsCache=["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
+  _catsCache=["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"].map(k=>({key:k,nameAr:k,nameEn:catLabel(k)}));
+}
+function catLabelAdmin(cat){
+  const key=cat.key||cat;
+  const lbl=catLabel(key);
+  if(lbl!==key)return lbl;
+  return getLang()==="en"?(cat.nameEn||key):(cat.nameAr||key);
 }
 
 // Render admins (from admins collection)
@@ -206,45 +228,96 @@ async function renderAdmins(){
       card.className = "customer-admin-card";
       
       const perms = data.permissions || {};
-      const canAdd = perms.canAddProducts;
+      let catPerms = perms.categories || {};
+      let prodPerms = perms.canAddProducts || {};
+      const canManageCust = perms.canManageCustomers || false;
       
-      card.innerHTML = '<div class="cust-header"><strong>🔑 ' + escapeHTML(data.username) + '</strong></div><div style="font-size:12px;color:var(--secondary);margin:4px 0;">' + t("canAddProducts") + ': ' + (canAdd ? '✅' : '❌') + '</div><div class="cust-invoices" style="display:none;margin-top:8px;"><div class="perm-grid"></div></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><button class="perm-toggle-btn" type="button" style="padding:4px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);font-weight:700;cursor:pointer;font-size:12px;">' + t("permissions") + '</button><button class="del-admin-btn" type="button" style="padding:4px 10px;border:1px solid #dc3545;border-radius:6px;background:var(--white);color:#dc3545;font-weight:700;cursor:pointer;font-size:12px;">' + t("deleteBtn") + '</button></div>';
+      card.innerHTML = '<div class="cust-header" style="cursor:pointer;"><span class="admin-expand-arrow" style="font-size:10px;margin-inline-end:8px;">\u25B6</span><strong>\u{1F511} ' + escapeHTML(data.username) + '</strong></div><div class="cust-invoices" style="display:none;margin-top:8px;"></div>';
       
-      // Permission toggle
-      card.querySelector(".perm-toggle-btn").addEventListener("click", () => {
-        const permDiv = card.querySelector(".cust-invoices");
-        if(permDiv.style.display !== "none"){ permDiv.style.display = "none"; return; }
+      const header = card.querySelector(".cust-header");
+      const expandArrow = card.querySelector(".admin-expand-arrow");
+      const detailsDiv = card.querySelector(".cust-invoices");
+      
+      header.addEventListener("click", () => {
+        const isOpen = detailsDiv.style.display !== "none";
+        if(isOpen){ detailsDiv.style.display = "none"; expandArrow.textContent = "\u25B6"; return; }
+        expandArrow.textContent = "\u25BC";
         
-        let html = '<div style="font-size:13px;font-weight:700;margin-bottom:6px;">' + t("categoryVisibility") + ':</div>';
+        // Build permission UI dynamically when opened (to get fresh cat list)
+        let html = '';
+        
+        // Section 1: Category visibility
+        html += '<div class="perm-header"><span>📂 ' + t("categoryVisibility") + '</span></div>';
         _catsCache.forEach(cat => {
-          const checked = perms.categories ? !!perms.categories[cat] : true;
-          html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;cursor:pointer;"><input type="checkbox" class="perm-cat-cb" data-cat="${cat}" ${checked?"checked":""}><span>${catLabel(cat)}</span></label>`;
+          const catKey = cat.key || cat;
+          const checked = catPerms[catKey] !== false;
+          html += '<div class="perm-toggle-row"><span class="perm-cat-name">' + catLabelAdmin(cat) + '</span><label class="perm-toggle-switch"><input type="checkbox" class="perm-cat-cb" data-cat="' + catKey + '" ' + (checked?'checked':'') + '><span class="perm-toggle-slider"></span></label></div>';
         });
-        html += `<div style="margin-top:8px;"><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="checkbox" id="permAddProd-${adminId}" ${canAdd?"checked":""}> ${t("canAddProducts")}</label></div>`;
-        html += `<button class="save-perm-btn" type="button" style="margin-top:8px;padding:5px 14px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:12px;">` + t("savePerms") + `</button>`;
         
-        permDiv.innerHTML = html;
-        permDiv.style.display = "";
+        // Section 2: Product add/edit permissions per category
+        html += '<div class="perm-header" style="margin-top:10px;"><span>🛒 ' + t("canAddProducts") + '</span></div>';
+        _catsCache.forEach(cat => {
+          const catKey = cat.key || cat;
+          const checked = prodPerms[catKey] || false;
+          html += '<div class="perm-toggle-row"><span class="perm-cat-name">' + catLabelAdmin(cat) + '</span><label class="perm-toggle-switch"><input type="checkbox" class="perm-prod-cb" data-cat="' + catKey + '" ' + (checked?'checked':'') + '><span class="perm-toggle-slider"></span></label></div>';
+        });
         
-        permDiv.querySelector(".save-perm-btn").addEventListener("click", async () => {
-          const newPerms = { categories: {}, canAddProducts: false };
-          permDiv.querySelectorAll(".perm-cat-cb").forEach(cb => { newPerms.categories[cb.dataset.cat] = cb.checked; });
-          newPerms.canAddProducts = document.getElementById("permAddProd-" + adminId)?.checked || false;
+        // Section 3: Customer management
+        html += '<div class="perm-toggle-row" style="margin-top:6px;"><span class="perm-cat-name">👥 ' + t("manageCustomers") + '</span><label class="perm-toggle-switch"><input type="checkbox" id="permCust-' + adminId + '" ' + (canManageCust?'checked':'') + '><span class="perm-toggle-slider"></span></label></div>';
+        
+        // Save permissions button
+        html += '<button class="save-perm-btn" type="button" style="margin-top:12px;padding:8px 20px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:13px;">💾 ' + t("savePerms") + '</button>';
+        
+        // Section 4: Edit admin details
+        html += '<hr style="margin:16px 0;border:none;border-top:1px solid rgba(199,178,153,.2);">';
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+        html += '<input type="text" class="edit-admin-user" value="' + escapeHTML(data.username) + '" placeholder="' + escapeHTML(t("username")) + '" style="flex:1;min-width:100px;padding:8px 12px;border:1.5px solid rgba(122,102,85,.2);border-radius:8px;font-size:13px;outline:none;">';
+        html += '<input type="password" class="edit-admin-pass" placeholder="' + escapeHTML(t("newPassword")) + '" style="flex:1;min-width:100px;padding:8px 12px;border:1.5px solid rgba(122,102,85,.2);border-radius:8px;font-size:13px;outline:none;">';
+        html += '<button class="save-admin-btn" type="button" style="padding:8px 18px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:13px;">💾 ' + t("save") + '</button>';
+        html += '</div>';
+        html += '<button class="del-admin-btn" type="button" style="padding:8px 18px;border:none;border-radius:8px;background:rgba(220,53,69,.1);color:#dc3545;font-weight:800;cursor:pointer;font-size:13px;">🗑 ' + t("deleteBtn") + '</button>';
+        
+        detailsDiv.innerHTML = html;
+        detailsDiv.style.display = "block";
+        
+        // Save permissions handler
+        detailsDiv.querySelector(".save-perm-btn").addEventListener("click", async () => {
+          const newPerms = { categories: {}, canAddProducts: {}, canManageCustomers: false };
+          detailsDiv.querySelectorAll(".perm-cat-cb").forEach(cb => { newPerms.categories[cb.dataset.cat] = cb.checked; });
+          detailsDiv.querySelectorAll(".perm-prod-cb").forEach(cb => { newPerms.canAddProducts[cb.dataset.cat] = cb.checked; });
+          newPerms.canManageCustomers = document.getElementById("permCust-" + adminId)?.checked || false;
           try {
             await updateDoc(doc(db, "admins", adminId), { permissions: newPerms });
             data.permissions = newPerms;
+            catPerms = newPerms.categories;
+            prodPerms = newPerms.canAddProducts;
             alert(t("permsSaved") + " " + data.username);
-            permDiv.style.display = "none";
-            renderAdmins();
           } catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
         });
-      });
-      
-      // Delete admin
-      card.querySelector(".del-admin-btn").addEventListener("click", async () => {
-        if(!confirm(t("deleteConfirm") + " " + data.username + "?")) return;
-        try { await deleteDoc(doc(db, "admins", adminId)); renderAdmins(); }
-        catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
+        
+        // Save admin (username/password) handler
+        detailsDiv.querySelector(".save-admin-btn").addEventListener("click", async () => {
+          const nu = detailsDiv.querySelector(".edit-admin-user").value.trim();
+          const np = detailsDiv.querySelector(".edit-admin-pass").value.trim();
+          if(!nu && !np){ alert(t("enterAtLeastOne")); return; }
+          const updates = {};
+          if(nu && nu !== data.username) updates.username = nu;
+          if(np) updates.password = np;
+          if(Object.keys(updates).length === 0){ alert(t("noChanges")); return; }
+          try {
+            await updateDoc(doc(db, "admins", adminId), updates);
+            Object.assign(data, updates);
+            renderAdmins();
+            alert(t("profileUpdated"));
+          } catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
+        });
+        
+        // Delete admin handler
+        detailsDiv.querySelector(".del-admin-btn").addEventListener("click", async () => {
+          if(!confirm(t("deleteConfirm") + " " + data.username + "?")) return;
+          try { await deleteDoc(doc(db, "admins", adminId)); renderAdmins(); }
+          catch(e) { alert(t("errorOccurredShort") + ": " + e.message); }
+        });
       });
       
       adminsList.appendChild(card);
