@@ -45,6 +45,7 @@ const productsDiv = document.getElementById("products");
 const searchInput = document.getElementById("search");
 const cartCount = document.getElementById("cartCount");
 const cartIconLink = document.getElementById("cartIconLink");
+if(cartIconLink){cartIconLink.addEventListener("click",function(){this.classList.add("bounce");setTimeout(()=>this.classList.remove("bounce"),400);});}
 const categoriesBar = document.getElementById("categoriesBar");
 const productsMain = document.getElementById("productsMain");
 const loginRequiredOverlay = document.getElementById("loginRequiredOverlay");
