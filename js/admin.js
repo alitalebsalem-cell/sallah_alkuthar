@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import { generateInvoicePdf } from "./invoice-pdf.js";
 import {
-  collection, addDoc, getDoc, getDocs, deleteDoc, updateDoc, doc,
+  collection, addDoc, getDocs, deleteDoc, updateDoc, doc,
   query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel, applyFullLang, applyMenuLang } from "./i18n.js";
@@ -16,7 +16,7 @@ const ARABIC_DAYS = ["الأحد","الاثنين","الثلاثاء","الأر�
 const ARABIC_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const CAT_EN_NAMES_ADMIN = {"قسم المعمل":"Almamal","قسم السوبرماركت":"AlsuperNarket","قسم محلات الجملة":"Aljumllah","قسم المستودع":"Almstudaa","احتياجات المعمل":"AhtyagatAlmamal"};
 const CAT_ORDER_ADMIN = ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"];
-const CATEGORY_PERMISSIONS={"حساب معمل":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"]};
+const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
 
 
 const productsTable = document.getElementById("productsTable");
@@ -84,8 +84,6 @@ function getLocalAdmin(){try{const d=localStorage.getItem(LOCAL_ADMIN_KEY);if(d)
 function saveLocalAdmin(username,password){try{localStorage.setItem(LOCAL_ADMIN_KEY,JSON.stringify({username,password}));}catch(e){}}
 let currentAdminData=null;
 let currentAdminDocId=null;
-let currentAdminPerms={};
-let currentAdminPermsLoaded=false;
 
 function revertToLoginScreen(msg){
   sessionStorage.removeItem(AUTH_KEY);
@@ -136,18 +134,11 @@ async function seedDefaultAdmin(){try{const s=await Promise.race([getDocs(admins
 
 /* TABS */
 const loadedTabs={};
-async function loadTabContent(name){
-  if(loadedTabs[name])return;
-  if(name==="customers"&&currentAdminPerms.canManageCustomers===false){
-    const sec=document.getElementById("section-customers");if(sec)sec.innerHTML=`<div style="text-align:center;padding:40px 20px;color:#dc3545;font-size:16px;font-weight:700;">🔒 ${t("noCustomerPerm")}</div>`;
-    loadedTabs[name]=true;return;
-  }
-  loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();populateCustBranchDropdown();break;case"branches":renderBranches();break;case"categories":renderCategories();break;}
-}
+async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();populateCustBranchDropdown();break;case"branches":renderBranches();break;case"categories":renderCategories();break;}}
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
-async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();rebuildCatPickCards();renderCategories();try{localStorage.setItem("sallah_products_cache",JSON.stringify(allProducts));}catch(e){}}
+async function loadProducts(){const snap=await getDocs(productsCollection);allProducts=[];snap.forEach(d=>allProducts.push({id:d.id,...d.data()}));renderProducts(allProducts);updateCategoryBadges();rebuildCatPickCards();renderCategories();try{localStorage.removeItem("sallah_products_cache");}catch(e){}}
 
 function updateCategoryBadges(){
   document.querySelectorAll(".cat-pick-card").forEach(c => {
@@ -180,15 +171,6 @@ function showProductForm(cat){
   if(productFormSection) productFormSection.style.display = "";
   if(selectedCategoryName) selectedCategoryName.textContent = catLabel(cat);
   if(categorySelect){ categorySelect.value = cat; }
-  // Control save button based on permissions
-  const pProds=currentAdminPerms.canAddProducts;
-  let canAdd=true;
-  if(currentAdminPermsLoaded){
-    if(!pProds||Object.keys(pProds).length===0)canAdd=false;
-    else canAdd=pProds[cat]===true;
-  }
-  const saveBtn=getElement("save");
-  if(saveBtn)saveBtn.style.display=canAdd?"":"none";
   // Show category products below the form
   renderCategoryProducts(cat);
 }
@@ -246,23 +228,13 @@ function renderProducts(products){
 
 getElement("imageFile")?.addEventListener("change",function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const pi=getElement("previewImage");if(pi)pi.src=e.target.result;};r.readAsDataURL(f);});
 
-document.getElementById("suggestCodeCheckbox")?.addEventListener("change",function(){
-  const codeInput=getElement("code");
-  if(!codeInput)return;
-  if(this.checked){
-    codeInput.value=String(Math.floor(10000+Math.random()*90000));
-    codeInput.disabled=true;
-  }else{codeInput.disabled=false;}
-});
-
-function clearForm(){["name","description","code","image"].forEach(id=>{const e=getElement(id);if(e)e.value="";});const f=getElement("imageFile");if(f)f.value="";const pi=getElement("previewImage");if(pi)pi.src="images/noimg.jpg";const sc=getElement("suggestCodeCheckbox");if(sc){sc.checked=false;}const ci=getElement("code");if(ci)ci.disabled=false;}
+function clearForm(){["name","description","code","image"].forEach(id=>{const e=getElement(id);if(e)e.value="";});const f=getElement("imageFile");if(f)f.value="";const pi=getElement("previewImage");if(pi)pi.src="images/noimg.jpg";}
 
 function compressImageFile(file){return new Promise((res,rej)=>{const img=new Image();const r=new FileReader();r.onload=e=>{img.onload=()=>{const c=document.createElement("canvas");let w=img.width,h=img.height;if(w>800){h=h*(800/w);w=800;}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);const d=c.toDataURL("image/jpeg",0.6);if(Math.ceil((d.length*3)/4)>1000000){rej(new Error("Image > 1MB"));return;}res(d);};img.onerror=()=>rej(new Error("Failed to load"));img.src=e.target.result;};r.onerror=()=>rej(new Error("Failed to read"));r.readAsDataURL(file);});}
 
 getElement("save")?.addEventListener("click",async()=>{
-  try{const pCat=getInputValue("category");const pProds=currentAdminPerms.canAddProducts;if(currentAdminPermsLoaded&&(!pProds||Object.keys(pProds).length===0||pProds[pCat]!==true)){alert(t("errorSaving"));return;}
-  let img=getInputValue("image");const f=getElement("imageFile")?.files[0];if(f)img=await compressImageFile(f);if(!img)img="images/noimg.jpg";
-  const p={name:getInputValue("name"),description:getInputValue("description"),code:getInputValue("code"),category:pCat,image:img,createdAt:Date.now()};
+  try{let img=getInputValue("image");const f=getElement("imageFile")?.files[0];if(f)img=await compressImageFile(f);if(!img)img="images/noimg.jpg";
+  const p={name:getInputValue("name"),description:getInputValue("description"),code:getInputValue("code"),category:getInputValue("category"),image:img,createdAt:Date.now()};
   if(!p.name||!p.code){alert(t("fillRequired"));return;}
   if(editingId){await updateDoc(doc(db,"products",editingId),p);editingId=null;alert(t("productUpdated"));}
   else{await addDoc(productsCollection,p);alert(t("productAdded"));}
@@ -270,7 +242,7 @@ getElement("save")?.addEventListener("click",async()=>{
 });
 
 window.deleteProduct=async function(id){if(!confirm(t("deleteProduct")))return;try{await deleteDoc(doc(db,"products",id));await loadProducts();}catch(e){alert(t("errorOccurredShort"));}};
-window.editProduct=function(id){const p=allProducts.find(i=>String(i.id)===String(id));if(!p)return;editingId=id;showProductForm(p.category||"قسم المعمل");getElement("name").value=p.name||"";getElement("description").value=p.description||"";getElement("code").value=p.code||"";getElement("image").value=p.image||"";const pi=getElement("previewImage");if(pi)pi.src=getProductImage(p);window.scrollTo({top:0,behavior:"smooth"});const sc=getElement("suggestCodeCheckbox");if(sc)sc.checked=false;const ci=getElement("code");if(ci)ci.disabled=false;};
+window.editProduct=function(id){const p=allProducts.find(i=>String(i.id)===String(id));if(!p)return;editingId=id;showProductForm(p.category||"قسم المعمل");getElement("name").value=p.name||"";getElement("description").value=p.description||"";getElement("code").value=p.code||"";getElement("image").value=p.image||"";const pi=getElement("previewImage");if(pi)pi.src=getProductImage(p);window.scrollTo({top:0,behavior:"smooth"});};
 
 getElement("searchAdmin")?.addEventListener("input",function(){const v=normalizeText(this.value);renderProducts(allProducts.filter(p=>normalizeText(`${p.name||""} ${p.description||""} ${p.code||""} ${p.category||""}`).includes(v)));});
 getElement("sortNewest")?.addEventListener("click",()=>renderProducts([...allProducts].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))));
@@ -295,8 +267,6 @@ function updateBulkUI(){
     allCb.checked = total > 0 && ids.length === total;
     allCb.indeterminate = ids.length > 0 && ids.length < total;
   }
-  const toolbar = document.getElementById("bulkToolbar");
-  if(toolbar) toolbar.classList.toggle("has-selection", ids.length > 0);
 }
 document.getElementById("selectAllCheckbox")?.addEventListener("change", function(){
   document.querySelectorAll(".prod-cb").forEach(cb => cb.checked = this.checked);
@@ -356,6 +326,9 @@ function renderAllInvoices(invoices){
     let rows="";
     if(inv.items?.length){
       let admItems = [...inv.items];
+      if(inv.accountType === "حساب معمل"){
+        admItems = admItems.filter(it => it.category === "احتياجات المعمل");
+      }
       const admGroups = {};
       admItems.forEach(it => {
         const cat = it.category || "Other";
@@ -406,8 +379,8 @@ async function loadAllCustomers(){
   list.innerHTML=`<div class='loading-msg'>${t("loadingCustomers")}</div>`;
   allCustomers=getLocalCustomers();
   try{const snap=await getDocs(customersCollection);const fids=new Set();
-   snap.forEach(d=>{fids.add(d.id);const data=d.data();const existing=allCustomers.find(c=>c.id===d.id);if(existing){existing.permissions=data.permissions||{};existing.branch=data.branch||"";}else{const byName=allCustomers.find(c=>String(c.name||"").trim().toLowerCase()===String(data.name||"").trim().toLowerCase());if(byName){byName.id=d.id;byName.permissions=data.permissions||{};byName.branch=data.branch||"";}else{allCustomers.push({id:d.id,name:data.name,pin:data.pin,accountType:data.accountType||"",branch:data.branch||"",permissions:data.permissions||{},createdAt:data.createdAt});}}});
-  allCustomers=allCustomers.filter(c=>fids.has(c.id)||String(c.id).startsWith("local_"));
+   snap.forEach(d=>{fids.add(d.id);const data=d.data();const existing=allCustomers.find(c=>c.id===d.id);if(existing){existing.permissions=data.permissions||{};existing.branch=data.branch||"";}else{allCustomers.push({id:d.id,name:data.name,pin:data.pin,accountType:data.accountType||"",branch:data.branch||"",permissions:data.permissions||{},createdAt:data.createdAt});}});
+  const lids=new Set(allCustomers.map(c=>c.id));fids.forEach(fid=>{if(!lids.has(fid))allCustomers=allCustomers.filter(c=>c.id!==fid);});
   allCustomers.forEach(c=>{const s=snap.docs.find(dd=>dd.id===c.id);if(s&&!s.data().accountType){try{updateDoc(doc(db,"customers",c.id),{accountType:"حساب معمل"});c.accountType="حساب معمل";}catch(e){}}});
   saveLocalCustomers(allCustomers);}catch(e){}
   renderAllCustomers(allCustomers);
@@ -420,7 +393,7 @@ function renderAllCustomers(customers){
     const ds=cust.createdAt?formatArabicDate(cust.createdAt):"";
     const acc=cust.accountType||"غير محدد";
     const card=document.createElement("div");card.className="customer-admin-card";
-    card.innerHTML=`<div class="cust-header"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><strong>👤 ${escapeHTML(cust.name)}</strong><span style="color:#dc3545;font-size:10px;font-weight:700;">${escapeHTML(acc)}</span></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;"><span style="font-size:11px;color:var(--secondary);font-weight:600;">PIN: ${escapeHTML(cust.pin||"")}</span><button class="cust-action-btn" type="button" style="font-size:16px;padding:2px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">▾</button></div></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""}</div><div style="font-size:12px;color:var(--secondary);">${t("branchName")}: <span class="cust-branch-label">${cust.branch?escapeHTML(cust.branch):"---"}</span></div><div class="cust-invoices"></div><div class="cust-actions-dropdown" style="display:none;margin-top:8px;padding:8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);flex-direction:column;gap:6px;"></div>`;
+    card.innerHTML=`<div class="cust-header"><strong>👤 ${escapeHTML(cust.name)}</strong> <span style="font-size:11px;color:var(--secondary);font-weight:600;">PIN: ${escapeHTML(cust.pin||"")}</span> <span class="cust-acc-type">${escapeHTML(acc)}</span> <button class="cust-action-btn" type="button" style="font-size:16px;padding:2px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--white);color:var(--accent);cursor:pointer;font-weight:700;">▾</button></div><div style="font-size:12px;color:var(--secondary);margin-top:4px;">${ds?`${t("registrationDate")} ${ds}`:""} | ${t("branchName")}: <span class="cust-branch-label">${cust.branch?escapeHTML(cust.branch):"---"}</span></div><div class="cust-invoices"></div><div class="cust-actions-dropdown" style="display:none;margin-top:8px;padding:8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);flex-direction:column;gap:6px;"></div>`;
     const invDiv=card.querySelector(".cust-invoices");
     const dropdown=card.querySelector(".cust-actions-dropdown");
     const branchLabel=card.querySelector(".cust-branch-label");
@@ -470,12 +443,12 @@ function openCustPerms(cust,card,dropdown){
   const curPerms=cust.permissions||{};
   const defPerms=CATEGORY_PERMISSIONS[cust.accountType]||CAT_ORDER_ADMIN;
   const hasCustom=typeof curPerms==='object'&&Object.keys(curPerms).length>0;
-  let ph=`<div class="perm-header"><span>🔑 ${t("permissionsLabel")}</span></div>`;
+  let ph=`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--accent);">${t("permissionsLabel")}</div>`;
   CAT_ORDER_ADMIN.forEach(cat=>{
     const checked=hasCustom?!!curPerms[cat]:defPerms.includes(cat);
-    ph+=`<div class="perm-toggle-row"><span class="perm-cat-name" data-i18n-cat="${cat}">${catLabel(cat)}</span><label class="perm-toggle-switch"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span class="perm-toggle-slider"></span></label></div>`;
+    ph+=`<label class="perm-label"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span data-i18n-cat="${cat}">${catLabel(cat)}</span></label>`;
   });
-  ph+=`<div class="perm-actions"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
+  ph+=`<div style="display:flex;gap:8px;margin-top:8px;"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
   permSection.innerHTML=ph;
   dropdown.innerHTML="";dropdown.appendChild(permSection);
   permSection.querySelector(".perm-save-btn").addEventListener("click",async()=>{
@@ -513,8 +486,10 @@ getElement("addCustBtn")?.addEventListener("click",async()=>{
   if(!name||name.length<2){alert(t("nameMinTwo"));return;}
   if(!pin){alert(t("enterPin"));return;}
   if(allCustomers.find(c=>String(c.name||"").trim().toLowerCase()===name.toLowerCase())){alert(t("customerExists"));return;}
+  const id="local_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);
+  const local=getLocalCustomers();local.push({id,name,pin,accountType:acc,branch,createdAt:Date.now()});saveLocalCustomers(local);
   getElement("newCustName").value="";getElement("newCustPin").value="";document.getElementById("newCustBranch").value="";
-  try{const ref=await addDoc(customersCollection,{name,pin,accountType:acc,branch,createdAt:serverTimestamp()});removeLocalCustomer("local_"+name.toLowerCase());const local=getLocalCustomers();local.push({id:ref.id,name,pin,accountType:acc,branch,createdAt:Date.now()});saveLocalCustomers(local);}catch(e){const id="local_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);const local=getLocalCustomers();local.push({id,name,pin,accountType:acc,branch,createdAt:Date.now()});saveLocalCustomers(local);}
+  try{await addDoc(customersCollection,{name,pin,accountType:acc,branch,createdAt:serverTimestamp()});}catch(e){}
   alert(t("customerAdded"));await loadAllCustomers();
 });
 
@@ -529,11 +504,12 @@ getElement("customerSearch")?.addEventListener("input",function(){const v=normal
 let deleteInvoiceTargetId=null;
 window.openDeleteInvoiceModal=function(id,name){deleteInvoiceTargetId=id;const o=document.getElementById("deleteInvoiceModal");if(!o)return;document.getElementById("deleteInvoiceName").textContent=name;const i=document.getElementById("deleteInvoiceConfirmInput");if(i)i.value="";const b=document.getElementById("deleteInvoiceConfirmBtn");if(b)b.disabled=true;o.hidden=false;o.setAttribute("aria-hidden","false");requestAnimationFrame(()=>o.classList.add("active"));};
 window.closeDeleteInvoiceModal=function(){const o=document.getElementById("deleteInvoiceModal");if(!o)return;o.classList.remove("active");o.setAttribute("aria-hidden","true");setTimeout(()=>{o.hidden=true;},200);deleteInvoiceTargetId=null;};
-window.confirmDeleteInvoice=async function(){if(!deleteInvoiceTargetId)return;const id=deleteInvoiceTargetId;deleteInvoiceTargetId=null;const removedIdx=allInvoices.findIndex(i=>i.id===id);const removedInv=removedIdx!==-1?allInvoices.splice(removedIdx,1)[0]:null;renderAllInvoices(allInvoices);closeDeleteInvoiceModal();try{await Promise.race([deleteDoc(doc(db,"invoices",id)),new Promise((_,r)=>setTimeout(()=>r(new Error("Timeout")),10000))]);}catch(e){if(removedInv)allInvoices.push(removedInv);renderAllInvoices(allInvoices);alert(e.message==="Timeout"?t("timeout"):t("errorOccurredShort"));}const cb=document.getElementById("deleteInvoiceConfirmBtn");if(cb)cb.disabled=false;};
+window.confirmDeleteInvoice=async function(){if(!deleteInvoiceTargetId)return;const id=deleteInvoiceTargetId;deleteInvoiceTargetId=null;try{await Promise.race([deleteDoc(doc(db,"invoices",id)),new Promise((_,r)=>setTimeout(()=>r(new Error("Timeout")),10000))]);closeDeleteInvoiceModal();await loadAllInvoices();}catch(e){alert(e.message==="Timeout"?t("timeout"):t("errorOccurredShort"));}};
 
 /* BRANCHES */
 const BRANCHES_KEY="sallah_branches";
 const DEFAULT_BRANCHES=["فرع الحمدانية - Hamdanya","فرع الطائف - Altayf","فرع السامر - Al-Samer","فرع المعمل - Almamal"];
+const LOCAL_ADMIN_KEY="sallah_local_admin";
 function getBranches(){try{const d=localStorage.getItem(BRANCHES_KEY);if(d){const p=JSON.parse(d);if(Array.isArray(p)&&p.length)return p;}}catch(e){}return[...DEFAULT_BRANCHES];}
 function saveBranches(l){localStorage.setItem(BRANCHES_KEY,JSON.stringify(l));}
 function populateCustBranchDropdown(){
@@ -606,30 +582,15 @@ function saveCatMeta(m){localStorage.setItem(CAT_META_KEY,JSON.stringify(m));}
 function getCatMetaObj(cat){const m=getCatMeta();return m[cat]||{nameEn:cat,desc:"",showDesc:true};}
 function catDisplayName(cat){const meta=getCatMetaObj(cat);return getLang()==="en"?meta.nameEn:cat;}
 
-function canAddProductsToCat(cat){
-  const pProds=currentAdminPerms.canAddProducts;
-  if(!currentAdminPermsLoaded)return true;
-  if(!pProds||Object.keys(pProds).length===0)return false;
-  return pProds[cat]===true;
-}
 function rebuildCatPickCards(){
   const cont=document.getElementById("catPickCardsContainer");if(!cont)return;
   const cats=[...new Set([...CAT_ORDER_ADMIN,...allProducts.filter(p=>p.category).map(p=>p.category)])];
-  const pCats=currentAdminPerms.categories;
-  let allowed;
-  if(!currentAdminPermsLoaded){allowed=[...cats];}
-  else if(!pCats||Object.keys(pCats).length===0){allowed=[];}
-  else{allowed=cats.filter(cat=>pCats[cat]!==false);}
   cont.innerHTML="";
-  allowed.forEach(cat=>{
+  cats.forEach(cat=>{
     const count=allProducts.filter(p=>p.category===cat).length;
-    const canAdd=canAddProductsToCat(cat);
-    const btn=document.createElement("button");btn.type="button";btn.className="cat-pick-card"+(canAdd?"":" no-add-perm");btn.dataset.cat=cat;
-    btn.innerHTML=`<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`+(canAdd?"":`<br><small class="no-add-perm-msg">${t("noAddPermForCat")}</small>`);
-    btn.addEventListener("click",()=>{
-      if(!canAdd){alert(t("noAddPermForCat"));return;}
-      showProductForm(cat);
-    });
+    const btn=document.createElement("button");btn.type="button";btn.className="cat-pick-card";btn.dataset.cat=cat;
+    btn.innerHTML=`<span class="cat-pick-badge">${count}</span><br><span class="cat-pick-label">${catDisplayName(cat)}</span>`;
+    btn.addEventListener("click",()=>showProductForm(cat));
     cont.appendChild(btn);
   });
   // Also rebuild the category select in product form
@@ -637,24 +598,24 @@ function rebuildCatPickCards(){
   if(catSelect){
     const curVal=catSelect.value;
     catSelect.innerHTML="";
-    allowed.forEach(cat=>{
+    cats.forEach(cat=>{
       const opt=document.createElement("option");opt.value=cat;
       opt.textContent=catDisplayName(cat);
       catSelect.appendChild(opt);
     });
-    if(allowed.includes(curVal))catSelect.value=curVal;
+    if(cats.includes(curVal))catSelect.value=curVal;
   }
   // Rebuild bulk category select
   const bulkSelect=document.getElementById("bulkCategorySelect");
   if(bulkSelect){
     const curVal2=bulkSelect.value;
     bulkSelect.innerHTML=`<option value="">-- ${t("selectCategory")} --</option>`;
-    allowed.forEach(cat=>{
+    cats.forEach(cat=>{
       const opt=document.createElement("option");opt.value=cat;
       opt.textContent=catDisplayName(cat);
       bulkSelect.appendChild(opt);
     });
-    if(allowed.includes(curVal2))bulkSelect.value=curVal2;
+    if(cats.includes(curVal2))bulkSelect.value=curVal2;
   }
 }
 
@@ -728,8 +689,9 @@ window.confirmRenameCat=async function(){
   const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
   for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:arName});s++;}catch(e){f++;}}
   if(oldName!==arName){
-    try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const p=d.data().permissions||{};if(oldName in p){p[arName]=p[oldName];delete p[oldName];await updateDoc(doc(db,"customers",d.id),{permissions:p});}}}catch(e){console.error(e);}
-    const localC=getLocalCustomers();if(localC){let changed=false;localC.forEach(c=>{if(c.permissions&&oldName in c.permissions){c.permissions[arName]=c.permissions[oldName];delete c.permissions[oldName];changed=true;}});if(changed)saveLocalCustomers(localC);}
+    const allCats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
+    try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const np={};allCats.forEach(cat=>np[cat]=true);await updateDoc(doc(db,"customers",d.id),{permissions:np});}}catch(e){console.error(e);}
+    const localC=getLocalCustomers();if(localC){localC.forEach(c=>{c.permissions={};allCats.forEach(cat=>c.permissions[cat]=true);});saveLocalCustomers(localC);}
     const idx=CAT_ORDER_ADMIN.indexOf(oldName);if(idx!==-1)CAT_ORDER_ADMIN[idx]=arName;
     if(CAT_EN_NAMES_ADMIN[oldName]){CAT_EN_NAMES_ADMIN[arName]=CAT_EN_NAMES_ADMIN[oldName];delete CAT_EN_NAMES_ADMIN[oldName];}
     for(const at in CATEGORY_PERMISSIONS){const arr=CATEGORY_PERMISSIONS[at];const oi=arr.indexOf(oldName);if(oi!==-1)arr[oi]=arName;}
@@ -758,8 +720,9 @@ function renderCategories(){
     const dispName=catDisplayName(cat);
     const hasDesc=!!meta.desc;
     const showDesc=meta.showDesc!==false;
+    const toggleLabel=showDesc?t("hideDescLabel")||"🕶️":t("showDescLabel")||"👁️";
     const card=document.createElement("div");card.className="cat-admin-card";
-    card.innerHTML=`<div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${hasDesc?`<div class="cat-admin-desc" style="display:${showDesc?'':'none'}">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button>${hasDesc?`<button class="cat-desc-toggle-btn" type="button">${showDesc?"👁️":"🙈"}</button>`:""}<button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
+    card.innerHTML=`<div style="flex:1;min-width:0;"><div class="cat-admin-name">${escapeHTML(dispName)}</div>${hasDesc?`<div class="cat-admin-desc" style="display:${showDesc?'':'none'}">${escapeHTML(meta.desc)}</div>`:""}</div><span class="cat-admin-count">(${count})</span><div class="cat-admin-actions"><button class="cat-rename-btn" type="button">${t("renameCategory")}</button>${hasDesc?`<button class="cat-desc-toggle-btn" type="button" style="font-size:11px;">${toggleLabel}</button>`:""}<button class="cat-del-btn" type="button">${t("deleteCategory")}</button></div>`;
     card.querySelector(".cat-admin-name").addEventListener("click",()=>showCategoryProducts(cat));
     card.querySelector(".cat-rename-btn").addEventListener("click",e=>{e.stopPropagation();openRenameCatModal(cat);});
     card.querySelector(".cat-del-btn").addEventListener("click",e=>{e.stopPropagation();deleteCategory(cat);});
@@ -840,12 +803,6 @@ function applyAdminLang(){
   const tabKeys = ["productsTab","invoicesTab","customersTab","branchesTab","categoriesTab"];
   tabs.forEach((tab,i) => {
     if(tabKeys[i]) tab.textContent = t(tabKeys[i]);
-    if(i===2){
-      if(currentAdminPerms.canManageCustomers===false){
-        tab.innerHTML='🔒 '+(tab.textContent||t(tabKeys[i]));
-        tab.style.opacity="0.5";
-      }else{tab.style.opacity="1";}
-    }
   });
 
   // Category picker title
@@ -869,10 +826,8 @@ function applyAdminLang(){
     const el = document.getElementById(id);
     if(el) el.placeholder = t(key);
   });
-  const saveProductBtn = document.getElementById("save");
-  if(saveProductBtn) saveProductBtn.textContent = t("saveProduct");
-  const suggestCodeLabel=document.getElementById("suggestCodeLabel");
-  if(suggestCodeLabel) suggestCodeLabel.textContent = t("suggestCode");
+  const saveBtn = document.getElementById("save");
+  if(saveBtn) saveBtn.textContent = t("saveProduct");
 
   // Category select in product form
   const catSelect = document.getElementById("category");
@@ -928,38 +883,7 @@ function applyAdminLang(){
 
   // Products table buttons
   document.querySelectorAll(".edit-btn").forEach(b => b.textContent = t("editBtn"));
-
-  // Delete modals
-  const delCustTitle=document.getElementById("deleteCustTitle");
-  if(delCustTitle)delCustTitle.textContent=t("deleteCustomerTitle");
-  const delCustMsg=document.getElementById("deleteCustMsg");
-  if(delCustMsg)delCustMsg.textContent=t("deleteCustomerMsg");
-  const delCustType=document.getElementById("deleteCustConfirmType");
-  if(delCustType)delCustType.textContent=t("deleteCategoryConfirmType");
-  const delCustCancel=document.getElementById("deleteCustCancelBtn");
-  if(delCustCancel)delCustCancel.textContent=t("cancelDelete");
-  const delCustConfirm=document.getElementById("deleteCustConfirmBtn");
-  if(delCustConfirm)delCustConfirm.textContent=t("deleteConfirm");
-  const delCustInput=document.getElementById("deleteCustConfirmInput");
-  if(delCustInput)delCustInput.placeholder=t("confirmDelete");
-  const delInvTitle=document.getElementById("deleteInvTitle");
-  if(delInvTitle)delInvTitle.textContent=t("deleteInvoiceTitle");
-  const delInvMsg=document.getElementById("deleteInvMsg");
-  if(delInvMsg)delInvMsg.textContent=t("deleteInvoiceMsg");
-  const delInvType=document.getElementById("deleteInvConfirmType");
-  if(delInvType)delInvType.textContent=t("deleteCategoryConfirmType");
-  const delInvCancel=document.getElementById("deleteInvCancelBtn");
-  if(delInvCancel)delInvCancel.textContent=t("cancelDelete");
-  const delInvConfirm=document.getElementById("deleteInvConfirmBtn");
-  if(delInvConfirm)delInvConfirm.textContent=t("deleteConfirm");
-  const delInvInput=document.getElementById("deleteInvoiceConfirmInput");
-  if(delInvInput)delInvInput.placeholder=t("confirmDelete");
   document.querySelectorAll(".delete-btn").forEach(b => b.textContent = t("deleteBtn"));
-  document.querySelectorAll(".edit-btn").forEach(b => b.textContent = t("editBtn"));
-  document.querySelectorAll(".inv-toggle-btn").forEach(b => {
-    const tbl = b.closest(".invoice-admin-card")?.querySelector(".inv-detail-table");
-    b.textContent = tbl?.classList.contains("show") ? t("hideDetails") : t("showDetails");
-  });
 
   // Invoices section
   const invTitle = document.querySelector("#section-invoices h2");
@@ -1010,12 +934,6 @@ function applyAdminLang(){
   if(selectedAdminCategory) renderCategoryProducts(selectedAdminCategory);
   const catSec = document.getElementById("section-categories");
   if(catSec && catSec.classList.contains("active")) renderCategories();
-
-  // Update restriction message if shown
-  const custSection = document.getElementById("section-customers");
-  if(custSection && currentAdminPerms.canManageCustomers===false && loadedTabs.customers){
-    custSection.innerHTML=`<div style="text-align:center;padding:40px 20px;color:#dc3545;font-size:16px;font-weight:700;">🔒 ${t("noCustomerPerm")}</div>`;
-  }
 }
 getElement("adminLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");
@@ -1080,36 +998,9 @@ document.getElementById("branchRenameModal")?.addEventListener("keydown", e => {
   });
 });
 
-async function loadAdminPermissions(){
-  currentAdminPermsLoaded=false;
-  try{
-    let docId=currentAdminDocId;
-    const uname=currentAdminData?currentAdminData.username:null;
-    if(!docId||docId==="local"){
-      if(!uname){currentAdminPerms={};return;}
-      const q=query(adminsCollection,where("username","==",uname));
-      const snap=await getDocs(q);
-      if(snap.empty){currentAdminPerms={};return;}
-      docId=snap.docs[0].id;
-      currentAdminDocId=docId;
-    }
-    const snap=await getDoc(doc(db,"admins",docId));
-    if(snap.exists()){
-      currentAdminPerms=snap.data().permissions||{};
-      currentAdminPermsLoaded=true;
-    }else{currentAdminPerms={};}
-  }catch(e){currentAdminPerms={};}
-}
 async function init(){
-  applyFullLang({langToggle:"adminLoginLangToggle"});
-  applyMenuLang();
   if(sessionStorage.getItem(VERIFIED_KEY)!=="true")await seedDefaultAdmin();
   const authed=await checkAdminAuth();if(!authed){if(!getLocalAdmin())saveLocalAdmin("admin","admin");return;}
-  sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");await loadAdminPermissions();applyAdminLang();initTabs();try{await loadCategoriesFromFirestore();await loadTabContent("products");}catch(e){}
+  sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");applyAdminLang();initTabs();try{await loadCategoriesFromFirestore();await loadTabContent("products");}catch(e){}
 }
 init();
-getElement("adminLoginLangToggle")?.addEventListener("click", () => {
-  setLang(getLang() === "ar" ? "en" : "ar");
-  applyFullLang({langToggle:"adminLoginLangToggle"});
-  applyMenuLang();
-});

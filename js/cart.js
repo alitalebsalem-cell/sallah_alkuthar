@@ -1,7 +1,7 @@
 import { db } from "./firebase.js";
 import { generateInvoicePdf } from "./invoice-pdf.js";
 import {
-  collection, addDoc, getDoc, getDocs, updateDoc, doc,
+  collection, addDoc, getDocs, updateDoc, doc,
   query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel, applyFullLang, applyCartLang } from "./i18n.js";
@@ -85,46 +85,24 @@ function applyLang(){
   document.documentElement.dir = getLang() === "en" ? "ltr" : "rtl";
   const btn = document.getElementById("langToggle");
   if(btn) btn.textContent = getLang() === "en" ? "عربي" : "EN";
-  const loginLangBtn = document.getElementById("loginLangToggle");
-  if(loginLangBtn) loginLangBtn.textContent = getLang() === "en" ? "🌐 عربي" : "🌐 EN";
   applyCartLang();
 }
 document.getElementById("langToggle")?.addEventListener("click",()=>{
   setLang(getLang()==="ar"?"en":"ar");
   applyLang();
-  renderCart();
-});
-document.getElementById("loginLangToggle")?.addEventListener("click",()=>{
-  setLang(getLang()==="ar"?"en":"ar");
-  applyLang();
-  renderCart();
 });
 
 /* AUTH */
 function loadSession(){
   const s=localStorage.getItem(SESSION_KEY);
-  if(s){try{const d=JSON.parse(s);currentCustomer={id:d.id,name:d.name,branch:d.branch||"",accountType:d.accountType||"",permissions:d.permissions||{}};currentCustomerPin=d.pin||"";updateAuthUI();showCart();}catch(e){currentCustomer=null;}}
+  if(s){try{const d=JSON.parse(s);currentCustomer={id:d.id,name:d.name,accountType:d.accountType||"",permissions:d.permissions||{}};currentCustomerPin=d.pin||"";updateAuthUI();showCart();}catch(e){currentCustomer=null;}}
 }
 function saveSession(c,p){
   currentCustomer=c;currentCustomerPin=p||"";
-  localStorage.setItem(SESSION_KEY,JSON.stringify({id:c.id,name:c.name,branch:c.branch||"",pin:currentCustomerPin,accountType:c.accountType||"",permissions:c.permissions||{}}));
+  localStorage.setItem(SESSION_KEY,JSON.stringify({id:c.id,name:c.name,pin:currentCustomerPin,accountType:c.accountType||"",permissions:c.permissions||{}}));
   updateAuthUI();showCart();
 }
 function clearSession(){ currentCustomer=null;currentCustomerPin="";localStorage.removeItem(SESSION_KEY);updateAuthUI();hideCart(); }
-async function refreshCustomerFromFirestore(){
-  if(!currentCustomer||!currentCustomer.id)return;
-  try{
-    const snap=await getDoc(doc(db,"customers",currentCustomer.id));
-    if(snap.exists()){
-      const d=snap.data();
-      currentCustomer.branch=d.branch||"";
-      currentCustomer.accountType=d.accountType||"";
-      currentCustomer.permissions=d.permissions||{};
-      localStorage.setItem(SESSION_KEY,JSON.stringify({id:currentCustomer.id,name:currentCustomer.name,branch:currentCustomer.branch,pin:currentCustomerPin,accountType:currentCustomer.accountType,permissions:currentCustomer.permissions}));
-      updateAuthUI();
-    }
-  }catch(e){console.warn("Customer refresh failed:",e);}
-}
 function updateAuthUI(){
   if(currentCustomer){
     if(loginBtn)loginBtn.style.display="none";
@@ -151,7 +129,7 @@ function hideCart(){
 }
 
 /* PERMISSIONS */
-const CATEGORY_PERMISSIONS={"حساب معمل":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"]};
+const CATEGORY_PERMISSIONS={"حساب معمل":["احتياجات المعمل"],"حساب فرع":["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]};
 function getAllowedCategories(){
   if(!currentCustomer)return[];
   const perms=currentCustomer.permissions;
@@ -219,7 +197,7 @@ function populateCustomerDropdown(at){
   [...f].sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ar")).forEach(c=>{const o=document.createElement("option");o.value=c.name;o.textContent=c.name;loginNameInput.appendChild(o);});
 }
 loginAccountType?.addEventListener("change",function(){if(this.value){populateCustomerDropdown(this.value);if(loginNameInput)loginNameInput.style.display="block";if(loginPinInput)loginPinInput.style.display="none";if(loginSubmitBtn)loginSubmitBtn.style.display="none";}else{if(loginNameInput)loginNameInput.style.display="none";if(loginPinInput)loginPinInput.style.display="none";if(loginSubmitBtn)loginSubmitBtn.style.display="none";}});
-loginNameInput?.addEventListener("change",function(){if(this.value){if(loginPinInput)loginPinInput.style.display="block";if(loginSubmitBtn)loginSubmitBtn.style.display="flex";}else{if(loginPinInput)loginPinInput.style.display="none";if(loginSubmitBtn)loginSubmitBtn.style.display="none";}});
+loginNameInput?.addEventListener("change",function(){if(this.value){if(loginPinInput)loginPinInput.style.display="block";if(loginSubmitBtn)loginSubmitBtn.style.display="block";}else{if(loginPinInput)loginPinInput.style.display="none";if(loginSubmitBtn)loginSubmitBtn.style.display="none";}});
 loginPinInput?.addEventListener("keydown",e=>{if(e.key==="Enter")loginSubmitBtn?.click();});
 loginSubmitBtn?.addEventListener("click",()=>{
   if(loginError)loginError.textContent="";
@@ -231,7 +209,7 @@ loginSubmitBtn?.addEventListener("click",()=>{
   if(!pin){loginError.textContent=t("enterPin");return;}
   const match=customersCache.find(c=>String(c.name||"").trim().toLowerCase()===name.trim().toLowerCase());
   if(!match){loginError.textContent=t("accountNotFound");return;}
-    if(String(match.pin)===pin){saveSession({id:match.id,name:match.name,branch:match.branch||"",accountType:match.accountType||at,permissions:match.permissions||{}},pin);closeLoginModal();}
+  if(String(match.pin)===pin){saveSession({id:match.id,name:match.name,accountType:match.accountType||at,permissions:match.permissions||{}},pin);closeLoginModal();}
   else{loginError.textContent=t("wrongPassword");}
 });
 document.getElementById("loginRequiredBtn")?.addEventListener("click",openLoginModal);
@@ -351,6 +329,10 @@ function createInvoiceCells(item){const desc=item.description||"";const arName=i
 function createEmptyCells(){return '<td class="invoice-check-cell invoice-empty-cell"></td><td class="invoice-product-cell invoice-empty-cell"></td>';}
 function createInvoiceRowsFromCart(){
   let items = [...cart];
+  const accountType = currentCustomer?.accountType || "";
+  if(accountType === "حساب معمل"){
+    items = items.filter(i => i.category === "احتياجات المعمل");
+  }
   const groups = {};
   items.forEach(it => {
     const cat = it.category || "Other";
@@ -484,4 +466,4 @@ function loadCategoryCounts(){
 }
 applyLang();
 loadSession();
-(async function(){ await loadCategoriesFromFirestore(); populateBranchDropdown(); renderCart(); if(currentCustomer)await refreshCustomerFromFirestore(); })();
+(async function(){ await loadCategoriesFromFirestore(); populateBranchDropdown(); renderCart(); })();

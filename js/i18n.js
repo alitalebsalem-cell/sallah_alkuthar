@@ -90,7 +90,6 @@ const T = {
     adminPassword: "كلمة السر",
     adminLoginBtn: "دخول",
     adminLoginError: "",
-    noCustomerPerm: "🔒 ليس لديك صلاحية إدارة المستخدمين",
     langToggle: "EN",
     selectCategory: "📦 اختر القسم لإضافة منتج جديد",
     backToCategories: "← العودة",
@@ -98,7 +97,6 @@ const T = {
     arabicName: "الاسم بالعربي",
     englishName: "الاسم بالإنجليزي",
     productCode: "كود المنتج",
-    suggestCode: "اقتراح كود",
     imageLink: "رابط الصورة",
     importExcel: "📥 استيراد من ملف إكسل",
     exportExcel: "📤 تصدير إلى إكسل",
@@ -137,8 +135,6 @@ const T = {
     checking: "جاري التحقق...",
     you: "(أنت)",
     canAddProducts: "يمكن إضافة منتجات",
-    noAddPermForCat: "ليس لديك صلاحية إضافة منتجات لهذا القسم",
-    manageCustomers: "إدارة العملاء",
     permissions: "الصلاحيات",
     categoryVisibility: "إظهار الأقسام",
     noAdmins: "لا يوجد مدراء",
@@ -338,7 +334,6 @@ const T = {
     adminPassword: "Password",
     adminLoginBtn: "Login",
     adminLoginError: "",
-    noCustomerPerm: "🔒 You don't have permission to manage customers",
     langToggle: "عربي",
     selectCategory: "📦 Select a category to add products",
     backToCategories: "← Back",
@@ -346,7 +341,6 @@ const T = {
     arabicName: "Arabic Name",
     englishName: "English Name",
     productCode: "Product Code",
-    suggestCode: "Suggest Code",
     imageLink: "Image URL",
     importExcel: "📥 Import from Excel",
     exportExcel: "📤 Export to Excel",
@@ -385,8 +379,6 @@ const T = {
     checking: "Checking...",
     you: "(you)",
     canAddProducts: "Can add products",
-    noAddPermForCat: "You don't have permission to add products to this category",
-    manageCustomers: "Manage customers",
     permissions: "Permissions",
     categoryVisibility: "Category visibility",
     noAdmins: "No admins",
@@ -540,7 +532,7 @@ export function applyFullLang(selectors){
 
   if(selectors?.langToggle){
     const btn = document.getElementById(selectors.langToggle);
-    if(btn) btn.textContent = isEn ? "🌐 عربي" : "🌐 EN";
+    if(btn) btn.textContent = isEn ? "عربي" : "EN";
   }
 
   if(selectors?.search) {
