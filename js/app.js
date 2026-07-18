@@ -83,7 +83,7 @@ function loadSession(){
   if(stored){
     try{
       const data = JSON.parse(stored);
-      currentCustomer = { id:data.id, name:data.name, accountType:data.accountType||"", permissions:data.permissions||{} };
+      currentCustomer = { id:data.id, name:data.name, branch:data.branch||"", accountType:data.accountType||"", permissions:data.permissions||{} };
       currentCustomerPin = data.pin || "";
       updateAuthUI();
       showStore();
@@ -93,7 +93,7 @@ function loadSession(){
 function saveSession(customer, pin){
   currentCustomer = customer;
   currentCustomerPin = pin || "";
-  const sessionData = { id:customer.id, name:customer.name, pin:currentCustomerPin, accountType:customer.accountType||"", permissions:customer.permissions||{} };
+  const sessionData = { id:customer.id, name:customer.name, branch:customer.branch||"", pin:currentCustomerPin, accountType:customer.accountType||"", permissions:customer.permissions||{} };
   localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
   updateAuthUI();
   showStore();
@@ -481,7 +481,7 @@ loginAccountType?.addEventListener("change", function(){
 loginNameInput?.addEventListener("change", function(){
   if(this.value){
     if(loginPinInput) loginPinInput.style.display = "block";
-    if(loginSubmitBtn) loginSubmitBtn.style.display = "block";
+    if(loginSubmitBtn) loginSubmitBtn.style.display = "flex";
   }else{
     if(loginPinInput) loginPinInput.style.display = "none";
     if(loginSubmitBtn) loginSubmitBtn.style.display = "none";
@@ -502,7 +502,7 @@ loginSubmitBtn?.addEventListener("click", () => {
   const match = customersCache.find(c => String(c.name||"").trim().toLowerCase() === trimmedName);
   if(!match){ loginError.textContent = t("accountNotFound"); return; }
   if(String(match.pin) === pin){
-    saveSession({ id:match.id, name:match.name, accountType:match.accountType || accountType, permissions:match.permissions||{} }, pin);
+    saveSession({ id:match.id, name:match.name, branch:match.branch||"", accountType:match.accountType || accountType, permissions:match.permissions||{} }, pin);
     closeLoginModal();
   }else{
     loginError.textContent = t("wrongPassword");

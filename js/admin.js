@@ -136,7 +136,14 @@ async function seedDefaultAdmin(){try{const s=await Promise.race([getDocs(admins
 
 /* TABS */
 const loadedTabs={};
-async function loadTabContent(name){if(loadedTabs[name])return;loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();populateCustBranchDropdown();break;case"branches":renderBranches();break;case"categories":renderCategories();break;}}
+async function loadTabContent(name){
+  if(loadedTabs[name])return;
+  if(name==="customers"&&currentAdminPerms.canManageCustomers===false){
+    const sec=document.getElementById("section-customers");if(sec)sec.innerHTML=`<div style="text-align:center;padding:40px 20px;color:#dc3545;font-size:16px;font-weight:700;">🔒 ${t("noCustomerPerm")}</div>`;
+    loadedTabs[name]=true;return;
+  }
+  loadedTabs[name]=true;switch(name){case"products":await loadProducts();break;case"invoices":await loadAllInvoices();break;case"customers":await loadAllCustomers();populateCustBranchDropdown();break;case"branches":renderBranches();break;case"categories":renderCategories();break;}
+}
 function initTabs(){document.querySelectorAll(".admin-tab").forEach(tab=>{tab.addEventListener("click",function(){document.querySelectorAll(".admin-tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".admin-section").forEach(s=>s.classList.remove("active"));this.classList.add("active");const n=this.dataset.tab;const sec=document.getElementById("section-"+n);if(sec)sec.classList.add("active");loadTabContent(n);});});}
 
 /* PRODUCTS */
@@ -349,9 +356,6 @@ function renderAllInvoices(invoices){
     let rows="";
     if(inv.items?.length){
       let admItems = [...inv.items];
-      if(inv.accountType === "حساب معمل"){
-        admItems = admItems.filter(it => it.category === "احتياجات المعمل");
-      }
       const admGroups = {};
       admItems.forEach(it => {
         const cat = it.category || "Other";
@@ -466,12 +470,12 @@ function openCustPerms(cust,card,dropdown){
   const curPerms=cust.permissions||{};
   const defPerms=CATEGORY_PERMISSIONS[cust.accountType]||CAT_ORDER_ADMIN;
   const hasCustom=typeof curPerms==='object'&&Object.keys(curPerms).length>0;
-  let ph=`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--accent);">${t("permissionsLabel")}</div>`;
+  let ph=`<div class="perm-header"><span>🔑 ${t("permissionsLabel")}</span></div>`;
   CAT_ORDER_ADMIN.forEach(cat=>{
     const checked=hasCustom?!!curPerms[cat]:defPerms.includes(cat);
-    ph+=`<label class="perm-label"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span data-i18n-cat="${cat}">${catLabel(cat)}</span></label>`;
+    ph+=`<div class="perm-toggle-row"><span class="perm-cat-name" data-i18n-cat="${cat}">${catLabel(cat)}</span><label class="perm-toggle-switch"><input type="checkbox" class="perm-checkbox" data-cat="${cat}" ${checked?"checked":""}><span class="perm-toggle-slider"></span></label></div>`;
   });
-  ph+=`<div style="display:flex;gap:8px;margin-top:8px;"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
+  ph+=`<div class="perm-actions"><button class="perm-save-btn" type="button">${t("savePerms")}</button><button class="perm-reset-btn" type="button">${t("resetPerms")}</button></div>`;
   permSection.innerHTML=ph;
   dropdown.innerHTML="";dropdown.appendChild(permSection);
   permSection.querySelector(".perm-save-btn").addEventListener("click",async()=>{
@@ -525,7 +529,7 @@ getElement("customerSearch")?.addEventListener("input",function(){const v=normal
 let deleteInvoiceTargetId=null;
 window.openDeleteInvoiceModal=function(id,name){deleteInvoiceTargetId=id;const o=document.getElementById("deleteInvoiceModal");if(!o)return;document.getElementById("deleteInvoiceName").textContent=name;const i=document.getElementById("deleteInvoiceConfirmInput");if(i)i.value="";const b=document.getElementById("deleteInvoiceConfirmBtn");if(b)b.disabled=true;o.hidden=false;o.setAttribute("aria-hidden","false");requestAnimationFrame(()=>o.classList.add("active"));};
 window.closeDeleteInvoiceModal=function(){const o=document.getElementById("deleteInvoiceModal");if(!o)return;o.classList.remove("active");o.setAttribute("aria-hidden","true");setTimeout(()=>{o.hidden=true;},200);deleteInvoiceTargetId=null;};
-window.confirmDeleteInvoice=async function(){if(!deleteInvoiceTargetId)return;const id=deleteInvoiceTargetId;deleteInvoiceTargetId=null;try{await Promise.race([deleteDoc(doc(db,"invoices",id)),new Promise((_,r)=>setTimeout(()=>r(new Error("Timeout")),10000))]);closeDeleteInvoiceModal();await loadAllInvoices();}catch(e){alert(e.message==="Timeout"?t("timeout"):t("errorOccurredShort"));}};
+window.confirmDeleteInvoice=async function(){if(!deleteInvoiceTargetId)return;const id=deleteInvoiceTargetId;deleteInvoiceTargetId=null;const removedIdx=allInvoices.findIndex(i=>i.id===id);const removedInv=removedIdx!==-1?allInvoices.splice(removedIdx,1)[0]:null;renderAllInvoices(allInvoices);closeDeleteInvoiceModal();try{await Promise.race([deleteDoc(doc(db,"invoices",id)),new Promise((_,r)=>setTimeout(()=>r(new Error("Timeout")),10000))]);}catch(e){if(removedInv)allInvoices.push(removedInv);renderAllInvoices(allInvoices);alert(e.message==="Timeout"?t("timeout"):t("errorOccurredShort"));}const cb=document.getElementById("deleteInvoiceConfirmBtn");if(cb)cb.disabled=false;};
 
 /* BRANCHES */
 const BRANCHES_KEY="sallah_branches";
@@ -724,9 +728,8 @@ window.confirmRenameCat=async function(){
   const ids=allProducts.filter(p=>p.category===oldName).map(p=>p.id);let s=0,f=0;
   for(const id of ids){try{await updateDoc(doc(db,"products",id),{category:arName});s++;}catch(e){f++;}}
   if(oldName!==arName){
-    const allCats=[...new Set(allProducts.filter(p=>p.category).map(p=>p.category))];
-    try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const np={};allCats.forEach(cat=>np[cat]=true);await updateDoc(doc(db,"customers",d.id),{permissions:np});}}catch(e){console.error(e);}
-    const localC=getLocalCustomers();if(localC){localC.forEach(c=>{c.permissions={};allCats.forEach(cat=>c.permissions[cat]=true);});saveLocalCustomers(localC);}
+    try{const snap=await getDocs(collection(db,"customers"));for(const d of snap.docs){const p=d.data().permissions||{};if(oldName in p){p[arName]=p[oldName];delete p[oldName];await updateDoc(doc(db,"customers",d.id),{permissions:p});}}}catch(e){console.error(e);}
+    const localC=getLocalCustomers();if(localC){let changed=false;localC.forEach(c=>{if(c.permissions&&oldName in c.permissions){c.permissions[arName]=c.permissions[oldName];delete c.permissions[oldName];changed=true;}});if(changed)saveLocalCustomers(localC);}
     const idx=CAT_ORDER_ADMIN.indexOf(oldName);if(idx!==-1)CAT_ORDER_ADMIN[idx]=arName;
     if(CAT_EN_NAMES_ADMIN[oldName]){CAT_EN_NAMES_ADMIN[arName]=CAT_EN_NAMES_ADMIN[oldName];delete CAT_EN_NAMES_ADMIN[oldName];}
     for(const at in CATEGORY_PERMISSIONS){const arr=CATEGORY_PERMISSIONS[at];const oi=arr.indexOf(oldName);if(oi!==-1)arr[oi]=arName;}
@@ -837,7 +840,12 @@ function applyAdminLang(){
   const tabKeys = ["productsTab","invoicesTab","customersTab","branchesTab","categoriesTab"];
   tabs.forEach((tab,i) => {
     if(tabKeys[i]) tab.textContent = t(tabKeys[i]);
-    if(i===2)tab.style.display=currentAdminPerms.canManageCustomers===false?"none":"";
+    if(i===2){
+      if(currentAdminPerms.canManageCustomers===false){
+        tab.innerHTML='🔒 '+(tab.textContent||t(tabKeys[i]));
+        tab.style.opacity="0.5";
+      }else{tab.style.opacity="1";}
+    }
   });
 
   // Category picker title
@@ -947,6 +955,11 @@ function applyAdminLang(){
   const delInvInput=document.getElementById("deleteInvoiceConfirmInput");
   if(delInvInput)delInvInput.placeholder=t("confirmDelete");
   document.querySelectorAll(".delete-btn").forEach(b => b.textContent = t("deleteBtn"));
+  document.querySelectorAll(".edit-btn").forEach(b => b.textContent = t("editBtn"));
+  document.querySelectorAll(".inv-toggle-btn").forEach(b => {
+    const tbl = b.closest(".invoice-admin-card")?.querySelector(".inv-detail-table");
+    b.textContent = tbl?.classList.contains("show") ? t("hideDetails") : t("showDetails");
+  });
 
   // Invoices section
   const invTitle = document.querySelector("#section-invoices h2");
@@ -997,6 +1010,12 @@ function applyAdminLang(){
   if(selectedAdminCategory) renderCategoryProducts(selectedAdminCategory);
   const catSec = document.getElementById("section-categories");
   if(catSec && catSec.classList.contains("active")) renderCategories();
+
+  // Update restriction message if shown
+  const custSection = document.getElementById("section-customers");
+  if(custSection && currentAdminPerms.canManageCustomers===false && loadedTabs.customers){
+    custSection.innerHTML=`<div style="text-align:center;padding:40px 20px;color:#dc3545;font-size:16px;font-weight:700;">🔒 ${t("noCustomerPerm")}</div>`;
+  }
 }
 getElement("adminLangToggle")?.addEventListener("click", () => {
   setLang(getLang() === "ar" ? "en" : "ar");
@@ -1082,8 +1101,15 @@ async function loadAdminPermissions(){
   }catch(e){currentAdminPerms={};}
 }
 async function init(){
+  applyFullLang({langToggle:"adminLoginLangToggle"});
+  applyMenuLang();
   if(sessionStorage.getItem(VERIFIED_KEY)!=="true")await seedDefaultAdmin();
   const authed=await checkAdminAuth();if(!authed){if(!getLocalAdmin())saveLocalAdmin("admin","admin");return;}
   sessionStorage.setItem(AUTH_KEY,"true");if(currentAdminData)saveLocalAdmin(currentAdminData.username||"admin",currentAdminData.password||"admin");await loadAdminPermissions();applyAdminLang();initTabs();try{await loadCategoriesFromFirestore();await loadTabContent("products");}catch(e){}
 }
 init();
+getElement("adminLoginLangToggle")?.addEventListener("click", () => {
+  setLang(getLang() === "ar" ? "en" : "ar");
+  applyFullLang({langToggle:"adminLoginLangToggle"});
+  applyMenuLang();
+});
