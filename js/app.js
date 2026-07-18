@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { collection, getDocs, query, orderBy, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { getLang, setLang, t, catLabel, applyFullLang } from "./i18n.js";
 import { generateInvoicePdf } from "./invoice-pdf.js";
 
@@ -7,8 +7,8 @@ const SESSION_KEY = "sallah_customer_session";
 const CUSTOMERS_LOCAL_KEY = "sallah_customers_data";
 
 const CATEGORY_PERMISSIONS = {
-  "حساب معمل": ["احتياجات المعمل"],
-  "حساب فرع": ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع"]
+  "حساب معمل": ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"],
+  "حساب فرع": ["قسم المعمل","قسم السوبرماركت","قسم محلات الجملة","قسم المستودع","احتياجات المعمل"]
 };
 
 const CAT_META_KEY="simsim_cat_meta";
@@ -83,7 +83,7 @@ function loadSession(){
   if(stored){
     try{
       const data = JSON.parse(stored);
-      currentCustomer = { id:data.id, name:data.name, accountType:data.accountType||"", permissions:data.permissions||{} };
+      currentCustomer = { id:data.id, name:data.name, branch:data.branch||"", accountType:data.accountType||"", permissions:data.permissions||{} };
       currentCustomerPin = data.pin || "";
       updateAuthUI();
       showStore();
@@ -93,7 +93,7 @@ function loadSession(){
 function saveSession(customer, pin){
   currentCustomer = customer;
   currentCustomerPin = pin || "";
-  const sessionData = { id:customer.id, name:customer.name, pin:currentCustomerPin, accountType:customer.accountType||"", permissions:customer.permissions||{} };
+  const sessionData = { id:customer.id, name:customer.name, branch:customer.branch||"", pin:currentCustomerPin, accountType:customer.accountType||"", permissions:customer.permissions||{} };
   localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
   updateAuthUI();
   showStore();
@@ -502,7 +502,7 @@ loginSubmitBtn?.addEventListener("click", () => {
   const match = customersCache.find(c => String(c.name||"").trim().toLowerCase() === trimmedName);
   if(!match){ loginError.textContent = t("accountNotFound"); return; }
   if(String(match.pin) === pin){
-    saveSession({ id:match.id, name:match.name, accountType:match.accountType || accountType, permissions:match.permissions||{} }, pin);
+    saveSession({ id:match.id, name:match.name, branch:match.branch||"", accountType:match.accountType || accountType, permissions:match.permissions||{} }, pin);
     closeLoginModal();
   }else{
     loginError.textContent = t("wrongPassword");
@@ -541,7 +541,12 @@ document.getElementById("profileChangePinBtn")?.addEventListener("click", async 
   const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
   stored.pin = newPin;
   localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
-  try{ const {doc,updateDoc} = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"); const {db:d} = await import("./firebase.js"); await updateDoc(doc(d,"customers",currentCustomer.id),{pin:newPin}); }catch(e){}
+  // Update pin in Firestore
+  try{ await updateDoc(doc(db,"customers",currentCustomer.id),{pin:newPin}); }catch(e){ console.warn("Pin update failed:",e); }
+  // Also update customersCache so re-login works immediately
+  const cached = customersCache.find(c => c.id === currentCustomer.id);
+  if(cached) cached.pin = newPin;
+  saveLocalCustomers(customersCache);
   alert(t("pinChanged"));
 });
 document.getElementById("profileInvoicesBtn")?.addEventListener("click", () => {
