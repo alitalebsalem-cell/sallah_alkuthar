@@ -49,11 +49,11 @@ a{text-decoration:none;color:inherit;}
 /* ============ CART FLOAT ============ */
 .cart-icon{
   position:fixed;top:14px;left:14px;z-index:99999;
-  width:100px;height:100px;
+  width:66px;height:66px;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
 }
-.cart-icon img{width:99px;height:99px;object-fit:contain;}
+.cart-icon img{width:66px;height:66px;object-fit:contain;}
 .cart-icon:hover{transform:scale(1.08);}
 .cart-icon span{
   position:absolute;top:2px;right:2px;
