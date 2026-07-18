@@ -45,6 +45,21 @@
     .view-user-info { font-size:12px; opacity:.9; }
     .view-logout-btn { background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.3); border-radius:10px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; color:#fff; transition:all .3s; }
     .view-logout-btn:hover { background:rgba(255,255,255,.25); }
+    .view-toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+    .branch-filter-bar{display:flex;flex-wrap:wrap;gap:6px;}
+    .branch-filter-bar .branch-chip{padding:7px 14px;border-radius:999px;border:1.5px solid rgba(122,102,85,.2);background:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;color:#7A6655;white-space:nowrap;}
+    .branch-filter-bar .branch-chip:hover{border-color:#B08A52;color:#453630;background:#F6F1EB;}
+    .branch-filter-bar .branch-chip.active{background:#453630;color:#fff;border-color:#453630;box-shadow:0 2px 8px rgba(69,54,48,.2);}
+    .sort-btns-bar{display:flex;gap:6px;flex-wrap:wrap;}
+    .sort-btns-bar .sort-btn{padding:6px 12px;border-radius:8px;border:1.5px solid rgba(122,102,85,.2);background:#fff;font-size:13px;cursor:pointer;transition:all .2s;color:#7A6655;font-weight:700;}
+    .sort-btns-bar .sort-btn:hover{border-color:#B08A52;color:#453630;}
+    .sort-btns-bar .sort-btn.active{background:#B08A52;color:#fff;border-color:#B08A52;}
+    @media(max-width:768px){
+      .branch-filter-bar{gap:4px;}
+      .branch-filter-bar .branch-chip{padding:5px 10px;font-size:11px;}
+      .sort-btns-bar{gap:4px;}
+      .sort-btns-bar .sort-btn{padding:5px 8px;font-size:12px;}
+    }
   </style>
 </head>
 <body>
@@ -65,7 +80,7 @@
         <option value="">-- اختر الاسم --</option>
       </select>
       <input type="password" id="loginPin" placeholder="كلمة المرور" autocomplete="off" style="width:100%;padding:12px;border:1.5px solid rgba(122,102,85,.2);border-radius:10px;font-size:14px;margin-bottom:10px;display:none;">
-      <button id="loginSubmit" type="button" style="width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#325247,#414935);color:#fff;font-size:16px;font-weight:800;cursor:pointer;display:none;">دخول</button>
+      <button id="loginSubmit" type="button" style="display:none;">دخول</button>
       <div id="loginError" style="color:#dc3545;font-size:13px;margin-top:8px;min-height:18px;"></div>
     </div>
   </div>
@@ -82,6 +97,15 @@
       </div>
     </div>
     <div class="view-container">
+      <div class="view-toolbar">
+        <div id="branchFilter" class="branch-filter-bar"></div>
+        <div id="sortBtns" class="sort-btns-bar">
+          <button class="sort-btn active" data-sort="newest">🆕</button>
+          <button class="sort-btn" data-sort="oldest">🕰️</button>
+          <button class="sort-btn" data-sort="most">📈</button>
+          <button class="sort-btn" data-sort="least">📉</button>
+        </div>
+      </div>
       <input type="text" id="viewSearch" class="view-search" placeholder="🔍 البحث بالعميل أو رقم الفاتورة...">
       <div class="view-grid" id="viewList">
         <div class="view-loading">جاري تحميل الفواتير...</div>
@@ -95,12 +119,12 @@
     import { generateInvoicePdf } from "./js/invoice-pdf.js";
 
     const mainFirebaseConfig = {
-      apiKey: "AIzaSyAE5T4yvDNKmo8sik4eFDbhjvc4K0uUi7M",
-      authDomain: "sallahkuthar.firebaseapp.com",
-      projectId: "sallahkuthar",
-      storageBucket: "sallahkuthar.firebasestorage.app",
-      messagingSenderId: "5993973139",
-      appId: "1:5993973139:web:735a1648d623dddf9b1466"
+      apiKey: "AIzaSyDmmwICZYXE_eTzUt8YuZ8VhOtFOO3DssQ",
+      authDomain: "sallahorders-3d3bb.firebaseapp.com",
+      projectId: "sallahorders-3d3bb",
+      storageBucket: "sallahorders-3d3bb.firebasestorage.app",
+      messagingSenderId: "1063050925586",
+      appId: "1:1063050925586:web:327700c149dde96f1eaacb"
     };
     const app = initializeApp(mainFirebaseConfig, "invoicesView");
     const db = getFirestore(app);
@@ -108,6 +132,9 @@
     const LANG_KEY = "sallah_lang";
     let currentUser = null;
     let allInvoices = [];
+    let filteredBase = [];
+    let selectedBranch = "";
+    let sortMode = "newest";
 
     /* TRANSLATIONS */
     function getLang(){ return localStorage.getItem(LANG_KEY) || "en"; }
@@ -125,6 +152,7 @@
         toggle:"🌐 EN", selectAccountType:"اختر نوع الحساب", selectNameErr:"اختر الاسم",
         pinFourDigits:"الرجاء إدخال كلمة المرور", enterPin:"الرجاء إدخال كلمة المرور", accountNotFound:"الحساب غير موجود", wrongPassword:"كلمة المرور خاطئة",
         menuStore:"المتجر", menuCart:"السلة", menuAdmin:"لوحة الإدارة", menuInvoices:"عرض الفواتير", menuDashboard:"Dashboard",
+        all:"جميع الفروع",
       },
       en: {
         loginTitle:"Invoices View", loginSub:"Login to view invoices",
@@ -138,6 +166,7 @@
         toggle:"🌐 عربي", selectAccountType:"Select account type", selectNameErr:"Select a name",
         pinFourDigits:"Please enter password", enterPin:"Please enter password", accountNotFound:"Account not found", wrongPassword:"Wrong PIN",
         menuStore:"Store", menuCart:"Cart", menuAdmin:"Admin Panel", menuInvoices:"Invoices", menuDashboard:"Dashboard",
+        all:"All Branches",
       }
     };
     function tt(key){ return (TV[getLang()] || TV.ar)[key] || key; }
@@ -179,6 +208,7 @@
       document.getElementById("viewLangToggle").textContent = tt("toggle");
       document.getElementById("viewLogoutBtn").textContent = tt("logout");
       if(currentUser) document.getElementById("viewUserInfo").textContent = `👤 ${currentUser.name}`;
+      if(filteredBase.length) renderBranchFilters();
       applyMenuLangInline();
     }
 
@@ -377,8 +407,9 @@
         }catch(e){}
         // Filter by account type
         const accType = currentUser?.accountType || "";
-        const filtered = filterInvoicesByType(allInvoices, accType);
-        renderInvoices(filtered);
+        filteredBase = filterInvoicesByType(allInvoices, accType);
+        renderBranchFilters();
+        applyFiltersAndRender();
       }catch(error){
         container.innerHTML = `<div class="view-error">${error.message}</div>`;
       }
@@ -393,17 +424,61 @@
       return list;
     }
 
-    document.getElementById("viewSearch")?.addEventListener("input", function(){
-      const value = this.value.toLowerCase().trim();
-      const accType = currentUser?.accountType || "";
-      let base = filterInvoicesByType(allInvoices, accType);
-      if(!value){ renderInvoices(base); return; }
-      const filtered = base.filter(inv =>
-        (inv.customerName || "").toLowerCase().includes(value) ||
-        (inv.invoiceNo || "").toLowerCase().includes(value) ||
-        (inv.branchName || "").toLowerCase().includes(value)
-      );
-      renderInvoices(filtered);
+    function renderBranchFilters(){
+      const container = document.getElementById("branchFilter");
+      if(!container) return;
+      const branches = [...new Set(filteredBase.map(inv => inv.branchName || "").filter(Boolean))].sort();
+      let html = `<div class="branch-chip${selectedBranch===""?" active":""}" data-branch="">${tt("all")}</div>`;
+      branches.forEach(b => {
+        html += `<div class="branch-chip${selectedBranch===b?" active":""}" data-branch="${escapeHTML(b)}">${escapeHTML(b)}</div>`;
+      });
+      container.innerHTML = html;
+      container.querySelectorAll(".branch-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          selectedBranch = chip.dataset.branch;
+          container.querySelectorAll(".branch-chip").forEach(c => c.classList.remove("active"));
+          chip.classList.add("active");
+          applyFiltersAndRender();
+        });
+      });
+    }
+
+    function applyFiltersAndRender(){
+      const searchVal = document.getElementById("viewSearch")?.value.toLowerCase().trim() || "";
+      let list = [...filteredBase];
+      // Branch filter
+      if(selectedBranch){
+        list = list.filter(inv => (inv.branchName || "") === selectedBranch);
+      }
+      // Search filter
+      if(searchVal){
+        list = list.filter(inv =>
+          (inv.customerName || "").toLowerCase().includes(searchVal) ||
+          (inv.invoiceNo || "").toLowerCase().includes(searchVal) ||
+          (inv.branchName || "").toLowerCase().includes(searchVal)
+        );
+      }
+      // Sort
+      if(sortMode === "newest"){
+        list.sort((a,b) => (b.createdAt||b.date||"") > (a.createdAt||a.date||"") ? 1 : -1);
+      } else if(sortMode === "oldest"){
+        list.sort((a,b) => (a.createdAt||a.date||"") > (b.createdAt||b.date||"") ? 1 : -1);
+      } else if(sortMode === "most"){
+        list.sort((a,b) => (b.totalItems||0) - (a.totalItems||0));
+      } else if(sortMode === "least"){
+        list.sort((a,b) => (a.totalItems||0) - (b.totalItems||0));
+      }
+      renderInvoices(list);
+    }
+
+    // Sort buttons
+    document.getElementById("sortBtns")?.addEventListener("click", function(e){
+      const btn = e.target.closest(".sort-btn");
+      if(!btn) return;
+      document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      sortMode = btn.dataset.sort;
+      applyFiltersAndRender();
     });
 
     checkSession();

@@ -247,27 +247,23 @@ async function renderAdmins(){
         let html = '';
         
         // Section 1: Category visibility
-        html += '<div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:8px;">📂 ' + t("categoryVisibility") + ':</div>';
-        html += '<div class="perm-col" style="display:flex;flex-direction:column;gap:4px;">';
+        html += '<div class="perm-header"><span>📂 ' + t("categoryVisibility") + '</span></div>';
         _catsCache.forEach(cat => {
           const catKey = cat.key || cat;
           const checked = catPerms[catKey] !== false;
-          html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:3px 0;cursor:pointer;"><input type="checkbox" class="perm-cat-cb" data-cat="' + catKey + '" ' + (checked?'checked':'') + '><span>' + catLabelAdmin(cat) + '</span></label>';
+          html += '<div class="perm-toggle-row"><span class="perm-cat-name">' + catLabelAdmin(cat) + '</span><label class="perm-toggle-switch"><input type="checkbox" class="perm-cat-cb" data-cat="' + catKey + '" ' + (checked?'checked':'') + '><span class="perm-toggle-slider"></span></label></div>';
         });
-        html += '</div>';
         
         // Section 2: Product add/edit permissions per category
-        html += '<div style="font-size:14px;font-weight:800;color:var(--dark);margin:14px 0 8px;">🛒 ' + t("canAddProducts") + ':</div>';
-        html += '<div class="perm-col" style="display:flex;flex-direction:column;gap:4px;">';
+        html += '<div class="perm-header" style="margin-top:10px;"><span>🛒 ' + t("canAddProducts") + '</span></div>';
         _catsCache.forEach(cat => {
           const catKey = cat.key || cat;
           const checked = prodPerms[catKey] || false;
-          html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:3px 0;cursor:pointer;"><input type="checkbox" class="perm-prod-cb" data-cat="' + catKey + '" ' + (checked?'checked':'') + '><span>' + catLabelAdmin(cat) + '</span></label>';
+          html += '<div class="perm-toggle-row"><span class="perm-cat-name">' + catLabelAdmin(cat) + '</span><label class="perm-toggle-switch"><input type="checkbox" class="perm-prod-cb" data-cat="' + catKey + '" ' + (checked?'checked':'') + '><span class="perm-toggle-slider"></span></label></div>';
         });
-        html += '</div>';
         
         // Section 3: Customer management
-        html += '<div style="margin-top:14px;"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="permCust-' + adminId + '" ' + (canManageCust?'checked':'') + '> 👥 ' + t("manageCustomers") + '</label></div>';
+        html += '<div class="perm-toggle-row" style="margin-top:6px;"><span class="perm-cat-name">👥 ' + t("manageCustomers") + '</span><label class="perm-toggle-switch"><input type="checkbox" id="permCust-' + adminId + '" ' + (canManageCust?'checked':'') + '><span class="perm-toggle-slider"></span></label></div>';
         
         // Save permissions button
         html += '<button class="save-perm-btn" type="button" style="margin-top:12px;padding:8px 20px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:13px;">💾 ' + t("savePerms") + '</button>';
